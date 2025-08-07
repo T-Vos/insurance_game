@@ -4,23 +4,26 @@ import GameRounds from './GameRounds';
 import GameConfig from './gameConfig';
 import TeamsConfig from './teamsConfig';
 import { LucideRefreshCw } from 'lucide-react';
+import * as Types from './types';
 
 const menuItems = [
-	{ name: 'Game Rounds', state: 'rounds' },
-	{ name: 'Game Config', state: 'rulesConfig' },
-	{ name: 'Team Config', state: 'teamsConfig' },
+	{ name: 'Game Rounds', state: Types.PageState.ROUNDS },
+	{ name: 'Game Config', state: Types.PageState.RULES_CONFIG },
+	{ name: 'Team Config', state: Types.PageState.TEAMS_CONFIG },
 ];
 
 const App = () => {
-	const [userId, setUserId] = useState('USER 12345');
-	const [pageState, setPageState] = useState('rounds');
-	const [loading, setLoading] = useState(true);
-	const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-	const initialBaseCapacity = 7;
+	const userId = 'USER 12345';
+	const [pageState, setPageState] = useState<Types.PageState>(
+		Types.PageState.ROUNDS
+	);
+	const [loading, setLoading] = useState<boolean>(false);
+	const [currentRoundIndex, setCurrentRoundIndex] = useState<number>(0);
+	const initialBaseCapacity: number = 7;
 
-	const [roundChoices, setRoundChoices] = useState([
+	const [roundChoices, setRoundChoices] = useState<Types.Round[]>([
 		{
-			round_id: 1,
+			round_id: 'round_1',
 			round_name: 'Round 1: Initial Investments',
 			choices: [
 				{
@@ -47,7 +50,7 @@ const App = () => {
 			],
 		},
 		{
-			round_id: 2,
+			round_id: 'round_2',
 			round_name: 'Round 2: Market Expansion',
 			choices: [
 				{
@@ -75,16 +78,16 @@ const App = () => {
 		},
 	]);
 
-	const [teams, setTeams] = useState([
+	const [teams, setTeams] = useState<Types.Team[]>([
 		{
-			id: 1,
+			id: 'team_1',
 			teamName: 'Verzekerbaars',
 			choices: [],
 			score: 0,
 			capacity: initialBaseCapacity,
 		},
 		{
-			id: 2,
+			id: 'team_2',
 			teamName: 'Financieel Fijntjes',
 			choices: [],
 			score: 0,
@@ -92,29 +95,35 @@ const App = () => {
 		},
 	]);
 
-	const updateTeamStats = (updatedTeams, roundIndex) => {
+	const updateTeamStats = (updatedTeams: Types.Team[], roundIndex: number) => {
 		const roundCapacityBonus = roundIndex * 2;
 
-		return updatedTeams.map((team) => {
+		return updatedTeams.map((team: Types.Team) => {
 			const totalScore = team.choices.reduce(
-				(sum, choice) => sum + choice.score,
+				(sum: number, choice: Types.ChosenItem) => sum + choice.score,
 				0
 			);
 
-			const usedCapacity = team.choices.reduce((sum, chosenItem) => {
-				const originalRound = roundChoices.find(
-					(r) => r.round_id === chosenItem.round_id
-				);
-				const originalChoice = originalRound.choices.find(
-					(c) => c.id === chosenItem.choice_id
-				);
+			const usedCapacity = team.choices.reduce(
+				(sum: number, chosenItem: Types.ChosenItem) => {
+					const originalRound = roundChoices.find(
+						(r) => r.round_id === chosenItem.round_id
+					);
+					const originalChoice = originalRound
+						? originalRound.choices.find((c) => c.id === chosenItem.choice_id)
+						: undefined;
 
-				const isActive =
-					roundIndex >= chosenItem.roundIndex &&
-					roundIndex < chosenItem.roundIndex + originalChoice.duration;
+					const isActive =
+						originalChoice &&
+						roundIndex >= chosenItem.roundIndex &&
+						roundIndex < chosenItem.roundIndex + originalChoice.duration;
 
-				return sum + (isActive ? originalChoice.capacity : 0);
-			}, 0);
+					return (
+						sum + (isActive && originalChoice ? originalChoice.capacity : 0)
+					);
+				},
+				0
+			);
 
 			const remainingCapacity =
 				initialBaseCapacity + roundCapacityBonus - usedCapacity;
@@ -122,7 +131,11 @@ const App = () => {
 		});
 	};
 
-	const handleSelectChoice = (teamId, roundId, choice) => {
+	const handleSelectChoice = (
+		teamId: Types.Team['id'],
+		roundId: Types.Round['round_id'],
+		choice: Types.Choice
+	) => {
 		setTeams((prevTeams) => {
 			const updatedTeams = prevTeams.map((team) => {
 				if (team.id === teamId) {
@@ -173,7 +186,7 @@ const App = () => {
 				}))
 			);
 			setCurrentRoundIndex(0);
-			setPageState('rounds');
+			setPageState(Types.PageState.ROUNDS);
 		}
 	};
 
@@ -194,9 +207,30 @@ const App = () => {
 		);
 	}
 
+	const handleUpdateRound = (updatedRound: Types.Round) => {
+		setRoundChoices((prev) =>
+			prev.map((round) =>
+				round.round_id === updatedRound.round_id ? updatedRound : round
+			)
+		);
+	};
+
+	const handleAddTeam = (team: Types.Team) => {
+		setTeams((prev) => [...prev, team]);
+	};
+
+	const handleUpdateTeam = (
+		id: Types.Team['id'],
+		updates: Partial<Types.Team>
+	) => {
+		setTeams((prev) =>
+			prev.map((team) => (team.id === id ? { ...team, ...updates } : team))
+		);
+	};
+
 	const renderPage = () => {
 		switch (pageState) {
-			case 'rounds':
+			case Types.PageState.ROUNDS:
 				return (
 					<GameRounds
 						teams={teams}
@@ -205,15 +239,22 @@ const App = () => {
 						handleSelectChoice={handleSelectChoice}
 					/>
 				);
-			case 'rulesConfig':
+			case Types.PageState.RULES_CONFIG:
 				return (
 					<GameConfig
 						roundChoices={roundChoices}
 						currentRoundIndex={currentRoundIndex}
+						handleUpdateRound={handleUpdateRound}
 					/>
 				);
-			case 'teamsConfig':
-				return <TeamsConfig />;
+			case Types.PageState.TEAMS_CONFIG:
+				return (
+					<TeamsConfig
+						teams={teams}
+						handleAddTeam={handleAddTeam}
+						handleUpdateTeam={handleUpdateTeam}
+					/>
+				);
 			default:
 				return null;
 		}

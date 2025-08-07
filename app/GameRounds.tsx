@@ -1,12 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { LucideCheckSquare, LucideSquare } from 'lucide-react';
+import { Choice, Round, Team } from './types';
+
+type GameRoundsProps = {
+	teams: Team[];
+	roundChoices: Round[];
+	currentRoundIndex: number;
+	handleSelectChoice: (
+		teamId: number | string,
+		roundId: number | string,
+		choice: Choice
+	) => void;
+};
 
 const GameRounds = ({
 	teams,
 	roundChoices,
 	currentRoundIndex,
 	handleSelectChoice,
-}) => {
+}: GameRoundsProps) => {
 	const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 	const prevRoundIndex = useRef(currentRoundIndex);
 
@@ -32,7 +44,6 @@ const GameRounds = ({
 				</p>
 			</div>
 
-			{/* Animated slide transition container */}
 			<div className="relative h-fit">
 				<div
 					key={currentRound.round_id}
@@ -67,7 +78,6 @@ const GameRounds = ({
 									</p>
 								</div>
 
-								{/* List of choices for the current round */}
 								<div className="mt-4 space-y-3">
 									{currentRound.choices.map((choice) => {
 										const isSelected = team.choices.some(
