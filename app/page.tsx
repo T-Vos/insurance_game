@@ -16,6 +16,7 @@ const App = () => {
 	const [pageState, setPageState] = useState('rounds');
 	const [loading, setLoading] = useState(true);
 	const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+	const initialBaseCapacity = 7;
 
 	const [roundChoices, setRoundChoices] = useState([
 		{
@@ -27,49 +28,97 @@ const App = () => {
 					description: 'Investeer in onderzoek',
 					score: 10,
 					capacity: 4,
+					duration: 1,
 				},
 				{
 					id: 2,
 					description: 'Update bedrijfsmodellen',
 					score: 20,
 					capacity: 2,
+					duration: 2,
 				},
-				{ id: 3, description: 'Onderzoek China', score: 30, capacity: 2 },
+				{
+					id: 3,
+					description: 'Onderzoek China',
+					score: 30,
+					capacity: 2,
+					duration: 1,
+				},
 			],
 		},
 		{
 			round_id: 2,
 			round_name: 'Round 2: Market Expansion',
 			choices: [
-				{ id: 1, description: 'Breid uit naar Europa', score: 15, capacity: 3 },
+				{
+					id: 1,
+					description: 'Breid uit naar Europa',
+					score: 15,
+					capacity: 3,
+					duration: 1,
+				},
 				{
 					id: 2,
 					description: 'Focus op binnenlandse markt',
 					score: 10,
 					capacity: 5,
+					duration: 1,
 				},
 				{
 					id: 3,
 					description: 'Verwerf een concurrent',
 					score: 40,
 					capacity: 1,
+					duration: 1,
 				},
 			],
 		},
 	]);
 
 	const [teams, setTeams] = useState([
-		{ id: 1, teamName: 'Verzekerbaars', choices: [], score: 0 },
-		{ id: 2, teamName: 'Financieel Fijntjes', choices: [], score: 0 },
+		{
+			id: 1,
+			teamName: 'Verzekerbaars',
+			choices: [],
+			score: 0,
+			capacity: initialBaseCapacity,
+		},
+		{
+			id: 2,
+			teamName: 'Financieel Fijntjes',
+			choices: [],
+			score: 0,
+			capacity: initialBaseCapacity,
+		},
 	]);
 
-	const updateTeamScores = (updatedTeams) => {
+	const updateTeamStats = (updatedTeams, roundIndex) => {
+		const roundCapacityBonus = roundIndex * 2;
+
 		return updatedTeams.map((team) => {
 			const totalScore = team.choices.reduce(
 				(sum, choice) => sum + choice.score,
 				0
 			);
-			return { ...team, score: totalScore };
+
+			const usedCapacity = team.choices.reduce((sum, chosenItem) => {
+				const originalRound = roundChoices.find(
+					(r) => r.round_id === chosenItem.round_id
+				);
+				const originalChoice = originalRound.choices.find(
+					(c) => c.id === chosenItem.choice_id
+				);
+
+				const isActive =
+					roundIndex >= chosenItem.roundIndex &&
+					roundIndex < chosenItem.roundIndex + originalChoice.duration;
+
+				return sum + (isActive ? originalChoice.capacity : 0);
+			}, 0);
+
+			const remainingCapacity =
+				initialBaseCapacity + roundCapacityBonus - usedCapacity;
+			return { ...team, score: totalScore, capacity: remainingCapacity };
 		});
 	};
 
@@ -81,32 +130,38 @@ const App = () => {
 						(c) => c.round_id === roundId && c.choice_id === choice.id
 					);
 
-					let newChoices;
+					let newChoices = [];
 					if (choiceIndex >= 0) {
-						// Choice already exists, so remove it (deselect)
 						newChoices = team.choices.filter(
 							(c, index) => index !== choiceIndex
 						);
 					} else {
-						// Choice does not exist, so add it
-						newChoices = [
-							...team.choices,
-							{ ...choice, round_id: roundId, choice_id: choice.id },
-						];
+						if (team.capacity >= choice.capacity) {
+							newChoices = [
+								...team.choices,
+								{
+									...choice,
+									round_id: roundId,
+									choice_id: choice.id,
+									roundIndex: currentRoundIndex,
+								},
+							];
+						} else {
+							return team;
+						}
 					}
-
 					return { ...team, choices: newChoices };
 				}
 				return team;
 			});
-			return updateTeamScores(updatedTeams);
+			return updateTeamStats(updatedTeams, currentRoundIndex);
 		});
 	};
 
 	const handleResetScores = () => {
 		if (
 			window.confirm(
-				'Are you sure you want to reset all team scores? This cannot be undone.'
+				'Are you sure you want to reset all team scores and capacity? This cannot be undone.'
 			)
 		) {
 			setTeams((prevTeams) =>
@@ -114,8 +169,11 @@ const App = () => {
 					...team,
 					choices: [],
 					score: 0,
+					capacity: initialBaseCapacity,
 				}))
 			);
+			setCurrentRoundIndex(0);
+			setPageState('rounds');
 		}
 	};
 
@@ -123,6 +181,10 @@ const App = () => {
 		const timer = setTimeout(() => setLoading(false), 500);
 		return () => clearTimeout(timer);
 	}, []);
+
+	useEffect(() => {
+		setTeams((prevTeams) => updateTeamStats(prevTeams, currentRoundIndex));
+	}, [currentRoundIndex]);
 
 	if (loading) {
 		return (
@@ -177,8 +239,22 @@ const App = () => {
 						</button>
 					</div>
 				</header>
+				<nav className="flex space-x-2 mb-4 sm:space-x-4">
+					{menuItems.map((item) => (
+						<button
+							key={item.state}
+							onClick={() => setPageState(item.state)}
+							className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
+								pageState === item.state
+									? 'bg-teal-500 text-white shadow-lg'
+									: 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+							}`}
+						>
+							{item.name}
+						</button>
+					))}
+				</nav>
 
-				{/* Navigation for rounds and pages */}
 				<div className="flex flex-col sm:flex-row justify-between items-center mb-8 space-y-4 sm:space-y-0 sm:space-x-4">
 					<div className="flex space-x-2 sm:space-x-4">
 						{roundChoices.map((round, index) => (
@@ -186,7 +262,6 @@ const App = () => {
 								key={round.round_id}
 								onClick={() => {
 									setCurrentRoundIndex(index);
-									setPageState('rounds'); // Always go to the rounds page when a round is selected
 								}}
 								className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
 									currentRoundIndex === index
@@ -198,22 +273,6 @@ const App = () => {
 							</button>
 						))}
 					</div>
-
-					<nav className="flex space-x-2 sm:space-x-4">
-						{menuItems.map((item) => (
-							<button
-								key={item.state}
-								onClick={() => setPageState(item.state)}
-								className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
-									pageState === item.state
-										? 'bg-teal-500 text-white shadow-lg'
-										: 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-								}`}
-							>
-								{item.name}
-							</button>
-						))}
-					</nav>
 				</div>
 
 				{renderPage()}

@@ -21,6 +21,9 @@ const TeamsConfig = (teams: any) => {
 					</button>
 				</div>
 			</div>
+			<div className="bg-gray-800 rounded-xl p-6 shadow-2xl mb-8">
+				<h2 className="text-2xl font-semibold mb-4 text-teal-300">Teams</h2>
+			</div>
 		</>
 	);
 };
