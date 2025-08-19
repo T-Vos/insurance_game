@@ -310,12 +310,21 @@ const App = () => {
 		switch (pageState) {
 			case Types.PageState.ROUNDS:
 				return (
-					<GameRounds
-						teams={teams}
-						roundChoices={roundChoices}
-						currentRoundIndex={currentRoundIndex}
-						handleSelectChoice={handleSelectChoice}
-					/>
+					<>
+						<GameRounds
+							teams={teams}
+							roundChoices={roundChoices}
+							currentRoundIndex={currentRoundIndex}
+							handleSelectChoice={handleSelectChoice}
+						/>
+						<div className="mt-8">
+							<RevealedInfo
+								teams={teams}
+								currentRoundIndex={currentRoundIndex}
+								roundChoices={roundChoices}
+							/>
+						</div>
+					</>
 				);
 			case Types.PageState.RULES_CONFIG:
 				return (
@@ -323,6 +332,14 @@ const App = () => {
 						roundChoices={roundChoices}
 						currentRoundIndex={currentRoundIndex}
 						handleUpdateRound={handleUpdateRound}
+						handleAddRound={() => {
+							const newRound: Types.Round = {
+								round_id: `round_${roundChoices.length + 1}`,
+								round_name: `Round ${roundChoices.length + 1}: New Round`,
+								choices: [],
+							};
+							setRoundChoices((prev) => [...prev, newRound]);
+						}}
 					/>
 				);
 			case Types.PageState.TEAMS_CONFIG:
@@ -394,15 +411,6 @@ const App = () => {
 				</div>
 
 				{renderPage()}
-				{pageState === Types.PageState.ROUNDS && (
-					<div className="mt-8">
-						<RevealedInfo
-							teams={teams}
-							currentRoundIndex={currentRoundIndex}
-							roundChoices={roundChoices}
-						/>
-					</div>
-				)}
 			</div>
 		</div>
 	);
