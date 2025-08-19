@@ -9,6 +9,12 @@ export interface RevealMessage {
 	revealedInRounds: number;
 }
 
+export interface InteractionEffect {
+	targetChoiceId: number;
+	roundId: string;
+	bonusScore: number;
+}
+
 export interface Choice {
 	id: number;
 	description: string;
@@ -16,6 +22,7 @@ export interface Choice {
 	capacity: number;
 	duration: number;
 	reveals: RevealMessage[];
+	interactionEffects?: InteractionEffect[];
 }
 
 export interface Round {

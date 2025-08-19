@@ -29,7 +29,7 @@ const RevealedInfo = ({
 					</h3>
 					{team.choices.length > 0 ? (
 						team.choices
-							.map((chosenItem) => {
+							.flatMap((chosenItem) => {
 								const originalRound = roundChoices.find(
 									(r) => r.round_id === chosenItem.round_id
 								);
@@ -38,30 +38,29 @@ const RevealedInfo = ({
 								);
 
 								if (!originalChoice?.reveals) {
+									return [];
+								}
+
+								return originalChoice.reveals.map((revealMessage, index) => {
+									const revealRound =
+										chosenItem.roundIndex + revealMessage.revealedInRounds;
+									if (currentRoundIndex === revealRound) {
+										return (
+											<div
+												key={`${team.id}-${chosenItem.choice_id}-${index}`}
+												className="bg-gray-700 p-3 rounded-md mb-2"
+											>
+												<p className="text-gray-400 text-sm">
+													From "{chosenItem.description}":
+												</p>
+												<p className="text-white font-medium italic mt-1">
+													{revealMessage.text}
+												</p>
+											</div>
+										);
+									}
 									return null;
-								}
-
-								const revealRoundIndex =
-									chosenItem.roundIndex + originalChoice.duration;
-								const revealedMessage =
-									originalChoice.reveals[currentRoundIndex - revealRoundIndex];
-
-								if (currentRoundIndex >= revealRoundIndex && revealedMessage) {
-									return (
-										<div
-											key={`${team.id}-${chosenItem.choice_id}`}
-											className="bg-gray-700 p-3 rounded-md mb-2"
-										>
-											<p className="text-gray-400 text-sm">
-												From "{chosenItem.description}":
-											</p>
-											<p className="text-white font-medium italic mt-1">
-												{revealedMessage}
-											</p>
-										</div>
-									);
-								}
-								return null;
+								});
 							})
 							.filter(Boolean) // Filter out null values
 					) : (

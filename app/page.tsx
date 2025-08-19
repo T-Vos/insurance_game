@@ -45,6 +45,9 @@ const App = () => {
 							revealedInRounds: 2,
 						},
 					],
+					interactionEffects: [
+						{ targetChoiceId: 2, roundId: 'round_2', bonusScore: 25 },
+					],
 				},
 				{
 					id: 2,
@@ -153,31 +156,52 @@ const App = () => {
 		const roundCapacityBonus = roundIndex * 2;
 
 		return updatedTeams.map((team: Types.Team) => {
-			const totalScore = team.choices.reduce(
-				(sum: number, choice: Types.ChosenItem) => sum + choice.score,
-				0
-			);
+			let totalScore = 0;
+			let usedCapacity = 0;
 
-			const usedCapacity = team.choices.reduce(
-				(sum: number, chosenItem: Types.ChosenItem) => {
-					const originalRound = roundChoices.find(
-						(r) => r.round_id === chosenItem.round_id
-					);
-					const originalChoice = originalRound
-						? originalRound.choices.find((c) => c.id === chosenItem.choice_id)
-						: undefined;
+			// Calculate base scores and capacity
+			team.choices.forEach((chosenItem: Types.ChosenItem) => {
+				const originalRound = roundChoices.find(
+					(r) => r.round_id === chosenItem.round_id
+				);
+				const originalChoice = originalRound
+					? originalRound.choices.find((c) => c.id === chosenItem.choice_id)
+					: undefined;
 
-					const isActive =
-						originalChoice &&
-						roundIndex >= chosenItem.roundIndex &&
-						roundIndex < chosenItem.roundIndex + originalChoice.duration;
+				if (originalChoice) {
+					totalScore += originalChoice.score;
+				}
 
-					return (
-						sum + (isActive && originalChoice ? originalChoice.capacity : 0)
-					);
-				},
-				0
-			);
+				const isActive =
+					originalChoice &&
+					roundIndex >= chosenItem.roundIndex &&
+					roundIndex < chosenItem.roundIndex + originalChoice.duration;
+				usedCapacity +=
+					isActive && originalChoice ? originalChoice.capacity : 0;
+			});
+
+			// Calculate bonus scores from interaction effects
+			team.choices.forEach((chosenItem: Types.ChosenItem) => {
+				const originalRound = roundChoices.find(
+					(r) => r.round_id === chosenItem.round_id
+				);
+				const originalChoice = originalRound
+					? originalRound.choices.find((c) => c.id === chosenItem.choice_id)
+					: undefined;
+
+				if (originalChoice && originalChoice.interactionEffects) {
+					originalChoice.interactionEffects.forEach((effect) => {
+						const hasTargetChoice = team.choices.some(
+							(c) =>
+								c.choice_id === effect.targetChoiceId &&
+								c.round_id === effect.roundId
+						);
+						if (hasTargetChoice) {
+							totalScore += effect.bonusScore;
+						}
+					});
+				}
+			});
 
 			const remainingCapacity =
 				initialBaseCapacity + roundCapacityBonus - usedCapacity;
@@ -313,7 +337,6 @@ const App = () => {
 				return null;
 		}
 	};
-
 	return (
 		<div className="min-h-screen bg-gray-900 text-gray-200 p-4 sm:p-8 flex flex-col items-center">
 			<div className="w-full max-w-5xl">
