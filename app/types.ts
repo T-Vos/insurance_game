@@ -1,36 +1,39 @@
-export interface ChosenItem {
-	round_id: number | string;
-	choice_id: number | string;
-	roundIndex: number;
-	score: number;
+export enum PageState {
+	ROUNDS,
+	RULES_CONFIG,
+	TEAMS_CONFIG,
 }
 
-export interface Team {
-	id: number | string;
-	teamName: string;
-	score: number;
-	capacity: number;
-	choices: ChosenItem[];
-	isEditing?: boolean;
-	editingName?: string;
+export interface RevealMessage {
+	text: string;
+	revealedInRounds: number;
 }
 
 export interface Choice {
-	id: number | string;
+	id: number;
 	description: string;
 	score: number;
 	capacity: number;
 	duration: number;
+	reveals: RevealMessage[];
 }
 
 export interface Round {
-	round_id: number | string;
+	round_id: string;
 	round_name: string;
 	choices: Choice[];
 }
 
-export enum PageState {
-	ROUNDS = 'rounds',
-	RULES_CONFIG = 'rulesConfig',
-	TEAMS_CONFIG = 'teamsConfig',
+export interface ChosenItem extends Choice {
+	round_id: string;
+	choice_id: number;
+	roundIndex: number;
+}
+
+export interface Team {
+	id: string;
+	teamName: string;
+	choices: ChosenItem[];
+	score: number;
+	capacity: number;
 }

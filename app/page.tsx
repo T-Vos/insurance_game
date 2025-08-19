@@ -1,3 +1,5 @@
+// App.tsx
+
 'use client';
 import React, { useEffect, useState } from 'react';
 import GameRounds from './GameRounds';
@@ -5,6 +7,7 @@ import GameConfig from './gameConfig';
 import TeamsConfig from './teamsConfig';
 import { LucideRefreshCw } from 'lucide-react';
 import * as Types from './types';
+import RevealedInfo from './RevealedInfo';
 
 const menuItems = [
 	{ name: 'Game Rounds', state: Types.PageState.ROUNDS },
@@ -13,7 +16,7 @@ const menuItems = [
 ];
 
 const App = () => {
-	const userId = 'USER 12345';
+	const GAME_ID = 'GeopoliticalShock2025';
 	const [pageState, setPageState] = useState<Types.PageState>(
 		Types.PageState.ROUNDS
 	);
@@ -29,9 +32,19 @@ const App = () => {
 				{
 					id: 1,
 					description: 'Investeer in onderzoek',
-					score: 10,
+					score: -10,
 					capacity: 4,
 					duration: 1,
+					reveals: [
+						{
+							text: 'Onderzoek toont aan dat er een nieuwe technologie op de markt komt die de productiekosten aanzienlijk verlaagt.',
+							revealedInRounds: 1,
+						},
+						{
+							text: 'De technologie heeft een onverwachte bijwerking, wat leidt tot vertragingen in de implementatie.',
+							revealedInRounds: 2,
+						},
+					],
 				},
 				{
 					id: 2,
@@ -39,6 +52,16 @@ const App = () => {
 					score: 20,
 					capacity: 2,
 					duration: 2,
+					reveals: [
+						{
+							text: 'De geüpdate modellen zijn zeer efficiënt en verhogen de inkomsten.',
+							revealedInRounds: 2,
+						},
+						{
+							text: 'Concurrenten hebben uw nieuwe model snel gekopieerd, wat de winstmarges doet dalen.',
+							revealedInRounds: 3,
+						},
+					],
 				},
 				{
 					id: 3,
@@ -46,6 +69,12 @@ const App = () => {
 					score: 30,
 					capacity: 2,
 					duration: 1,
+					reveals: [
+						{
+							text: 'Onderzoek toont een grote, onontdekte markt in China met hoge winstkansen.',
+							revealedInRounds: 1,
+						},
+					],
 				},
 			],
 		},
@@ -59,6 +88,7 @@ const App = () => {
 					score: 15,
 					capacity: 3,
 					duration: 1,
+					reveals: [],
 				},
 				{
 					id: 2,
@@ -66,6 +96,7 @@ const App = () => {
 					score: 10,
 					capacity: 5,
 					duration: 1,
+					reveals: [],
 				},
 				{
 					id: 3,
@@ -73,6 +104,29 @@ const App = () => {
 					score: 40,
 					capacity: 1,
 					duration: 1,
+					reveals: [],
+				},
+			],
+		},
+		{
+			round_id: 'round_3',
+			round_name: 'Round 3: Vervolg',
+			choices: [
+				{
+					id: 1,
+					description: 'Breid uit naar Europa',
+					score: 15,
+					capacity: 3,
+					duration: 1,
+					reveals: [],
+				},
+				{
+					id: 2,
+					description: 'Focus op binnenlandse markt',
+					score: 10,
+					capacity: 5,
+					duration: 1,
+					reveals: [],
 				},
 			],
 		},
@@ -269,7 +323,7 @@ const App = () => {
 					</h1>
 					<div className="bg-gray-800 rounded-lg p-4 mt-4 shadow-xl flex items-center justify-between">
 						<p className="text-sm font-mono break-all text-gray-500">
-							User ID: <span className="font-bold">{userId}</span>
+							Game ID: <span className="font-bold">{GAME_ID}</span>
 						</p>
 						<button
 							onClick={handleResetScores}
@@ -317,6 +371,11 @@ const App = () => {
 				</div>
 
 				{renderPage()}
+				<RevealedInfo
+					teams={teams}
+					currentRoundIndex={currentRoundIndex}
+					roundChoices={roundChoices}
+				/>
 			</div>
 		</div>
 	);

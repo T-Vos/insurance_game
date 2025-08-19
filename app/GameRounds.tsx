@@ -137,7 +137,8 @@ const GameRounds = ({
 												</div>
 												<div className="flex-shrink-0 text-right">
 													<p className="text-sm font-bold opacity-80">
-														+{choice.score}
+														{choice.score >= 0 ? '+' : ''}
+														{choice.score}
 													</p>
 													<p className="text-xs opacity-60">
 														Capacity: {choice.capacity}
