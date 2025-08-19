@@ -28,7 +28,7 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				{children}
-				<footer className="text-center text-gray-500 mt-8">
+				<footer className="text-center text-gray-500 my-8">
 					<p className="text-xs mt-2">
 						© 2025 - {new Date().getFullYear()}{' '}
 						<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>

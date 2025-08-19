@@ -394,11 +394,15 @@ const App = () => {
 				</div>
 
 				{renderPage()}
-				<RevealedInfo
-					teams={teams}
-					currentRoundIndex={currentRoundIndex}
-					roundChoices={roundChoices}
-				/>
+				{pageState === Types.PageState.ROUNDS && (
+					<div className="mt-8">
+						<RevealedInfo
+							teams={teams}
+							currentRoundIndex={currentRoundIndex}
+							roundChoices={roundChoices}
+						/>
+					</div>
+				)}
 			</div>
 		</div>
 	);

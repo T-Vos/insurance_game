@@ -1,7 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Round, Choice, RevealMessage, InteractionEffect } from './types';
-import { LucidePlus, LucideTrash, LucideSave, LucideEdit } from 'lucide-react';
+import {
+	ChevronDown,
+	ChevronRight,
+	LucideTrash,
+	LucidePlus,
+	LucideSave,
+} from 'lucide-react';
 
 type GameConfigProps = {
 	roundChoices: Round[];
@@ -16,6 +22,15 @@ const GameConfig = ({
 	handleUpdateRound,
 	handleAddRound,
 }: GameConfigProps) => {
+	const [openedChoices, setOpenedOptions] = useState<number[]>([]);
+
+	const toggleCollapse = (choiceId: number) => {
+		setOpenedOptions((prev) =>
+			prev.includes(choiceId)
+				? prev.filter((id) => id !== choiceId)
+				: [...prev, choiceId]
+		);
+	};
 	const currentRound = roundChoices[currentRoundIndex];
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(
@@ -245,240 +260,275 @@ const GameConfig = ({
 						</button>
 					</div>
 
-					{editingChoices.map((choice, choiceIndex) => (
-						<div
-							key={choice.id}
-							className="bg-gray-800 rounded-xl p-6 shadow-2xl mb-6 border-l-4 border-teal-500"
-						>
-							<div className="flex gap-4 justify-end mb-4">
-								<div className="grow">
-									<input
-										type="text"
-										value={choice.description}
-										onChange={(e) =>
-											handleUpdateChoice(choiceIndex, {
-												description: e.target.value,
-											})
-										}
-										className="w-full bg-gray-700 text-white rounded px-3 py-2"
-									/>
-								</div>
-								<button
-									onClick={() => handleRemoveChoice(choice.id)}
-									className="text-red-400 hover:text-red-300 transition duration-200"
-								>
-									<LucideTrash size={20} />
-								</button>
-							</div>
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 items-end">
-								<div>
-									<label className="block text-gray-400 text-sm font-bold mb-1">
-										Score
-									</label>
-									<input
-										type="number"
-										value={choice.score}
-										onChange={(e) =>
-											handleUpdateChoice(choiceIndex, {
-												score: parseInt(e.target.value, 10),
-											})
-										}
-										className="w-full bg-gray-700 text-white rounded px-3 py-2"
-									/>
-								</div>
-								<div>
-									<label className="block text-gray-400 text-sm font-bold mb-1">
-										Capacity
-									</label>
-									<input
-										type="number"
-										value={choice.capacity}
-										onChange={(e) =>
-											handleUpdateChoice(choiceIndex, {
-												capacity: parseInt(e.target.value, 10),
-											})
-										}
-										className="w-full bg-gray-700 text-white rounded px-3 py-2"
-									/>
-								</div>
-								<div>
-									<label className="block text-gray-400 text-sm font-bold mb-1">
-										Duration
-									</label>
-									<input
-										type="number"
-										value={choice.duration}
-										onChange={(e) =>
-											handleUpdateChoice(choiceIndex, {
-												duration: parseInt(e.target.value, 10),
-											})
-										}
-										className="w-full bg-gray-700 text-white rounded px-3 py-2"
-									/>
-								</div>
-							</div>
-
-							<div className="mt-6">
-								<h4 className="text-lg font-bold text-gray-300 mb-2">
-									Reveal Messages
-								</h4>
-								{(choice.reveals || []).map((reveal, revealIndex) => (
-									<div
-										key={revealIndex}
-										className="flex items-center space-x-2 mb-2"
+					{editingChoices.map((choice, choiceIndex) => {
+						const isOpened = openedChoices.includes(choice.id);
+						return (
+							<div
+								key={choice.id}
+								className="bg-gray-900 rounded-xl p-6 shadow-2xl mb-6 border-l-4 border-teal-500"
+							>
+								<div className="flex gap-4 items-center mb-4">
+									<button
+										onClick={() => toggleCollapse(choice.id)}
+										className="text-gray-400 hover:text-gray-200 transition"
 									>
+										<div
+											className={`transition-transform duration-300 ${
+												isOpened ? 'rotate-180' : ''
+											}`}
+										>
+											<ChevronDown size={20} />
+										</div>
+									</button>
+									<div className="grow">
 										<input
 											type="text"
-											value={reveal.text}
-											placeholder="Reveal message text"
+											value={choice.description}
 											onChange={(e) =>
-												handleUpdateReveal(
-													choiceIndex,
-													revealIndex,
-													'text',
-													e.target.value
-												)
+												handleUpdateChoice(choiceIndex, {
+													description: e.target.value,
+												})
 											}
-											className="flex-grow bg-gray-700 text-white rounded px-3 py-2"
+											className="w-full bg-gray-700 text-white rounded px-3 py-2"
 										/>
-										<input
-											type="number"
-											value={reveal.revealedInRounds}
-											placeholder="Rounds"
-											onChange={(e) =>
-												handleUpdateReveal(
-													choiceIndex,
-													revealIndex,
-													'revealedInRounds',
-													e.target.value
-												)
-											}
-											className="w-20 bg-gray-700 text-white rounded px-3 py-2"
-										/>
-										<button
-											onClick={() =>
-												handleRemoveReveal(choiceIndex, revealIndex)
-											}
-											className="text-red-400 hover:text-red-300 transition duration-200"
-										>
-											<LucideTrash size={18} />
-										</button>
 									</div>
-								))}
-								<button
-									onClick={() => handleAddReveal(choiceIndex)}
-									className="flex items-center space-x-2 text-teal-400 hover:text-teal-300 transition duration-200 mt-2"
+									<button
+										onClick={() => handleRemoveChoice(choice.id)}
+										className="text-red-400 hover:text-red-300 transition duration-200"
+									>
+										<LucideTrash size={20} />
+									</button>
+								</div>
+
+								{/* Collapsible Content */}
+								<div
+									className={`overflow-hidden transition-all duration-300 ${
+										isOpened ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+									}`}
 								>
-									<LucidePlus size={18} />
-									<span>Add Reveal Message</span>
-								</button>
-							</div>
-
-							<div className="mt-6">
-								<h4 className="text-lg font-bold text-gray-300 mb-2">
-									Interaction Effects
-								</h4>
-								{(choice.interactionEffects || []).map(
-									(interaction, interactionIndex) => (
-										<div
-											key={interactionIndex}
-											className="flex flex-wrap items-center space-x-2 mb-2"
-										>
+									<div className="pt-4">
+										<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 items-end">
 											<div className="grow">
 												<label className="block text-gray-400 text-sm font-bold mb-1">
-													Target Round
-												</label>
-												<select
-													value={interaction.roundId}
-													onChange={(e) =>
-														handleUpdateInteraction(
-															choiceIndex,
-															interactionIndex,
-															'roundId',
-															e.target.value
-														)
-													}
-													className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
-												>
-													{roundChoices.map((round) => (
-														<option key={round.round_id} value={round.round_id}>
-															{round.round_name}
-														</option>
-													))}
-												</select>
-											</div>
-
-											<div className="grow">
-												<label className="block text-gray-400 text-sm font-bold mb-1">
-													Target Choice
-												</label>
-												<select
-													value={interaction.targetChoiceId}
-													onChange={(e) =>
-														handleUpdateInteraction(
-															choiceIndex,
-															interactionIndex,
-															'targetChoiceId',
-															e.target.value
-														)
-													}
-													className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
-												>
-													<option value="" disabled>
-														Select a choice
-													</option>
-													{roundChoices
-														.find((r) => r.round_id === interaction.roundId)
-														?.choices.map((targetChoice) => (
-															<option
-																key={targetChoice.id}
-																value={targetChoice.id}
-															>
-																{targetChoice.description}
-															</option>
-														))}
-												</select>
-											</div>
-											<div>
-												<label className="block text-gray-400 text-sm font-bold mb-1">
-													Bonus Score
+													Score
 												</label>
 												<input
 													type="number"
-													value={interaction.bonusScore}
-													placeholder="Bonus Score"
+													value={choice.score}
 													onChange={(e) =>
-														handleUpdateInteraction(
-															choiceIndex,
-															interactionIndex,
-															'bonusScore',
-															e.target.value
-														)
+														handleUpdateChoice(choiceIndex, {
+															score: parseInt(e.target.value, 10),
+														})
 													}
-													className="w-28 bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
+													className="w-full bg-gray-700 text-white rounded px-3 py-2"
 												/>
 											</div>
+											<div className="grow">
+												<label className="block text-gray-400 text-sm font-bold mb-1">
+													Capacity
+												</label>
+												<input
+													type="number"
+													value={choice.capacity}
+													onChange={(e) =>
+														handleUpdateChoice(choiceIndex, {
+															capacity: parseInt(e.target.value, 10),
+														})
+													}
+													className="w-full bg-gray-700 text-white rounded px-3 py-2"
+												/>
+											</div>
+											<div className="grow">
+												<label className="block text-gray-400 text-sm font-bold mb-1">
+													Duration
+												</label>
+												<input
+													type="number"
+													value={choice.duration}
+													onChange={(e) =>
+														handleUpdateChoice(choiceIndex, {
+															duration: parseInt(e.target.value, 10),
+														})
+													}
+													className="w-full bg-gray-700 text-white rounded px-3 py-2"
+												/>
+											</div>
+										</div>
+
+										<div className="mt-6">
+											<h4 className="text-lg font-bold text-gray-300 mb-2">
+												Reveal Messages
+											</h4>
+											{(choice.reveals || []).map((reveal, revealIndex) => (
+												<div
+													key={revealIndex}
+													className="flex items-center space-x-2 mb-2"
+												>
+													<input
+														type="text"
+														value={reveal.text}
+														placeholder="Reveal message text"
+														onChange={(e) =>
+															handleUpdateReveal(
+																choiceIndex,
+																revealIndex,
+																'text',
+																e.target.value
+															)
+														}
+														className="flex-grow bg-gray-700 text-white rounded px-3 py-2"
+													/>
+													<input
+														type="number"
+														value={reveal.revealedInRounds}
+														placeholder="Rounds"
+														onChange={(e) =>
+															handleUpdateReveal(
+																choiceIndex,
+																revealIndex,
+																'revealedInRounds',
+																e.target.value
+															)
+														}
+														className="w-20 bg-gray-700 text-white rounded px-3 py-2"
+													/>
+													<button
+														onClick={() =>
+															handleRemoveReveal(choiceIndex, revealIndex)
+														}
+														className="text-red-400 hover:text-red-300 transition duration-200"
+													>
+														<LucideTrash size={18} />
+													</button>
+												</div>
+											))}
 											<button
-												onClick={() =>
-													handleRemoveInteraction(choiceIndex, interactionIndex)
-												}
-												className="text-red-400 hover:text-red-300 transition duration-200"
+												onClick={() => handleAddReveal(choiceIndex)}
+												className="flex items-center space-x-2 text-teal-400 hover:text-teal-300 transition duration-200 mt-2"
 											>
-												<LucideTrash size={18} />
+												<LucidePlus size={18} />
+												<span>Add Reveal Message</span>
 											</button>
 										</div>
-									)
-								)}
-								<button
-									onClick={() => handleAddInteraction(choiceIndex)}
-									className="flex items-center space-x-2 text-teal-400 hover:text-teal-300 transition duration-200 mt-2"
-								>
-									<LucidePlus size={18} />
-									<span>Add Interaction Effect</span>
-								</button>
+
+										<div className="mt-6">
+											<h4 className="text-lg font-bold text-gray-300 mb-2">
+												Interaction Effects
+											</h4>
+											{(choice.interactionEffects || []).map(
+												(interaction, interactionIndex) => (
+													<div
+														key={interactionIndex}
+														className="flex flex-wrap items-center space-x-2 mb-2"
+													>
+														<div className="grow">
+															<label className="block text-gray-400 text-sm font-bold mb-1">
+																Target Round
+															</label>
+															<select
+																value={interaction.roundId}
+																onChange={(e) =>
+																	handleUpdateInteraction(
+																		choiceIndex,
+																		interactionIndex,
+																		'roundId',
+																		e.target.value
+																	)
+																}
+																className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
+															>
+																{roundChoices.map((round) => (
+																	<option
+																		key={round.round_id}
+																		value={round.round_id}
+																	>
+																		{round.round_name}
+																	</option>
+																))}
+															</select>
+														</div>
+
+														<div className="grow">
+															<label className="block text-gray-400 text-sm font-bold mb-1">
+																Target Choice
+															</label>
+															<select
+																value={interaction.targetChoiceId}
+																onChange={(e) =>
+																	handleUpdateInteraction(
+																		choiceIndex,
+																		interactionIndex,
+																		'targetChoiceId',
+																		e.target.value
+																	)
+																}
+																className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
+															>
+																<option value="" disabled>
+																	Select a choice
+																</option>
+																{roundChoices
+																	.find(
+																		(r) => r.round_id === interaction.roundId
+																	)
+																	?.choices.map((targetChoice) => (
+																		<option
+																			key={targetChoice.id}
+																			value={targetChoice.id}
+																		>
+																			{targetChoice.description}
+																		</option>
+																	))}
+															</select>
+														</div>
+														<div>
+															<label className="block text-gray-400 text-sm font-bold mb-1">
+																Bonus Score
+															</label>
+															<input
+																type="number"
+																value={interaction.bonusScore}
+																placeholder="Bonus Score"
+																onChange={(e) =>
+																	handleUpdateInteraction(
+																		choiceIndex,
+																		interactionIndex,
+																		'bonusScore',
+																		e.target.value
+																	)
+																}
+																className="w-28 bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
+															/>
+														</div>
+														<div className="self-end mb-2">
+															<button
+																onClick={() =>
+																	handleRemoveInteraction(
+																		choiceIndex,
+																		interactionIndex
+																	)
+																}
+																className="text-red-400 hover:text-red-300 transition duration-200"
+															>
+																<LucideTrash size={18} />
+															</button>
+														</div>
+													</div>
+												)
+											)}
+											<button
+												onClick={() => handleAddInteraction(choiceIndex)}
+												className="flex items-center space-x-2 text-teal-400 hover:text-teal-300 transition duration-200 mt-2"
+											>
+												<LucidePlus size={18} />
+												<span>Add Interaction Effect</span>
+											</button>
+										</div>
+									</div>
+								</div>
 							</div>
-						</div>
-					))}
+						);
+					})}
 				</div>
 			</div>
 		</>
