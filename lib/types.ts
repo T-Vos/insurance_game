@@ -57,6 +57,7 @@ export interface ChosenItem {
 	round_id: string;
 	choice_id: string;
 	roundIndex: number;
+	saved: boolean;
 }
 
 /**
