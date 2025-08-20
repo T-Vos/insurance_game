@@ -12,7 +12,7 @@ export default function HomePage() {
 					Login as Admin
 				</Link>
 				<Link
-					href="/team/login"
+					href="/team/join"
 					className="bg-green-600 text-white py-2 rounded text-center hover:bg-green-700 transition"
 				>
 					Login as Team
