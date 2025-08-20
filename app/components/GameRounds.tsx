@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { LucideCheckSquare, LucideSquare } from 'lucide-react';
-import { Choice, Round, Team } from './types';
+import { Choice, Round, Team } from './lib/types';
 
 type GameRoundsProps = {
 	teams: Team[];
