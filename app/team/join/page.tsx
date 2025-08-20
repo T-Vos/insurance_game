@@ -1,77 +1,65 @@
 'use client';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
 
-export default function JoinTeamPage() {
-	const searchParams = useSearchParams();
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { db } from '@/firebase/client';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+
+export default function TeamJoinPage() {
 	const [gameId, setGameId] = useState('');
 	const [teamName, setTeamName] = useState('');
 	const router = useRouter();
 
-	useEffect(() => {
-		const queryGameId = searchParams.get('gameId');
-		if (queryGameId) {
-			setGameId(queryGameId);
-		}
-	}, [searchParams]);
-
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleJoin = async (e: React.FormEvent) => {
 		e.preventDefault();
-		// Handle join logic here, e.g., call API or navigate
-		alert(`Joining game ${gameId} as team "${teamName}"`);
-		// Example: router.push(`/game/${gameId}/team/${teamName}`);
+		try {
+			const gameRef = doc(db, 'games', gameId);
+			const gameSnap = await getDoc(gameRef);
+
+			if (!gameSnap.exists()) {
+				alert('Game not found');
+				return;
+			}
+
+			const teamId = crypto.randomUUID();
+			await updateDoc(gameRef, {
+				teams: arrayUnion({
+					id: teamId,
+					teamName,
+					choices: [],
+					expected_profit_score: 0,
+					liquidity_score: 0,
+					solvency_score: 0,
+					IT_score: 0,
+					capacity_score: 0,
+				}),
+			});
+
+			document.cookie = `teamSession=${teamId}; path=/`;
+			router.push(`/team/${gameId}`);
+		} catch (err) {
+			console.error(err);
+		}
 	};
 
 	return (
-		<main
-			style={{
-				maxWidth: 400,
-				margin: '2rem auto',
-				padding: 24,
-				border: '1px solid #ddd',
-				borderRadius: 8,
-			}}
-		>
-			<h1>Join a Game</h1>
-			<form
-				onSubmit={handleSubmit}
-				style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-			>
-				<label>
-					Game ID:
-					<input
-						type="text"
-						value={gameId}
-						onChange={(e) => setGameId(e.target.value)}
-						placeholder="Enter Game ID"
-						required
-						style={{ width: '100%', padding: 8, marginTop: 4 }}
-					/>
-				</label>
-				<label>
-					Team Name:
-					<input
-						type="text"
-						value={teamName}
-						onChange={(e) => setTeamName(e.target.value)}
-						placeholder="Enter Team Name"
-						required
-						style={{ width: '100%', padding: 8, marginTop: 4 }}
-					/>
-				</label>
-				<button
-					type="submit"
-					style={{
-						padding: 10,
-						background: '#0070f3',
-						color: '#fff',
-						border: 'none',
-						borderRadius: 4,
-					}}
-				>
-					Join Game
-				</button>
+		<div className="p-6">
+			<h1 className="text-xl font-bold">Join a Game</h1>
+			<form onSubmit={handleJoin} className="flex flex-col gap-2 mt-4">
+				<input
+					type="text"
+					placeholder="Game ID"
+					value={gameId}
+					onChange={(e) => setGameId(e.target.value)}
+				/>
+				<input
+					type="text"
+					placeholder="Team Name"
+					value={teamName}
+					onChange={(e) => setTeamName(e.target.value)}
+				/>
+				<button type="submit">Join</button>
 			</form>
-		</main>
+		</div>
 	);
 }
