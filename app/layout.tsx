@@ -28,11 +28,16 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				{children}
-				<footer className="text-center text-gray-500 my-8">
-					<p className="text-xs mt-2">
-						© 2025 - {new Date().getFullYear()}{' '}
-						<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>
-					</p>
+				<footer className="border-t-8 border-blue-900 bg-white p-4 flex flex-row">
+					<div className="flex-1 flex items-center justify-center">
+						<img src="/dnb_logo.svg" />
+					</div>
+					<div className="flex-1 flex items-center justify-center">
+						<p className="text-xs mt-2 text-gray-700">
+							© 2025 - {new Date().getFullYear()}{' '}
+							<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>
+						</p>
+					</div>
 				</footer>
 			</body>
 		</html>
