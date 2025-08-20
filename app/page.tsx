@@ -292,6 +292,7 @@ const App = () => {
 	useEffect(() => {
 		const initAuth = async () => {
 			try {
+				console.log('Initializing Firebase auth...');
 				const authInstance = getAuth(app);
 				await signInAnonymously(authInstance);
 				setAuth(authInstance);
@@ -312,6 +313,7 @@ const App = () => {
 			gameDocRef,
 			async (snapshot) => {
 				if (snapshot.exists()) {
+					console.log('Game doc exists, fetching data...');
 					setGameData(snapshot.data() as Game);
 				} else {
 					console.log('Game doc missing, creating initial...');
