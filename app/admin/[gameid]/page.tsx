@@ -11,7 +11,7 @@ import ConfirmationModal from './components/ConfirmationModal';
 // Firebase imports
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { getAuth, signInAnonymously, Auth } from 'firebase/auth';
-import { db, app } from '../lib/config';
+import { db, app } from '@/lib/config';
 
 const App = () => {
 	const [auth, setAuth] = useState<Auth | null>(null);

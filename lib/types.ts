@@ -88,6 +88,7 @@ export interface Game {
 	gameStartedAt: number | null;
 	gameFinishedAt: number | null;
 	createdAt: number;
+	admin_user_ids: string[];
 }
 
 /**
