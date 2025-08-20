@@ -25,6 +25,13 @@ export default function TeamJoinPage() {
 	}, [searchParams]);
 
 	const handleJoin = async (e: React.FormEvent) => {
+		console.log(
+			'Joining game with code:',
+			gameCode,
+			'and team name:',
+			teamName
+		);
+
 		e.preventDefault();
 
 		if (gameCode.length !== 6) {
@@ -32,8 +39,13 @@ export default function TeamJoinPage() {
 			return;
 		}
 
-		const q = query(collection(db, 'games'), where('key', '==', gameCode));
+		const q = query(
+			collection(db, 'insurance_game'),
+			where('key', '==', gameCode)
+		);
 		const snapshot = await getDocs(q);
+
+		console.log('Game query snapshot:', snapshot);
 
 		if (snapshot.empty) {
 			alert('Game not found');

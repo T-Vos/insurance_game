@@ -1,3 +1,4 @@
+import { getAuth } from 'firebase/auth';
 import { initializeApp, FirebaseApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
 
@@ -21,9 +22,11 @@ export const firebaseConfig: FirebaseConfig = {
 const app: FirebaseApp = !getApps().length
 	? initializeApp(firebaseConfig)
 	: getApp();
-export const db: Firestore = getFirestore(app);
-export { app, appId };
 
+export const db: Firestore = getFirestore(app);
+export const auth = getAuth(app);
+
+export { app, appId };
 export interface FirebaseConfig {
 	apiKey: string;
 	authDomain: string;

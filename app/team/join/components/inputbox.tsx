@@ -1,26 +1,27 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
-export default function GameCodeInput({
-	value,
-	onChange,
-}: {
+interface GameCodeInputProps {
 	value: string;
 	onChange: (val: string) => void;
-}) {
-	const inputs = Array.from({ length: 6 });
-	const refs = inputs.map(() => useRef<HTMLInputElement>(null));
+}
 
-	const handleChange = (index: number, char: string) => {
+export default function GameCodeInput({ value, onChange }: GameCodeInputProps) {
+	const inputsRef = useRef<HTMLInputElement[]>([]);
+
+	useEffect(() => {
+		if (inputsRef.current[0]) inputsRef.current[0].focus();
+	}, []);
+
+	const handleChange = (index: number, val: string) => {
 		const chars = value.split('');
-		chars[index] = char.toUpperCase().slice(-1); // enforce 1 char uppercase
-		const newVal = chars.join('');
+		chars[index] = val.toUpperCase().slice(-1);
+		const newVal = chars.join('').padEnd(6, '');
 		onChange(newVal);
 
-		// auto move to next
-		if (char && index < 5) {
-			refs[index + 1].current?.focus();
+		if (val && index < 5) {
+			inputsRef.current[index + 1].focus();
 		}
 	};
 
@@ -29,16 +30,18 @@ export default function GameCodeInput({
 		e: React.KeyboardEvent<HTMLInputElement>
 	) => {
 		if (e.key === 'Backspace' && !value[index] && index > 0) {
-			refs[index - 1].current?.focus();
+			inputsRef.current[index - 1].focus();
 		}
 	};
 
 	return (
 		<div className="flex gap-2 justify-center">
-			{inputs.map((_, i) => (
+			{Array.from({ length: 6 }).map((_, i) => (
 				<input
 					key={i}
-					ref={refs[i]}
+					ref={(el) => {
+						inputsRef.current[i] = el!;
+					}}
 					type="text"
 					maxLength={1}
 					value={value[i] ?? ''}
