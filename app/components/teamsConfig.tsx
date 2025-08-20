@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Team } from './types';
+import { Team } from './lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface TeamsConfigProps {

@@ -1,6 +1,6 @@
 // RevealedInfo.tsx
 
-import * as Types from './types';
+import * as Types from './lib/types';
 import React from 'react';
 
 interface RevealedInfoProps {

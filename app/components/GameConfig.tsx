@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Round, Choice, RevealMessage, InteractionEffect } from './types';
+import { Round, Choice, RevealMessage, InteractionEffect } from './lib/types';
 import { ChevronDown, LucideTrash, LucidePlus, LucideSave } from 'lucide-react';
 
 type GameConfigProps = {
