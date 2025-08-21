@@ -1,6 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { LucideRefreshCw } from 'lucide-react';
+import {
+	LucideChevronRight,
+	LucidePlay,
+	LucideRefreshCw,
+	LucideSquare,
+} from 'lucide-react';
 import { PageState, Game, Team, Round, Choice, ChosenItem } from '@/lib/types';
 import GameRounds from '../components/GameRounds';
 import GameConfig from '../components/GameConfig';
@@ -12,282 +17,29 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { getAuth, signInAnonymously, Auth } from 'firebase/auth';
 import { db, app } from '@/lib/config';
+import { calculateScores } from '@/lib/calculateScores';
+import { initialGameData } from '@/lib/initialGame';
 
 const App = () => {
 	const [auth, setAuth] = useState<Auth | null>(null);
 	const [userId, setUserId] = useState<string | null>(null);
-
 	const [gameData, setGameData] = useState<Game | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [showResetModal, setShowResetModal] = useState<boolean>(false);
-
-	// State for local UI
+	const [localCurrentRoundIndex, setLocalCurrentRoundIndex] =
+		useState<number>(0);
+	const [isGameRunning, setIsGameRunning] = useState(false);
 	const [pageState, setPageState] = useState<PageState>(PageState.ROUNDS);
 
 	const teams = gameData?.teams || [];
 	const roundChoices = gameData?.rounds || [];
 	const currentRoundIndex = gameData?.currentRoundIndex || 0;
+	const isLastRound = currentRoundIndex >= roundChoices.length - 1;
 
 	const GAME_ID = 'GeopoliticalShock2025';
 	const gameDocPath = `insurance_game/${GAME_ID}`;
 
 	const initialBaseCapacity = 7;
-
-	const calculateScores = (
-		teams: Team[],
-		rounds: Round[],
-		roundIndex: number
-	) => {
-		const roundCapacityBonus = roundIndex * 2;
-
-		// This helper function finds a choice by its round ID and choice ID
-		const findChoice = (roundId: string, choiceId: string) => {
-			const round = rounds.find((r) => r.round_id === roundId);
-			return round?.choices.find((c) => c.id === choiceId);
-		};
-
-		return teams.map((team) => {
-			const newTeam = { ...team };
-
-			let expected_profit_score = 0;
-			let liquidity_score = 0;
-			let solvency_score = 0;
-			let IT_score = 0;
-			let capacity_score_used = 0;
-
-			// First, calculate base scores and used capacity
-			newTeam.choices.forEach((chosenItem) => {
-				const choice = findChoice(chosenItem.round_id, chosenItem.choice_id);
-				if (choice) {
-					expected_profit_score += choice.expected_profit_score;
-					liquidity_score += choice.liquidity_score;
-					solvency_score += choice.solvency_score;
-					IT_score += choice.IT_score;
-
-					const isActive =
-						roundIndex >= chosenItem.roundIndex &&
-						(choice.duration === null ||
-							roundIndex < chosenItem.roundIndex + choice.duration);
-					if (isActive) {
-						capacity_score_used += choice.capacity_score;
-					}
-				}
-			});
-
-			// Second, apply interaction effects
-			newTeam.choices.forEach((chosenItem) => {
-				const choice = findChoice(chosenItem.round_id, chosenItem.choice_id);
-				if (choice && choice.interactionEffects) {
-					choice.interactionEffects.forEach((effect) => {
-						const hasTargetChoice = newTeam.choices.some(
-							(c) =>
-								c.choice_id === effect.targetChoiceId &&
-								c.round_id === effect.roundId
-						);
-						if (hasTargetChoice) {
-							expected_profit_score += effect.bonusScore;
-						}
-					});
-				}
-			});
-
-			// Update the newTeam object with the calculated scores
-			newTeam.expected_profit_score = expected_profit_score;
-			newTeam.liquidity_score = liquidity_score;
-			newTeam.solvency_score = solvency_score;
-			newTeam.IT_score = IT_score;
-			newTeam.capacity_score =
-				initialBaseCapacity + roundCapacityBonus - capacity_score_used;
-
-			return newTeam;
-		});
-	};
-
-	const initialGameData: Game = {
-		id: 'GeopoliticalShock2025',
-		key: 'DNB_2025_R1',
-		name: 'Insurance Simulation',
-		rounds: [
-			{
-				round_id: 'round_1',
-				round_duration: 3600,
-				round_started_at: null,
-				round_finished_at: null,
-				round_index: 0,
-				round_name: 'Round 1: Initial Investments',
-				choices: [
-					{
-						id: '1',
-						description: 'Investeer in onderzoek',
-						expected_profit_score: -10,
-						liquidity_score: 5,
-						solvency_score: 2,
-						IT_score: -1,
-						capacity_score: 4,
-						duration: 1,
-						reveals: [
-							{
-								text: 'Onderzoek toont aan dat er een nieuwe technologie op de markt komt die de productiekosten aanzienlijk verlaagt.',
-								revealedInRounds: 1,
-							},
-							{
-								text: 'De technologie heeft een onverwachte bijwerking, wat leidt tot vertragingen in de implementatie.',
-								revealedInRounds: 2,
-							},
-						],
-						interactionEffects: [
-							{ targetChoiceId: '2', roundId: 'round_2', bonusScore: 25 },
-						],
-					},
-					{
-						id: '2',
-						description: 'Update bedrijfsmodellen',
-						expected_profit_score: 20,
-						liquidity_score: -5,
-						solvency_score: 1,
-						IT_score: 3,
-						capacity_score: 2,
-						duration: 2,
-						reveals: [
-							{
-								text: 'De geüpdate modellen zijn zeer efficiënt en verhogen de inkomsten.',
-								revealedInRounds: 2,
-							},
-							{
-								text: 'Concurrenten hebben uw nieuwe model snel gekopieerd, wat de winstmarges doet dalen.',
-								revealedInRounds: 3,
-							},
-						],
-						interactionEffects: [],
-					},
-					{
-						id: '3',
-						description: 'Onderzoek China',
-						expected_profit_score: 30,
-						liquidity_score: -2,
-						solvency_score: 0,
-						IT_score: 0,
-						capacity_score: 2,
-						duration: 1,
-						reveals: [
-							{
-								text: 'Onderzoek toont een grote, onontdekte markt in China met hoge winstkansen.',
-								revealedInRounds: 1,
-							},
-						],
-						interactionEffects: [],
-					},
-				],
-			},
-			{
-				round_id: 'round_2',
-				round_duration: 3600,
-				round_started_at: null,
-				round_finished_at: null,
-				round_index: 1,
-				round_name: 'Round 2: Market Expansion',
-				choices: [
-					{
-						id: '1',
-						description: 'Breid uit naar Europa',
-						expected_profit_score: 15,
-						liquidity_score: 10,
-						solvency_score: 3,
-						IT_score: 2,
-						capacity_score: 3,
-						duration: 1,
-						reveals: [],
-						interactionEffects: [],
-					},
-					{
-						id: '2',
-						description: 'Focus op binnenlandse markt',
-						expected_profit_score: 10,
-						liquidity_score: 5,
-						solvency_score: 1,
-						IT_score: 1,
-						capacity_score: 5,
-						duration: 1,
-						reveals: [],
-						interactionEffects: [],
-					},
-					{
-						id: '3',
-						description: 'Verwerf een concurrent',
-						expected_profit_score: 40,
-						liquidity_score: -15,
-						solvency_score: 5,
-						IT_score: 4,
-						capacity_score: 1,
-						duration: 1,
-						reveals: [],
-						interactionEffects: [],
-					},
-				],
-			},
-			{
-				round_id: 'round_3',
-				round_duration: 3600,
-				round_started_at: null,
-				round_finished_at: null,
-				round_index: 2,
-				round_name: 'Round 3: Vervolg',
-				choices: [
-					{
-						id: '1',
-						description: 'Breid uit naar Europa',
-						expected_profit_score: 15,
-						liquidity_score: 10,
-						solvency_score: 3,
-						IT_score: 2,
-						capacity_score: 3,
-						duration: 1,
-						reveals: [],
-						interactionEffects: [],
-					},
-					{
-						id: '2',
-						description: 'Focus op binnenlandse markt',
-						expected_profit_score: 10,
-						liquidity_score: 5,
-						solvency_score: 1,
-						IT_score: 1,
-						capacity_score: 5,
-						duration: 1,
-						reveals: [],
-						interactionEffects: [],
-					},
-				],
-			},
-		],
-		teams: [
-			{
-				id: 'team_1',
-				teamName: 'Verzekerbaars',
-				choices: [],
-				expected_profit_score: 0,
-				liquidity_score: 0,
-				solvency_score: 0,
-				IT_score: 0,
-				capacity_score: 7,
-			},
-			{
-				id: 'team_2',
-				teamName: 'Financieel Fijntjes',
-				choices: [],
-				expected_profit_score: 0,
-				liquidity_score: 0,
-				solvency_score: 0,
-				IT_score: 0,
-				capacity_score: 7,
-			},
-		],
-		currentRoundIndex: 0,
-		currentRoundId: 'round_1',
-		gameStartedAt: null,
-		gameFinishedAt: null,
-		createdAt: Date.now(),
-	};
 
 	useEffect(() => {
 		const initAuth = async () => {
@@ -327,10 +79,11 @@ const App = () => {
 				if (snapshot.exists()) {
 					console.log('Game doc exists, fetching data...');
 					setGameData(snapshot.data() as Game);
-				} else {
-					console.log('Game doc missing, creating initial...');
-					await setDoc(gameDocRef, initialGameData);
 				}
+				//  else {
+				// 	console.log('Game doc missing, creating initial...');
+				// 	await setDoc(gameDocRef, initialGameData);
+				// }
 				setLoading(false);
 			},
 			(error) => {
@@ -341,6 +94,101 @@ const App = () => {
 
 		return () => unsubscribe();
 	}, [db, gameDocPath]);
+
+	const handleStartGame = async () => {
+		if (!db || !gameData || isGameRunning) return;
+		setLoading(true);
+
+		const gameDocRef = doc(db, gameDocPath);
+		const updatedRounds = gameData.rounds.map((round, index) => {
+			const updatedRound = {
+				...round,
+				round_started_at: null,
+				round_finished_at: null,
+			};
+			if (index === 0) {
+				updatedRound.round_started_at = Date.now();
+			}
+			return updatedRound;
+		});
+
+		const updatedGameData = {
+			...gameData,
+			gameStartedAt: Date.now(),
+			gameFinishedAt: null,
+			currentRoundIndex: 0,
+			currentRoundId: gameData.rounds[0].round_id,
+			rounds: updatedRounds,
+		};
+
+		try {
+			await setDoc(gameDocRef, updatedGameData);
+			setIsGameRunning(true);
+		} catch (error) {
+			console.error('Failed to start game:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleNextRound = async () => {
+		if (!db || !gameData || !isGameRunning || isLastRound) return;
+		setLoading(true);
+
+		const gameDocRef = doc(db, gameDocPath);
+		const updatedRounds = [...gameData.rounds];
+
+		updatedRounds[currentRoundIndex].round_finished_at = Date.now();
+
+		const nextRoundIndex = currentRoundIndex + 1;
+		if (nextRoundIndex < updatedRounds.length) {
+			updatedRounds[nextRoundIndex].round_started_at = Date.now();
+		}
+
+		const newRoundId =
+			updatedRounds[nextRoundIndex]?.round_id || gameData.currentRoundId;
+		const updatedTeams = calculateScores(teams, updatedRounds, nextRoundIndex);
+
+		const updatedGameData = {
+			...gameData,
+			currentRoundIndex: nextRoundIndex,
+			currentRoundId: newRoundId,
+			rounds: updatedRounds,
+			teams: updatedTeams,
+		};
+
+		try {
+			await setDoc(gameDocRef, updatedGameData);
+		} catch (error) {
+			console.error('Failed to advance to next round:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleStopGame = async () => {
+		if (!db || !gameData || !isGameRunning) return;
+		setLoading(true);
+
+		const gameDocRef = doc(db, gameDocPath);
+		const updatedRounds = [...gameData.rounds];
+		updatedRounds[currentRoundIndex].round_finished_at = Date.now();
+
+		const updatedGameData = {
+			...gameData,
+			gameFinishedAt: Date.now(),
+			rounds: updatedRounds,
+		};
+
+		try {
+			await setDoc(gameDocRef, updatedGameData);
+			setIsGameRunning(false);
+		} catch (error) {
+			console.error('Failed to stop game:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	const handleSelectChoice = async (
 		teamId: Team['id'],
@@ -354,31 +202,31 @@ const App = () => {
 		const updatedGameData = { ...gameData };
 
 		const updatedTeams = gameData.teams.map((team) => {
-			if (team.id === teamId) {
-				const choiceIndex = team.choices.findIndex(
-					(c) => c.round_id === roundId && c.choice_id === choice.id
-				);
+			// if (team.id === teamId) {
+			// 	const choiceIndex = team.choices.findIndex(
+			// 		(c) => c.round_id === roundId && c.choice_id === choice.id
+			// 	);
 
-				let newChoices: ChosenItem[];
-				if (choiceIndex >= 0) {
-					newChoices = team.choices.filter((c, index) => index !== choiceIndex);
-				} else {
-					if (team.capacity_score >= choice.capacity_score) {
-						newChoices = [
-							...team.choices,
-							{
-								round_id: roundId,
-								choice_id: choice.id,
-								roundIndex: currentRoundIndex,
-							},
-						];
-					} else {
-						console.log('Not enough capacity to select this choice.');
-						return team;
-					}
-				}
-				return { ...team, choices: newChoices };
-			}
+			// 	let newChoices: ChosenItem[];
+			// 	if (choiceIndex >= 0) {
+			// 		newChoices = team.choices.filter((c, index) => index !== choiceIndex);
+			// 	} else {
+			// 		if (team.capacity_score >= choice.capacity_score) {
+			// 			newChoices = [
+			// 				...team.choices,
+			// 				{
+			// 					round_id: roundId,
+			// 					choice_id: choice.id,
+			// 					roundIndex: currentRoundIndex,
+			// 				},
+			// 			];
+			// 		} else {
+			// 			console.log('Not enough capacity to select this choice.');
+			// 			return team;
+			// 		}
+			// 	}
+			// 	return { ...team, choices: newChoices };
+			// }
 			return team;
 		});
 
@@ -545,13 +393,13 @@ const App = () => {
 						<GameRounds
 							teams={teams}
 							roundChoices={roundChoices}
-							currentRoundIndex={currentRoundIndex}
+							currentRoundIndex={localCurrentRoundIndex}
 							handleSelectChoice={handleSelectChoice}
 						/>
 						<div className="mt-8">
 							<RevealedInfo
 								teams={teams}
-								currentRoundIndex={currentRoundIndex}
+								currentRoundIndex={localCurrentRoundIndex}
 								roundChoices={roundChoices}
 							/>
 						</div>
@@ -561,7 +409,7 @@ const App = () => {
 				return (
 					<GameConfig
 						roundChoices={roundChoices}
-						currentRoundIndex={currentRoundIndex}
+						currentRoundIndex={localCurrentRoundIndex}
 						handleUpdateRound={handleUpdateRound}
 						handleAddRound={handleAddRound}
 					/>
@@ -638,10 +486,10 @@ const App = () => {
 							<button
 								key={round.round_id}
 								onClick={() => {
-									handleSetCurrentRound(index);
+									setLocalCurrentRoundIndex(index);
 								}}
 								className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
-									currentRoundIndex === index
+									localCurrentRoundIndex === index
 										? 'bg-purple-600 text-white shadow-lg'
 										: 'bg-gray-800 text-gray-300 hover:bg-gray-700'
 								}`}
@@ -649,6 +497,40 @@ const App = () => {
 								{round.round_name}
 							</button>
 						))}
+					</div>
+					<div className="flex items-center space-x-4 mt-4 sm:mt-0">
+						{!isGameRunning && (
+							<button
+								onClick={handleStartGame}
+								className="px-4 py-2 rounded-lg font-medium transition duration-300 bg-green-500 text-white hover:bg-green-600"
+							>
+								<LucidePlay size={18} />
+								Start Game
+							</button>
+						)}
+						{isGameRunning && (
+							<button
+								onClick={handleNextRound}
+								disabled={isLastRound}
+								className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 ${
+									isLastRound
+										? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+										: 'bg-blue-500 text-white hover:bg-blue-600'
+								}`}
+							>
+								<span>Next Round</span>
+								<LucideChevronRight size={18} />
+							</button>
+						)}
+						{isGameRunning && (
+							<button
+								onClick={handleStopGame}
+								className="px-4 py-2 rounded-lg font-medium transition duration-300 bg-red-500 text-white hover:bg-red-600"
+							>
+								<LucideSquare size={18} />
+								Stop Game
+							</button>
+						)}
 					</div>
 				</div>
 
