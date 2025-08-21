@@ -1,12 +1,12 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { LucideRefreshCw } from 'lucide-react';
-import { PageState, Game, Team, Round, Choice, ChosenItem } from '../lib/types';
-import GameRounds from './components/GameRounds';
-import GameConfig from './components/GameConfig';
-import RevealedInfo from './components/RevealedInfo';
-import TeamsConfig from './components/teamsConfig';
-import ConfirmationModal from './components/ConfirmationModal';
+import { PageState, Game, Team, Round, Choice, ChosenItem } from '@/lib/types';
+import GameRounds from '../components/GameRounds';
+import GameConfig from '../components/GameConfig';
+import RevealedInfo from '../components/RevealedInfo';
+import TeamsConfig from '../components/teamsConfig';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 // Firebase imports
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -291,6 +291,16 @@ const App = () => {
 
 	useEffect(() => {
 		const initAuth = async () => {
+			// Check for the development environment variable
+			if (process.env.NEXT_PUBLIC_DEVELOPMENT === 'TRUE') {
+				console.log('Development mode detected. Skipping Firebase auth.');
+				// Set a fake user ID for development
+				setUserId('dev_user_123');
+				setLoading(false); // Make sure to set loading to false
+				return; // Exit the function to prevent Firebase auth
+			}
+
+			// Production/normal auth flow
 			try {
 				console.log('Initializing Firebase auth...');
 				const authInstance = getAuth(app);
@@ -299,6 +309,8 @@ const App = () => {
 				setUserId(authInstance.currentUser?.uid || 'anonymous');
 			} catch (error) {
 				console.error('Firebase auth failed:', error);
+			} finally {
+				setLoading(false);
 			}
 		};
 		initAuth();
