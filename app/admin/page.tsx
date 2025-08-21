@@ -8,7 +8,7 @@ import { Game } from '@/lib/types';
 import { generateUniqueGameKey } from '@/lib/generate_game_key';
 import { ArrowRight, Paperclip, Pencil, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import Tooltip from '@/components/tooltip';
+import Tooltip from '@/components/Tooltip';
 
 export default function AdminDashboard() {
 	const [games, setGames] = useState<Game[]>([]);

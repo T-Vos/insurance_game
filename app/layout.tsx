@@ -20,27 +20,30 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
 	children,
-}: Readonly<{
+}: {
 	children: React.ReactNode;
-}>) {
+}) {
 	return (
 		<html lang="en">
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				{children}
-				<footer className="border-t-8 border-blue-900 bg-white p-4 flex flex-row">
-					<div className="flex-1 flex items-center justify-center">
-						<img src="/dnb_logo.svg" />
-					</div>
-					<div className="flex-1 flex items-center justify-center">
-						<p className="text-xs mt-2 text-gray-700">
-							© 2025 - {new Date().getFullYear()}{' '}
-							<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>
-						</p>
-					</div>
-					<ThemeToggle />
-				</footer>
+				<div className="bg-background min-h-screen flex flex-col text-foreground">
+					<main className="flex-1">{children}</main>
+
+					<footer className="border-t-8 border-blue-900 bg-background text-foreground p-4 flex flex-row">
+						<div className="flex-1 flex items-center justify-center">
+							<img src="/dnb_logo.svg" alt="Logo" />
+						</div>
+						<div className="flex-1 flex flex-col items-center justify-center">
+							<p className="text-xs mt-2">
+								© 2025 - {new Date().getFullYear()}{' '}
+								<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>
+							</p>
+							<ThemeToggle />
+						</div>
+					</footer>
+				</div>
 			</body>
 		</html>
 	);

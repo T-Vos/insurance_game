@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @tailwind utilities;
 
+body {
+	@apply bg-white text-black dark:bg-gray-900 dark:text-gray-100 transition-colors duration-500;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
 :root {
 	--background: #ffffff;
 	--foreground: #171717;
@@ -13,18 +18,11 @@
 	--font-mono: var(--font-geist-mono);
 }
 
-/* @media (prefers-color-scheme: dark) {
-	:root {
-		--background: #0a0a0a;
-		--foreground: #ededed;
-	}
-} */
-
-body {
+/* body {
 	background: var(--background);
 	color: var(--foreground);
 	font-family: Arial, Helvetica, sans-serif;
-}
+} */
 
 body.dark {
 	--background: #0a0a0a;

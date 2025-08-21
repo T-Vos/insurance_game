@@ -96,14 +96,27 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	const currentRound = game.rounds[game.currentRoundIndex];
 
 	return (
-		<div className="p-6 space-y-4">
-			<h1 className="text-2xl font-bold text-teal-400">{game.name}</h1>
-			<TeamBoard
-				team={currentTeam}
-				currentRound={currentRound}
-				handleSelectChoice={handleSelectChoice}
-				handleSaveChoice={handleSaveChoice}
-			/>
+		<div className=" flex items-center justify-center min-h-screen">
+			<div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-3xl">
+				<div className="flex justify-between items-center text-gray-600 mb-4">
+					{/* <button className="text-xl">&larr;</button> */}
+					{/* <span className="text-sm font-semibold">18</span> */}
+					{/* <button className="text-xl">&#8942;</button> */}
+				</div>
+				{currentRound.round_name}
+				{currentTeam ? (
+					<TeamBoard
+						team={currentTeam}
+						currentRound={currentRound}
+						handleSelectChoice={handleSelectChoice}
+						handleSaveChoice={handleSaveChoice}
+					/>
+				) : (
+					<div className="text-center text-gray-500">
+						No team data available.
+					</div>
+				)}
+			</div>
 		</div>
 	);
 }
