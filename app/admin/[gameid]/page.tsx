@@ -1,12 +1,15 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import {
-	LucideChevronRight,
+	LucideHome,
+	LucideUsers,
+	LucideSettings,
 	LucidePlay,
-	LucideRefreshCw,
+	LucideChevronRight,
 	LucideSquare,
+	LucideChevronLeft,
 } from 'lucide-react';
-import { PageState, Game, Team, Round, Choice, ChosenItem } from '@/lib/types';
+import { PageState, Game, Team, Round, Choice } from '@/lib/types';
 import GameRounds from '../components/GameRounds';
 import GameConfig from '../components/GameConfig';
 import RevealedInfo from '../components/RevealedInfo';
@@ -20,6 +23,8 @@ import { db, app } from '@/lib/config';
 import { calculateScores } from '@/lib/calculateScores';
 import { initialGameData } from '@/lib/initialGame';
 import Footer from '../components/footer';
+import RoundsProgress from '../components/roundProgress';
+import clsx from 'clsx';
 
 const App = () => {
 	const [auth, setAuth] = useState<Auth | null>(null);
@@ -127,6 +132,41 @@ const App = () => {
 			setIsGameRunning(true);
 		} catch (error) {
 			console.error('Failed to start game:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handlePreviousRound = async () => {
+		if (!db || !gameData || !isGameRunning || currentRoundIndex === 0) return;
+		setLoading(true);
+
+		const gameDocRef = doc(db, gameDocPath);
+		const updatedRounds = [...gameData.rounds];
+
+		// Reset the current round's finish time
+		updatedRounds[currentRoundIndex].round_finished_at = null;
+
+		const prevRoundIndex = currentRoundIndex - 1;
+		// Optionally reset the previous round's start time
+		updatedRounds[prevRoundIndex].round_started_at = null;
+
+		const newRoundId =
+			updatedRounds[prevRoundIndex]?.round_id || gameData.currentRoundId;
+		const updatedTeams = calculateScores(teams, updatedRounds, prevRoundIndex);
+
+		const updatedGameData = {
+			...gameData,
+			currentRoundIndex: prevRoundIndex,
+			currentRoundId: newRoundId,
+			rounds: updatedRounds,
+			teams: updatedTeams,
+		};
+
+		try {
+			await setDoc(gameDocRef, updatedGameData);
+		} catch (error) {
+			console.error('Failed to go to previous round:', error);
 		} finally {
 			setLoading(false);
 		}
@@ -429,9 +469,13 @@ const App = () => {
 	};
 
 	const menuItems = [
-		{ name: 'Game Rounds', state: PageState.ROUNDS },
-		{ name: 'Game Config', state: PageState.RULES_CONFIG },
-		{ name: 'Team Config', state: PageState.TEAMS_CONFIG },
+		{ name: 'Game Rounds', state: PageState.ROUNDS, icon: LucideHome },
+		{
+			name: 'Game Config',
+			state: PageState.RULES_CONFIG,
+			icon: LucideSettings,
+		},
+		{ name: 'Team Config', state: PageState.TEAMS_CONFIG, icon: LucideUsers },
 	];
 
 	if (loading || !gameData) {
@@ -445,52 +489,117 @@ const App = () => {
 	return (
 		<div className="min-h-screen bg-gray-900 text-gray-200 flex">
 			{/* Sidebar */}
-			<aside className="w-64 bg-gray-800 p-4 flex flex-col space-y-6">
-				<h2 className="text-lg font-bold text-teal-400 mb-2">Admin Panel</h2>
+			<aside className="w-64 bg-gray-800 p-4 flex flex-col">
+				<h2 className="text-lg font-bold text-teal-400 mb-4">Admin Panel</h2>
 
-				{/* Main menu */}
-				<nav className="flex flex-col space-y-2">
-					{menuItems.map((item) => (
+				{/* Navigation + Rounds wrapper (takes available space) */}
+				<div className="flex-1 flex flex-col space-y-6">
+					{/* Main menu */}
+					<nav className="flex flex-col space-y-2">
+						{menuItems.map((item) => {
+							const Icon = item.icon;
+							return (
+								<button
+									key={item.state}
+									onClick={() => setPageState(item.state)}
+									className={`px-4 py-2 flex items-center space-x-2 text-left rounded-lg font-medium transition duration-300 ${
+										pageState === item.state
+											? 'bg-teal-500 text-white shadow-lg'
+											: 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+									}`}
+								>
+									<Icon size={18} />
+									<span>{item.name}</span>
+								</button>
+							);
+						})}
+					</nav>
+
+					{/* Divider */}
+					<div className="border-t border-gray-600"></div>
+
+					{/* Rounds */}
+					<div>
+						<h3 className="text-sm font-semibold text-gray-400 mb-2">Rounds</h3>
+						<div className="flex flex-col space-y-2">
+							{roundChoices.map((round, index) => (
+								<button
+									key={round.round_id}
+									onClick={() => setLocalCurrentRoundIndex(index)}
+									className={clsx(
+										'px-4 py-2 text-left rounded-lg font-medium transition duration-300',
+										localCurrentRoundIndex === index
+											? 'bg-purple-600 text-white shadow-lg'
+											: 'bg-gray-700 text-gray-300 hover:bg-gray-600',
+										index === currentRoundIndex && 'border-2 border-yellow-400'
+									)}
+								>
+									{round.round_name}
+								</button>
+							))}
+						</div>
+					</div>
+				</div>
+
+				{/* Game Controls at bottom */}
+				<div className="mt-6 border-t border-gray-600 pt-4 flex flex-col space-y-2">
+					{!isGameRunning && (
 						<button
-							key={item.state}
-							onClick={() => setPageState(item.state)}
-							className={`px-4 py-2 text-left rounded-lg font-medium transition duration-300 ${
-								pageState === item.state
-									? 'bg-teal-500 text-white shadow-lg'
-									: 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-							}`}
+							onClick={handleStartGame}
+							className="px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 bg-green-500 text-white hover:bg-green-600"
 						>
-							{item.name}
+							<LucidePlay size={18} />
+							<span>Start Game</span>
 						</button>
-					))}
-				</nav>
-
-				{/* Divider */}
-				<div className="border-t border-gray-600"></div>
-
-				{/* Rounds */}
-				<div>
-					<h3 className="text-sm font-semibold text-gray-400 mb-2">Rounds</h3>
-					<div className="flex flex-col space-y-2">
-						{roundChoices.map((round, index) => (
+					)}
+					{isGameRunning && (
+						<>
 							<button
-								key={round.round_id}
-								onClick={() => setLocalCurrentRoundIndex(index)}
-								className={`px-4 py-2 text-left rounded-lg font-medium transition duration-300 ${
-									localCurrentRoundIndex === index
-										? 'bg-purple-600 text-white shadow-lg'
-										: 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+								onClick={handlePreviousRound}
+								disabled={currentRoundIndex == 0}
+								className={clsx(
+									`px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300`,
+									currentRoundIndex == 0
+										? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+										: 'bg-blue-500 text-white hover:bg-blue-600'
+								)}
+							>
+								<span>Vorige ronde</span>
+								<LucideChevronLeft size={18} />
+							</button>
+							<button
+								onClick={handleNextRound}
+								disabled={isLastRound}
+								className={`px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 ${
+									isLastRound
+										? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+										: 'bg-blue-500 text-white hover:bg-blue-600'
 								}`}
 							>
-								{round.round_name}
+								<span>Volgende ronde</span>
+								<LucideChevronRight size={18} />
 							</button>
-						))}
-					</div>
+						</>
+					)}
+					{isGameRunning && (
+						<button
+							onClick={handleStopGame}
+							className="px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 bg-red-500 text-white hover:bg-red-600"
+						>
+							<LucideSquare size={18} />
+							<span>Stop Game</span>
+						</button>
+					)}
 				</div>
 			</aside>
 
 			{/* Main Content */}
 			<main className="flex-1 p-6">
+				<RoundsProgress
+					rounds={roundChoices}
+					currentRoundIndex={currentRoundIndex}
+				/>
+
 				{/* Page renderer */}
 				<div className="mb-6">{renderPage()}</div>
 
