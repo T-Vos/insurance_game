@@ -27,7 +27,8 @@
 		"**/*.ts",
 		"**/*.tsx",
 		".next/types/**/*.ts",
-		"app/createadmin.js"
+		"app/createadmin.js",
+		"app/admin/components/GameRounds.tsx.old"
 	],
 	"exclude": ["node_modules"]
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LucideCheckSquare, LucideSquare } from 'lucide-react';
-import { Choice, Round, Team } from './lib/types';
+import { Choice, Round, Team } from '@/lib/types';
+import TeamBoard from '@/components/TeamBoard';
 
 type GameRoundsProps = {
 	teams: Team[];
@@ -78,80 +79,15 @@ const GameRounds = ({
 									</p>
 								</div>
 
-								<div className="mt-4 space-y-3">
-									{currentRound.choices.map((choice) => {
-										const isSelected = team.choices.some(
-											(c) =>
-												c.round_id === currentRound.round_id &&
-												c.choice_id === choice.id
-										);
-
-										const canSelect =
-											isSelected || team.capacity >= choice.capacity;
-
-										const buttonClasses = `
-											relative w-full text-left py-3 px-4 rounded-lg transition-all duration-200
-											flex justify-between items-center group
-											${
-												isSelected
-													? 'bg-teal-600 text-white shadow-md'
-													: canSelect
-													? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-													: 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
-											}
-										`;
-
-										const CheckIcon = isSelected
-											? LucideCheckSquare
-											: LucideSquare;
-
-										return (
-											<button
-												key={choice.id}
-												onClick={() =>
-													handleSelectChoice(
-														team.id,
-														currentRound.round_id,
-														choice
-													)
-												}
-												className={buttonClasses}
-												title={
-													isSelected
-														? 'Deselect this choice'
-														: 'Select this choice'
-												}
-												disabled={!canSelect && !isSelected}
-											>
-												<div className="flex items-center space-x-3">
-													<CheckIcon
-														className={`h-5 w-5 ${
-															isSelected
-																? 'text-white'
-																: 'text-gray-400 group-hover:text-teal-300'
-														}`}
-													/>
-													<span className="font-medium">
-														{choice.description}
-													</span>
-												</div>
-												<div className="flex-shrink-0 text-right">
-													<p className="text-sm font-bold opacity-80">
-														{choice.score >= 0 ? '+' : ''}
-														{choice.score}
-													</p>
-													<p className="text-xs opacity-60">
-														Capacity: {choice.capacity}
-													</p>
-													{choice.duration > 1 && (
-														<p className="text-xs text-orange-400 font-semibold mt-1">
-															{choice.duration} rounds
-														</p>
-													)}
-												</div>
-											</button>
-										);
-									})}
+								<div className="mt-4">
+									<TeamBoard
+										key={team.id}
+										currentRound={currentRound}
+										team={team}
+										handleSelectChoice={(teamId, roundId, choice) => {
+											handleSelectChoice(teamId, roundId, choice);
+										}}
+									/>
 								</div>
 							</div>
 						))}

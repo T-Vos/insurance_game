@@ -150,7 +150,7 @@ const App = () => {
 		const prevRoundIndex = currentRoundIndex - 1;
 		// Optionally reset the previous round's start time
 		updatedRounds[prevRoundIndex].round_started_at = null;
-
+		setLocalCurrentRoundIndex(prevRoundIndex);
 		const newRoundId =
 			updatedRounds[prevRoundIndex]?.round_id || gameData.currentRoundId;
 		const updatedTeams = calculateScores(teams, updatedRounds, prevRoundIndex);
@@ -175,13 +175,13 @@ const App = () => {
 	const handleNextRound = async () => {
 		if (!db || !gameData || !isGameRunning || isLastRound) return;
 		setLoading(true);
-
 		const gameDocRef = doc(db, gameDocPath);
 		const updatedRounds = [...gameData.rounds];
 
 		updatedRounds[currentRoundIndex].round_finished_at = Date.now();
 
 		const nextRoundIndex = currentRoundIndex + 1;
+		setLocalCurrentRoundIndex(nextRoundIndex);
 		if (nextRoundIndex < updatedRounds.length) {
 			updatedRounds[nextRoundIndex].round_started_at = Date.now();
 		}
@@ -487,12 +487,14 @@ const App = () => {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-900 text-gray-200 flex">
+		<div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-200 flex">
 			{/* Sidebar */}
-			<aside className="w-64 bg-gray-800 p-4 flex flex-col">
-				<h2 className="text-lg font-bold text-teal-400 mb-4">Admin Panel</h2>
+			<aside className="w-64 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col">
+				<h2 className="text-lg font-bold text-teal-600 dark:text-teal-400 mb-4">
+					Admin Panel
+				</h2>
 
-				{/* Navigation + Rounds wrapper (takes available space) */}
+				{/* Navigation + Rounds wrapper */}
 				<div className="flex-1 flex flex-col space-y-6">
 					{/* Main menu */}
 					<nav className="flex flex-col space-y-2">
@@ -505,7 +507,7 @@ const App = () => {
 									className={`px-4 py-2 flex items-center space-x-2 text-left rounded-lg font-medium transition duration-300 ${
 										pageState === item.state
 											? 'bg-teal-500 text-white shadow-lg'
-											: 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+											: 'bg-gray-300 text-gray-700 hover:bg-gray-400 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
 									}`}
 								>
 									<Icon size={18} />
@@ -516,11 +518,13 @@ const App = () => {
 					</nav>
 
 					{/* Divider */}
-					<div className="border-t border-gray-600"></div>
+					<div className="border-t border-gray-400 dark:border-gray-600"></div>
 
 					{/* Rounds */}
 					<div>
-						<h3 className="text-sm font-semibold text-gray-400 mb-2">Rounds</h3>
+						<h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+							Rounds
+						</h3>
 						<div className="flex flex-col space-y-2">
 							{roundChoices.map((round, index) => (
 								<button
@@ -530,8 +534,10 @@ const App = () => {
 										'px-4 py-2 text-left rounded-lg font-medium transition duration-300',
 										localCurrentRoundIndex === index
 											? 'bg-purple-600 text-white shadow-lg'
-											: 'bg-gray-700 text-gray-300 hover:bg-gray-600',
-										index === currentRoundIndex && 'border-2 border-yellow-400'
+											: 'bg-gray-300 text-gray-700 hover:bg-gray-400 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600',
+										index === currentRoundIndex &&
+											isGameRunning &&
+											'border-2 border-yellow-400'
 									)}
 								>
 									{round.round_name}
@@ -541,8 +547,8 @@ const App = () => {
 					</div>
 				</div>
 
-				{/* Game Controls at bottom */}
-				<div className="mt-6 border-t border-gray-600 pt-4 flex flex-col space-y-2">
+				{/* Game Controls */}
+				<div className="mt-6 border-t border-gray-400 dark:border-gray-600 pt-4 flex flex-col space-y-2">
 					{!isGameRunning && (
 						<button
 							onClick={handleStartGame}
@@ -560,7 +566,7 @@ const App = () => {
 								className={clsx(
 									`px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300`,
 									currentRoundIndex == 0
-										? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+										? 'bg-gray-300 text-gray-400 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed'
 										: 'bg-blue-500 text-white hover:bg-blue-600'
 								)}
 							>
@@ -572,7 +578,7 @@ const App = () => {
 								disabled={isLastRound}
 								className={`px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 ${
 									isLastRound
-										? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+										? 'bg-gray-300 text-gray-400 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed'
 										: 'bg-blue-500 text-white hover:bg-blue-600'
 								}`}
 							>
@@ -599,11 +605,8 @@ const App = () => {
 					rounds={roundChoices}
 					currentRoundIndex={currentRoundIndex}
 				/>
-
-				{/* Page renderer */}
 				<div className="mb-6">{renderPage()}</div>
 
-				{/* Reset modal */}
 				{showResetModal && (
 					<ConfirmationModal
 						message="Are you sure you want to reset all game data? This cannot be undone."
@@ -612,7 +615,6 @@ const App = () => {
 					/>
 				)}
 
-				{/* Footer */}
 				<Footer
 					GAME_ID={GAME_ID}
 					userId={userId || 'unknown'}

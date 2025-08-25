@@ -31,11 +31,10 @@ export default function ThemeToggle() {
 
 	return (
 		<button
-			onClick={toggleTheme}
-			className="px-3 py-1 border rounded text-sm transition-colors
-				border-gray-700 text-gray-900 dark:border-gray-300 dark:text-white"
+			onClick={() => document.documentElement.classList.toggle('dark')}
+			className="p-2 border rounded"
 		>
-			{darkMode ? 'Light Mode' : 'Dark Mode'}
+			Toggle Theme
 		</button>
 	);
 }

@@ -1,0 +1,172 @@
+import { useEffect, useRef, useState } from 'react';
+import { LucideCheckSquare, LucideSquare } from 'lucide-react';
+import { Choice, Round, Team } from '@/lib/types';
+import TeamBoard from '@/components/TeamBoard';
+
+type GameRoundsProps = {
+	teams: Team[];
+	roundChoices: Round[];
+	currentRoundIndex: number;
+	handleSelectChoice: (
+		teamId: number | string,
+		roundId: number | string,
+		choice: Choice
+	) => void;
+};
+
+const GameRounds = ({
+	teams,
+	roundChoices,
+	currentRoundIndex,
+	handleSelectChoice,
+}: GameRoundsProps) => {
+	const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
+	const prevRoundIndex = useRef(currentRoundIndex);
+
+	useEffect(() => {
+		if (currentRoundIndex > prevRoundIndex.current) {
+			setDirection('forward');
+		} else if (currentRoundIndex < prevRoundIndex.current) {
+			setDirection('backward');
+		}
+		prevRoundIndex.current = currentRoundIndex;
+	}, [currentRoundIndex]);
+
+	const currentRound = roundChoices[currentRoundIndex];
+
+	return (
+		<div className="space-y-6 overflow-hidden">
+			<div className="text-center">
+				<h2 className="text-3xl font-bold text-teal-400 transition-opacity duration-300">
+					{currentRound.round_name}
+				</h2>
+				<p className="mt-2 text-gray-400">
+					Select a choice for each team to update their score.
+				</p>
+			</div>
+
+			<div className="relative h-fit">
+				<div
+					key={currentRound.round_id}
+					className={`transition-transform duration-500 ease-in-out
+					${
+						direction === 'forward'
+							? 'animate-slide-in-forward'
+							: 'animate-slide-in-backward'
+					}`}
+				>
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						{teams.map((team) => (
+							<div
+								key={team.id}
+								className="bg-gray-800 rounded-2xl p-6 shadow-xl border-t-4 border-gray-700"
+							>
+								<h3 className="text-2xl font-semibold text-teal-300">
+									{team.teamName}
+								</h3>
+								<div className="mt-1 flex justify-between text-sm font-medium">
+									<p className="text-gray-400">
+										Score:{' '}
+										<span className="font-bold text-teal-500">
+											{team.score}
+										</span>
+									</p>
+									<p className="text-gray-400">
+										Capacity:{' '}
+										<span className="font-bold text-orange-500">
+											{team.capacity}
+										</span>
+									</p>
+								</div>
+
+								<div className="mt-4 space-y-3">
+									{currentRound.choices.map((choice: Choice) => {
+										<TeamBoard
+											key={choice.id + team.id}
+											currentRound={currentRound}
+											team={team}
+										/>;
+
+										// const isSelected = team.choices.some(
+										// 	(c) =>
+										// 		c.round_id === currentRound.round_id &&
+										// 		c.choice_id === choice.id
+										// );
+
+										// const canSelect =
+										// 	isSelected || team.capacity >= choice.capacity;
+
+										// const buttonClasses = `
+										// 	relative w-full text-left py-3 px-4 rounded-lg transition-all duration-200
+										// 	flex justify-between items-center group
+										// 	${
+										// 		isSelected
+										// 			? 'bg-teal-600 text-white shadow-md'
+										// 			: canSelect
+										// 			? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+										// 			: 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-50'
+										// 	}
+										// `;
+
+										// const CheckIcon = isSelected
+										// 	? LucideCheckSquare
+										// 	: LucideSquare;
+
+										// return (
+										// 	<button
+										// 		key={choice.id}
+										// 		onClick={() =>
+										// 			handleSelectChoice(
+										// 				team.id,
+										// 				currentRound.round_id,
+										// 				choice
+										// 			)
+										// 		}
+										// 		className={buttonClasses}
+										// 		title={
+										// 			isSelected
+										// 				? 'Deselect this choice'
+										// 				: 'Select this choice'
+										// 		}
+										// 		disabled={!canSelect && !isSelected}
+										// 	>
+										// 		<div className="flex items-center space-x-3">
+										// 			<CheckIcon
+										// 				className={`h-5 w-5 ${
+										// 					isSelected
+										// 						? 'text-white'
+										// 						: 'text-gray-400 group-hover:text-teal-300'
+										// 				}`}
+										// 			/>
+										// 			<span className="font-medium">
+										// 				{choice.description}
+										// 			</span>
+										// 		</div>
+										// 		<div className="flex-shrink-0 text-right">
+										// 			<p className="text-sm font-bold opacity-80">
+										// 				{choice.score >= 0 ? '+' : ''}
+										// 				{choice.score}
+										// 			</p>
+										// 			<p className="text-xs opacity-60">
+										// 				Capacity: {choice.capacity}
+										// 			</p>
+										// 			{choice.duration > 1 && (
+										// 				<p className="text-xs text-orange-400 font-semibold mt-1">
+										// 					{choice.duration} rounds
+										// 				</p>
+										// 			)}
+										// 		</div>
+										// 	</button>
+										// );
+									})}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+export default GameRounds;
