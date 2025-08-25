@@ -5,6 +5,7 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
 import { Choice, ChosenItem, Game, Team } from '@/lib/types';
+import RoundTimer from '../components/RoundTimer';
 
 export default function TeamGame({ gameId }: { gameId: string }) {
 	const [game, setGame] = useState<Game | null>(null);
@@ -109,20 +110,40 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 			<div className="text-center text-gray-500">No team data available.</div>
 		);
 	}
+	const selectedChoice = currentTeam.choices.find(
+		(c: ChosenItem) => c.round_id === currentRound.round_id
+	);
 
+	const isChoiceSaved = selectedChoice?.saved ?? false;
+	const roundStarted =
+		currentRound.round_started_at !== null &&
+		currentRound.round_started_at != '';
 	return (
-		<div className="flex items-center justify-center min-h-screen">
-			<div className="rounded-xl shadow-lg p-6 w-full max-w-3xl">
-				<div className="flex items-center justify-center flex-col">
-					<h3 className="text-xl">{currentRound.round_name}</h3>
-					<div className="w-full mt-6">
+		<div className="flex items-center justify-center flex-col min-h-screen">
+			<div className=" w-full max-w-3xl">
+				<div className="rounded-xl shadow-lg p-6">
+					<div className="flex items-center justify-center flex-col">
+						<RoundTimer
+							roundDuration={currentRound.round_duration}
+							roundStartedAt={currentRound.round_started_at}
+							confirmed={isChoiceSaved}
+						/>
+						<h3 className="text-xl">{currentRound.round_name}</h3>
+					</div>
+				</div>
+				<div className="pt-8">
+					{roundStarted ? (
 						<TeamBoard
 							team={currentTeam}
 							currentRound={currentRound}
 							handleSelectChoice={handleSelectChoice}
 							handleSaveChoice={handleSaveChoice}
 						/>
-					</div>
+					) : (
+						<div className=" text-center w-full">
+							Wacht tot de ronde gestart wordt
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

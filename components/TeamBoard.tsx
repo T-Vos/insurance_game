@@ -89,7 +89,7 @@ export default function TeamBoard({
 			<div className="mt-4">
 				<button
 					onClick={() => handleSaveChoice(team.id, currentRound.round_id)}
-					disabled={!selectedChoice || saved}
+					disabled={!selectedChoice || saved || !currentRound.round_started_at}
 					className={`w-full py-3 cursor-pointer px-6 rounded-lg text-white font-semibold transition-all ${
 						saved ? 'bg-gray-500' : 'bg-green-600 hover:bg-green-700'
 					}`}
