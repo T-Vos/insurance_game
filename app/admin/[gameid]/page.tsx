@@ -19,6 +19,7 @@ import { getAuth, signInAnonymously, Auth } from 'firebase/auth';
 import { db, app } from '@/lib/config';
 import { calculateScores } from '@/lib/calculateScores';
 import { initialGameData } from '@/lib/initialGame';
+import Footer from '../components/footer';
 
 const App = () => {
 	const [auth, setAuth] = useState<Auth | null>(null);
@@ -442,37 +443,21 @@ const App = () => {
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-900 text-gray-200 p-4 sm:p-8 flex flex-col items-center">
-			<div className="w-full max-w-5xl">
-				<header className="text-center mb-8">
-					<h1 className="text-4xl font-extrabold text-teal-400">
-						Insurance Simulation Admin
-					</h1>
-					<div className="bg-gray-800 rounded-lg p-4 mt-4 shadow-xl flex flex-col sm:flex-row items-center justify-between">
-						<p className="text-sm font-mono break-all text-gray-500 mb-2 sm:mb-0">
-							Game ID: <span className="font-bold">{GAME_ID}</span>
-						</p>
-						<p className="text-sm font-mono break-all text-gray-500 mb-2 sm:mb-0">
-							User ID: <span className="font-bold">{userId}</span>
-						</p>
-						<button
-							onClick={() => setShowResetModal(true)}
-							className="flex items-center space-x-2 text-sm text-red-400 hover:text-red-300 transition duration-200"
-						>
-							<LucideRefreshCw size={16} />
-							<span>Reset Scores</span>
-						</button>
-					</div>
-				</header>
-				<nav className="flex flex-wrap justify-center space-x-2 mb-4 sm:space-x-4">
+		<div className="min-h-screen bg-gray-900 text-gray-200 flex">
+			{/* Sidebar */}
+			<aside className="w-64 bg-gray-800 p-4 flex flex-col space-y-6">
+				<h2 className="text-lg font-bold text-teal-400 mb-2">Admin Panel</h2>
+
+				{/* Main menu */}
+				<nav className="flex flex-col space-y-2">
 					{menuItems.map((item) => (
 						<button
 							key={item.state}
 							onClick={() => setPageState(item.state)}
-							className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
+							className={`px-4 py-2 text-left rounded-lg font-medium transition duration-300 ${
 								pageState === item.state
 									? 'bg-teal-500 text-white shadow-lg'
-									: 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+									: 'bg-gray-700 text-gray-300 hover:bg-gray-600'
 							}`}
 						>
 							{item.name}
@@ -480,62 +465,36 @@ const App = () => {
 					))}
 				</nav>
 
-				<div className="flex flex-col sm:flex-row justify-between items-center mb-8 space-y-4 sm:space-y-0 sm:space-x-4">
-					<div className="flex flex-wrap justify-center space-x-2 sm:space-x-4">
+				{/* Divider */}
+				<div className="border-t border-gray-600"></div>
+
+				{/* Rounds */}
+				<div>
+					<h3 className="text-sm font-semibold text-gray-400 mb-2">Rounds</h3>
+					<div className="flex flex-col space-y-2">
 						{roundChoices.map((round, index) => (
 							<button
 								key={round.round_id}
-								onClick={() => {
-									setLocalCurrentRoundIndex(index);
-								}}
-								className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
+								onClick={() => setLocalCurrentRoundIndex(index)}
+								className={`px-4 py-2 text-left rounded-lg font-medium transition duration-300 ${
 									localCurrentRoundIndex === index
 										? 'bg-purple-600 text-white shadow-lg'
-										: 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+										: 'bg-gray-700 text-gray-300 hover:bg-gray-600'
 								}`}
 							>
 								{round.round_name}
 							</button>
 						))}
 					</div>
-					<div className="flex items-center space-x-4 mt-4 sm:mt-0">
-						{!isGameRunning && (
-							<button
-								onClick={handleStartGame}
-								className="px-4 py-2 rounded-lg font-medium transition duration-300 bg-green-500 text-white hover:bg-green-600"
-							>
-								<LucidePlay size={18} />
-								Start Game
-							</button>
-						)}
-						{isGameRunning && (
-							<button
-								onClick={handleNextRound}
-								disabled={isLastRound}
-								className={`px-4 py-2 rounded-lg font-medium transition duration-300 flex items-center space-x-2 ${
-									isLastRound
-										? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-										: 'bg-blue-500 text-white hover:bg-blue-600'
-								}`}
-							>
-								<span>Next Round</span>
-								<LucideChevronRight size={18} />
-							</button>
-						)}
-						{isGameRunning && (
-							<button
-								onClick={handleStopGame}
-								className="px-4 py-2 rounded-lg font-medium transition duration-300 bg-red-500 text-white hover:bg-red-600"
-							>
-								<LucideSquare size={18} />
-								Stop Game
-							</button>
-						)}
-					</div>
 				</div>
+			</aside>
 
-				{renderPage()}
+			{/* Main Content */}
+			<main className="flex-1 p-6">
+				{/* Page renderer */}
+				<div className="mb-6">{renderPage()}</div>
 
+				{/* Reset modal */}
 				{showResetModal && (
 					<ConfirmationModal
 						message="Are you sure you want to reset all game data? This cannot be undone."
@@ -543,7 +502,14 @@ const App = () => {
 						onCancel={() => setShowResetModal(false)}
 					/>
 				)}
-			</div>
+
+				{/* Footer */}
+				<Footer
+					GAME_ID={GAME_ID}
+					userId={userId || 'unknown'}
+					setShowResetModal={setShowResetModal}
+				/>
+			</main>
 		</div>
 	);
 };
