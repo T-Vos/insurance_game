@@ -4,7 +4,7 @@ import { db } from '@/lib/config';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
-import { Choice, Game } from '@/lib/types';
+import { Choice, ChosenItem, Game, Team } from '@/lib/types';
 
 export default function TeamGame({ gameId }: { gameId: string }) {
 	const [game, setGame] = useState<Game | null>(null);
@@ -40,19 +40,26 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	) => {
 		if (!game) return;
 
-		const teamIndex = game.teams.findIndex((t: any) => t.id === teamId);
+		const teamIndex = game.teams.findIndex((t: Team) => t.id === teamId);
 		if (teamIndex === -1) return;
 
 		const team = game.teams[teamIndex];
 
 		// Check if this round is already saved
-		const roundChoice = team.choices.find((c: any) => c.round_id === roundId);
+		const roundChoice = team.choices.find(
+			(c: ChosenItem) => c.round_id === roundId
+		);
 		if (roundChoice?.saved) return; // cannot change saved choice
 
 		// Only one choice per round
 		const updatedChoices = [
-			...team.choices.filter((c: any) => c.round_id !== roundId),
-			{ round_id: roundId, choice_id: choice.id, saved: false },
+			...team.choices.filter((c: ChosenItem) => c.round_id !== roundId),
+			{
+				round_id: roundId,
+				choice_id: choice.id,
+				roundIndex: game.currentRoundIndex,
+				saved: false,
+			},
 		];
 
 		const updatedTeams = [...game.teams];
@@ -66,12 +73,12 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	const handleSaveChoice = async (teamId: string, roundId: string) => {
 		if (!game) return;
 
-		const teamIndex = game.teams.findIndex((t: any) => t.id === teamId);
+		const teamIndex = game.teams.findIndex((t: Team) => t.id === teamId);
 		if (teamIndex === -1) return;
 
 		const team = game.teams[teamIndex];
 		const roundChoiceIndex = team.choices.findIndex(
-			(c: any) => c.round_id === roundId
+			(c: ChosenItem) => c.round_id === roundId
 		);
 		if (roundChoiceIndex === -1) return;
 
@@ -92,30 +99,31 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	if (!teamId) return <div>Please log in first.</div>;
 	if (!game) return <div>Loading or game not found...</div>;
 
-	const currentTeam = game.teams.find((t: any) => t.id === teamId);
+	const currentTeam = game.teams.find((t: Team) => t.id === teamId);
 	const currentRound = game.rounds[game.currentRoundIndex];
 
+	if (!teamId) return <div>Please log in first.</div>;
+	if (!game) return <div>Loading or game not found...</div>;
+	if (!currentTeam) {
+		return (
+			<div className="text-center text-gray-500">No team data available.</div>
+		);
+	}
+
 	return (
-		<div className=" flex items-center justify-center min-h-screen">
-			<div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-3xl">
-				<div className="flex justify-between items-center text-gray-600 mb-4">
-					{/* <button className="text-xl">&larr;</button> */}
-					{/* <span className="text-sm font-semibold">18</span> */}
-					{/* <button className="text-xl">&#8942;</button> */}
-				</div>
-				{currentRound.round_name}
-				{currentTeam ? (
-					<TeamBoard
-						team={currentTeam}
-						currentRound={currentRound}
-						handleSelectChoice={handleSelectChoice}
-						handleSaveChoice={handleSaveChoice}
-					/>
-				) : (
-					<div className="text-center text-gray-500">
-						No team data available.
+		<div className="flex items-center justify-center min-h-screen">
+			<div className="rounded-xl shadow-lg p-6 w-full max-w-3xl">
+				<div className="flex items-center justify-center flex-col">
+					<h3 className="text-xl">{currentRound.round_name}</h3>
+					<div className="w-full mt-6">
+						<TeamBoard
+							team={currentTeam}
+							currentRound={currentRound}
+							handleSelectChoice={handleSelectChoice}
+							handleSaveChoice={handleSaveChoice}
+						/>
 					</div>
-				)}
+				</div>
 			</div>
 		</div>
 	);

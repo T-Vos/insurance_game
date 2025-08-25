@@ -16,6 +16,7 @@ import GameCodeInput from './components/inputbox';
 export default function TeamJoinPage() {
 	const searchParams = useSearchParams();
 	const [gameCode, setGameCode] = useState('');
+	const [joining, setJoining] = useState(false);
 	const [teamName, setTeamName] = useState('');
 	const router = useRouter();
 
@@ -39,6 +40,7 @@ export default function TeamJoinPage() {
 			return;
 		}
 
+		setJoining(true);
 		const q = query(
 			collection(db, 'insurance_game'),
 			where('key', '==', gameCode)
@@ -71,27 +73,34 @@ export default function TeamJoinPage() {
 
 		document.cookie = `teamSession=${teamId}; path=/`;
 		router.push(`/team/${gameId}`);
+		setJoining(false);
 	};
 
 	return (
 		<div className="p-6 max-w-md mx-auto">
 			<h1 className="text-xl font-bold text-center">Join a Game</h1>
 			<form onSubmit={handleJoin} className="flex flex-col gap-4 mt-6">
-				<GameCodeInput value={gameCode} onChange={setGameCode} />
+				<GameCodeInput
+					disabled={joining}
+					value={gameCode}
+					onChange={setGameCode}
+				/>
 
 				<input
 					type="text"
 					placeholder="Team Name"
 					value={teamName}
 					onChange={(e) => setTeamName(e.target.value)}
-					className="border p-2 rounded-lg"
+					className="border p-2 rounded-lg focus:ring-blue-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500"
+					disabled={joining}
+					required
 				/>
-
 				<button
 					type="submit"
-					className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+					disabled={joining}
+					className="bg-blue-600 focus:ring-blue-500 text-white py-2 rounded-lg disabled:opacity-50 disabled:cursor-default cursor-pointer disabled:hover:bg-blue-600 hover:bg-blue-700"
 				>
-					Join
+					{joining ? 'U wordt aangemeld' : 'Aanmelden'}
 				</button>
 			</form>
 		</div>

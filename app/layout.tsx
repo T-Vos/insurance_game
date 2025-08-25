@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import ThemeToggle from '@/components/ThemeToggle';
+import DNBLogo from '@/components/dnb';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -28,19 +29,23 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<div className="bg-background min-h-screen flex flex-col text-foreground">
-					<main className="flex-1">{children}</main>
+				<div className="bg-background  flex flex-col text-foreground">
+					<main className="flex-1 min-h-screen">{children}</main>
 
-					<footer className="border-t-8 border-blue-900 bg-background text-foreground p-4 flex flex-row">
-						<div className="flex-1 flex items-center justify-center">
-							<img src="/dnb_logo.svg" alt="Logo" />
-						</div>
-						<div className="flex-1 flex flex-col items-center justify-center">
-							<p className="text-xs mt-2">
-								© 2025 - {new Date().getFullYear()}{' '}
-								<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>
-							</p>
-							<ThemeToggle />
+					<footer className="border-t-8 border-blue-900 bg-background text-foreground px-6 py-8">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center text-center md:text-left">
+							<div className="sm:order-last md:order-1 flex justify-center md:justify-end">
+								<DNBLogo />
+							</div>
+							<div className="order-2 flex flex-col items-center">
+								<p className="text-xs mb-2">
+									© 2025 - {new Date().getFullYear()}{' '}
+									<a href="https://www.linkedin.com/in/t-vos/">Thomas Vos</a>
+								</p>
+							</div>
+							<div className="sm:order-1 md:order-last">
+								<ThemeToggle />
+							</div>
 						</div>
 					</footer>
 				</div>
