@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
 import { Choice, Round, Team } from '@/lib/types';
 import TeamBoard from '@/components/TeamBoard';
+import { cardstyle } from '../components/styling';
 
 type GameRoundsProps = {
 	teams: Team[];
@@ -34,7 +34,7 @@ const GameRounds = ({
 					key={currentRound.round_id}
 					className={`transition-transform duration-500 ease-in-out`}
 				>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						{teams.map((team: Team) =>
 							TeamRoundCard(team, currentRound, handleSelectChoice)
 						)}
@@ -57,23 +57,36 @@ function TeamRoundCard(
 	) => void
 ) {
 	return (
-		<div
-			key={team.id}
-			className="bg-gray-800 rounded-2xl p-6 shadow-xl border-t-4 border-gray-700"
-		>
+		<div key={team.id} className={cardstyle}>
 			<h3 className="text-2xl font-semibold text-teal-300">{team.teamName}</h3>
 			<div className="mt-1 flex justify-between text-sm font-medium">
 				<p className="text-gray-400">
-					Score: <span className="font-bold text-teal-500">0</span>
+					Verwachte winst:{' '}
+					<span className="font-bold text-teal-500">
+						{team.expected_profit_score ?? 0}
+					</span>
 				</p>
 				<p className="text-gray-400">
-					Score: <span className="font-bold text-teal-500">0</span>
+					Liquiditeit:{' '}
+					<span className="font-bold text-teal-500">
+						{team.liquidity_score ?? 0}
+					</span>
 				</p>
 				<p className="text-gray-400">
-					Score: <span className="font-bold text-teal-500">0</span>
+					Solvency:{' '}
+					<span className="font-bold text-teal-500">
+						{team.solvency_score ?? 0}
+					</span>
 				</p>
 				<p className="text-gray-400">
-					Score: <span className="font-bold text-teal-500">0</span>
+					IT-score:{' '}
+					<span className="font-bold text-teal-500">{team.IT_score ?? 0}</span>
+				</p>
+				<p className="text-gray-400">
+					Capaciteit score:{' '}
+					<span className="font-bold text-teal-500">
+						{team.capacity_score ?? 0}
+					</span>
 				</p>
 			</div>
 

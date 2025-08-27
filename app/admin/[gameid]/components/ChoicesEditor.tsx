@@ -1,223 +1,6 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { Round, Choice, RevealMessage, InteractionEffect } from '@/lib/types';
+import { Choice, Round, RevealMessage, InteractionEffect } from '@/lib/types';
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
-import { generateGameKey } from '@/lib/generate_game_key';
-
-type GameConfigProps = {
-	roundChoices: Round[];
-	currentRoundIndex: number;
-	handleUpdateRound: (updatedRound: Round) => void;
-	handleAddRound: () => void;
-};
-
-const GameConfig = ({
-	roundChoices,
-	currentRoundIndex,
-	handleUpdateRound,
-	handleAddRound,
-}: GameConfigProps) => {
-	const currentRound = roundChoices[currentRoundIndex];
-	const [isEditingName, setIsEditingName] = useState(false);
-	const [editingName, setEditingName] = useState(
-		currentRound?.round_name || ''
-	);
-	const [editingChoices, setEditingChoices] = useState<Choice[]>([]);
-
-	useEffect(() => {
-		if (currentRound) {
-			setEditingName(currentRound.round_name);
-			setEditingChoices(currentRound.choices);
-		}
-	}, [currentRound]);
-
-	if (!currentRound) {
-		return (
-			<div className="text-center text-gray-400">
-				<p className="text-lg">No round selected or available.</p>
-				<button
-					onClick={handleAddRound}
-					className="mt-4 flex items-center space-x-2 bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-				>
-					<LucidePlus size={18} />
-					<span>Add New Round</span>
-				</button>
-			</div>
-		);
-	}
-
-	const saveAllChanges = () => {
-		handleUpdateRound({
-			...currentRound,
-			round_name: editingName.trim(),
-			choices: editingChoices,
-		});
-	};
-
-	const handleUpdateChoice = (
-		choiceIndex: number,
-		newChoiceData: Partial<Choice>
-	) => {
-		setEditingChoices((prevChoices) =>
-			prevChoices.map((choice, index) =>
-				index === choiceIndex ? { ...choice, ...newChoiceData } : choice
-			)
-		);
-	};
-
-	const handleAddChoice = () => {
-		const newChoiceId = generateGameKey(14); // Generate a unique ID for the new choice
-		const newChoice: Choice = {
-			id: newChoiceId,
-			description: 'New choice',
-			duration: 1,
-			reveals: [],
-			interactionEffects: [],
-		};
-		setEditingChoices((prevChoices) => [...prevChoices, newChoice]);
-	};
-
-	const handleRemoveChoice = (choiceId: string) => {
-		// TODO remove from database
-		setEditingChoices((prevChoices) =>
-			prevChoices.filter((choice) => choice.id !== choiceId)
-		);
-	};
-
-	return (
-		<div className="bg-gray-800 rounded-xl p-6 shadow-2xl mb-8">
-			<RoundHeader
-				isEditingName={isEditingName}
-				setIsEditingName={setIsEditingName}
-				editingName={editingName}
-				setEditingName={setEditingName}
-				currentRoundName={currentRound.round_name}
-				finishEditingName={saveAllChanges}
-				saveAllChanges={saveAllChanges}
-				handleAddRound={handleAddRound}
-			/>
-			<ChoicesList
-				editingChoices={editingChoices}
-				handleUpdateChoice={handleUpdateChoice}
-				handleRemoveChoice={handleRemoveChoice}
-				handleAddChoice={handleAddChoice}
-				roundChoices={roundChoices}
-			/>
-		</div>
-	);
-};
-
-export default GameConfig;
-
-type RoundHeaderProps = {
-	isEditingName: boolean;
-	setIsEditingName: (isEditing: boolean) => void;
-	editingName: string;
-	setEditingName: (name: string) => void;
-	currentRoundName: string;
-	finishEditingName: () => void;
-	saveAllChanges: () => void;
-	handleAddRound: () => void;
-};
-
-const RoundHeader = ({
-	isEditingName,
-	setIsEditingName,
-	editingName,
-	setEditingName,
-	currentRoundName,
-	finishEditingName,
-	saveAllChanges,
-	handleAddRound,
-}: RoundHeaderProps) => {
-	return (
-		<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-			<div className="flex-1 min-w-0">
-				{isEditingName ? (
-					<input
-						type="text"
-						value={editingName}
-						onChange={(e) => setEditingName(e.target.value)}
-						onBlur={finishEditingName}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') finishEditingName();
-							if (e.key === 'Escape') {
-								setEditingName(currentRoundName);
-								setIsEditingName(false);
-							}
-						}}
-						autoFocus
-						className="text-2xl font-semibold text-orange-300 bg-gray-700 rounded px-2 py-1 w-full"
-					/>
-				) : (
-					<h2
-						className="text-2xl font-semibold text-orange-300 cursor-pointer"
-						onClick={() => setIsEditingName(true)}
-						title="Click to edit round name"
-					>
-						{currentRoundName}
-					</h2>
-				)}
-			</div>
-			<div className="flex flex-col sm:flex-row gap-2">
-				<button
-					onClick={handleAddRound}
-					className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-				>
-					<LucidePlus size={18} />
-					<span>Add New Round</span>
-				</button>
-			</div>
-		</div>
-	);
-};
-
-type ChoicesListProps = {
-	editingChoices: Choice[];
-	handleUpdateChoice: (
-		choiceIndex: number,
-		newChoiceData: Partial<Choice>
-	) => void;
-	handleRemoveChoice: (choiceId: string) => void;
-	handleAddChoice: () => void;
-	roundChoices: Round[];
-};
-
-const ChoicesList = ({
-	editingChoices,
-	handleUpdateChoice,
-	handleRemoveChoice,
-	handleAddChoice,
-	roundChoices,
-}: ChoicesListProps) => {
-	return (
-		<div className="mt-8">
-			<div className="flex justify-between items-center mb-4">
-				<h3 className="text-xl font-bold text-gray-300">
-					Choices for this Round
-				</h3>
-				<button
-					onClick={handleAddChoice}
-					className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-				>
-					<LucidePlus size={18} />
-					<span>Add Choice</span>
-				</button>
-			</div>
-
-			{editingChoices.map((choice, choiceIndex) => (
-				<ChoiceEditor
-					key={choice.id}
-					choice={choice}
-					choiceIndex={choiceIndex}
-					handleUpdateChoice={handleUpdateChoice}
-					handleRemoveChoice={handleRemoveChoice}
-					roundChoices={roundChoices}
-				/>
-			))}
-		</div>
-	);
-};
+import { useState } from 'react';
 
 type ChoiceEditorProps = {
 	choice: Choice;
@@ -230,7 +13,7 @@ type ChoiceEditorProps = {
 	roundChoices: Round[];
 };
 
-const ChoiceEditor = ({
+export const ChoiceEditor = ({
 	choice,
 	choiceIndex,
 	handleUpdateChoice,
@@ -354,37 +137,7 @@ const ChoiceEditor = ({
 				}`}
 			>
 				<div className="pt-4">
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 items-end">
-						{/* <div className="grow">
-							<label className="block text-gray-400 text-sm font-bold mb-1">
-								Score
-							</label>
-							<input
-								type="number"
-								value={choice.score}
-								onChange={(e) =>
-									handleUpdateChoice(choiceIndex, {
-										score: parseInt(e.target.value, 10),
-									})
-								}
-								className="w-full bg-gray-700 text-white rounded px-3 py-2"
-							/>
-						</div> */}
-						{/* <div className="grow">
-							<label className="block text-gray-400 text-sm font-bold mb-1">
-								Capacity
-							</label>
-							<input
-								type="number"
-								value={choice.capacity}
-								onChange={(e) =>
-									handleUpdateChoice(choiceIndex, {
-										capacity: parseInt(e.target.value, 10),
-									})
-								}
-								className="w-full bg-gray-700 text-white rounded px-3 py-2"
-							/>
-						</div> */}
+					{/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 items-end">
 						<div className="grow">
 							<label className="block text-gray-400 text-sm font-bold mb-1">
 								Duration
@@ -400,7 +153,7 @@ const ChoiceEditor = ({
 								className="w-full bg-gray-700 text-white rounded px-3 py-2"
 							/>
 						</div>
-					</div>
+					</div> */}
 
 					<RevealMessages
 						reveals={choice.reveals}

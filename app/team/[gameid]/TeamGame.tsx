@@ -4,7 +4,7 @@ import { db } from '@/lib/firebase/config';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
-import { ChosenItem, Game, Round, Team } from '@/lib/types';
+import { TeamChoice, Game, Round, Team } from '@/lib/types';
 import RoundTimer from '../components/RoundTimer';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 
@@ -48,7 +48,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 
 		const team = game.teams[teamIndex];
 		const roundChoiceIndex = team.choices.findIndex(
-			(c: ChosenItem) => c.round_id === roundId
+			(c: TeamChoice) => c.round_id === roundId
 		);
 		if (roundChoiceIndex === -1) return;
 
@@ -80,7 +80,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		);
 	}
 	const selectedChoice = currentTeam.choices.find(
-		(c: ChosenItem) => c.round_id === currentRound.round_id
+		(c: TeamChoice) => c.round_id === currentRound.round_id
 	);
 
 	const isChoiceSaved = selectedChoice?.saved ?? false;

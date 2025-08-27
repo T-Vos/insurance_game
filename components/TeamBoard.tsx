@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { LucideCheckSquare, LucideSquare } from 'lucide-react';
-import { Choice, ChosenItem, Round, Team } from '@/lib/types';
+import { Choice, TeamChoice, Round, Team } from '@/lib/types';
 import clsx from 'clsx';
 
 interface TeamBoardProps {
@@ -25,7 +25,7 @@ export default function TeamBoard({
 	if (!team || !currentRound) return <div>Loading team data...</div>;
 
 	const selectedChoice = team.choices.find(
-		(c: ChosenItem) => c.round_id === currentRound.round_id
+		(c: TeamChoice) => c.round_id === currentRound.round_id
 	);
 
 	const _Disabled: boolean = isAdminView

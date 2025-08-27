@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
-import {
-	initializeApp,
-	getApps,
-	cert,
-	ServiceAccount,
-} from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
 const projectId =
 	process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_PROJECT_ID;

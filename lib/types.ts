@@ -7,18 +7,21 @@ export enum PageState {
 	TEAMS_CONFIG = 'TEAMS_CONFIG',
 }
 
+export interface Scores {
+	expected_profit_score: number;
+	liquidity_score: number;
+	solvency_score: number;
+	IT_score: number;
+	capacity_score: number;
+}
+
 /**
  * Represents a single choice or strategy within a game round.
  */
-export interface Choice {
+export interface Choice extends Scores {
 	id: string;
 	description: string;
-	expected_profit_score?: number; // Winst in Euro's 150
-	liquidity_score?: number; // Liquiditeit in Euros 250
-	solvency_score?: number; // Kapitaal in percentage
-	IT_score?: number; // IT/OPS in percentage 90 %
-	capacity_score?: number; // ORG percentage 75 %
-	duration: number | null;
+	duration?: number | null;
 	reveals: RevealMessage[];
 	interactionEffects?: InteractionEffect[];
 	blockeding_circumstances?: blockedingCircumstance[]; // Circumstances that block the choice
@@ -39,6 +42,11 @@ export interface Round {
 	round_index: number;
 	round_name: string;
 	choices: Choice[];
+	round_schock_expected_profit_score?: number;
+	round_schock_liquidity_score?: number;
+	round_schock_solvency_score?: number;
+	round_schock_IT_score?: number;
+	round_schock_capacity_score?: number;
 }
 
 /**
@@ -53,27 +61,21 @@ export interface InteractionEffect {
 /**
  * Represents a chosen item, linking a team to a specific choice in a round.
  */
-export interface ChosenItem {
+export interface TeamChoice {
 	round_id: Round['round_id'];
 	choice_id: Choice['id'];
 	roundIndex: Round['round_index'];
 	saved: boolean;
 }
 
-/**
- * Represents a team, including its name, score, capacity, and a list of choices they have made.
- */
-export interface Team {
-	id: string | number;
-	teamName: string;
-	choices: ChosenItem[];
-	expected_profit_score?: number; // Winst in Euro's 150
-	liquidity_score?: number; // Liquiditeit in Euros 250
-	solvency_score?: number; // Kapitaal in percentage
-	IT_score?: number; // IT/OPS in percentage 90 %
-	capacity_score?: number; // ORG percentage 75 %
-	isEditing?: boolean;
+export interface Team extends Scores {
 	editingName?: string | undefined;
+	isEditing?: boolean;
+	// Extend Scores interface
+	id: string;
+	teamName: string;
+	team_members: string[];
+	choices: TeamChoice[]; // Each entry tracks the choice made in a round
 }
 
 /**
@@ -91,6 +93,11 @@ export interface Game {
 	gameFinishedAt: number | null;
 	createdAt: number;
 	admin_user_ids: string[];
+	start_expected_profit_score?: number;
+	start_liquidity_score?: number;
+	start_solvency_score?: number;
+	start_IT_score?: number;
+	start_capacity_score?: number;
 }
 
 /**

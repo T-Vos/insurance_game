@@ -10,7 +10,6 @@ import { ArrowRight, Paperclip, Pencil, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import Tooltip from '@/components/Tooltip';
 import Link from 'next/link';
-
 export default function AdminDashboard() {
 	const [games, setGames] = useState<Game[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -20,15 +19,12 @@ export default function AdminDashboard() {
 
 	useEffect(() => {
 		const auth = getAuth();
-		// Listen for auth state changes to ensure the user is loaded
 		const unsubscribe = onAuthStateChanged(auth, async (user) => {
 			if (user) {
-				console.log('User session loaded. Fetching games for UID:', user.uid);
 				setUserId(user.uid);
 				setLoading(true);
 				try {
 					const gamesRef = collection(db, 'insurance_game');
-					// This query now runs only when we are sure the user is available
 					const q = query(
 						gamesRef,
 						where('admin_user_ids', 'array-contains', user.uid)
@@ -37,23 +33,19 @@ export default function AdminDashboard() {
 					const fetchedGames: Game[] = snapshot.docs.map(
 						(doc) => ({ id: doc.id, ...doc.data() } as Game)
 					);
-					console.log('Fetched games:', fetchedGames);
 					setGames(fetchedGames);
 				} catch (error) {
 					console.error('Failed to fetch games:', error);
-					// Handle error, e.g., show an error message
 				} finally {
 					setLoading(false);
 				}
 			} else {
-				// No user found, redirect to login
 				console.error('No user session found. Redirecting...');
 				setLoading(false);
 				router.push('/admin/login');
 			}
 		});
 
-		// Cleanup the listener when the component unmounts
 		return () => unsubscribe();
 	}, [router]);
 

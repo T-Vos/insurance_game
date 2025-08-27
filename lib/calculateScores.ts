@@ -1,92 +1,94 @@
-import { Round, Team } from './types';
+import { Game, Team, Scores, Choice } from './types';
 
-export const __initialBaseCapacity = {
-	expected_profit_score: 0,
-	liquidity_score: 0,
-	solvency_score: 0,
-	IT_score: 0,
-	capacity_score: 0,
-};
+/**
+ * Calculates the cumulative scores for all teams up to a specific round index.
+ *
+ * @param {Game} gameData The full game data object containing teams, rounds, and initial scores.
+ * @param {number} roundIndex The index of the round up to which scores should be calculated.
+ * @returns {Team[]} A new array of teams with their updated scores.
+ */
+export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
+	const {
+		teams,
+		rounds,
+		start_expected_profit_score,
+		start_liquidity_score,
+		start_solvency_score,
+		start_IT_score,
+		start_capacity_score,
+	} = gameData;
 
-export interface baseCapacity {
-	expected_profit_score: number;
-	liquidity_score: number;
-	solvency_score: number;
-	IT_score: number;
-	capacity_score: number;
-}
-
-export const calculateScores = (
-	teams: Team[],
-	rounds: Round[],
-	roundIndex: number,
-	initialBaseCapacity: baseCapacity = __initialBaseCapacity
-) => {
-	const roundCapacityBonus = roundIndex * 2;
-
-	// This helper function finds a choice by its round ID and choice ID
-	const findChoice = (roundId: string, choiceId: string) => {
-		const round = rounds.find((r) => r.round_id === roundId);
+	// Helper function to find a choice's data from a given round
+	const findChoice = (
+		targetRoundId: string | number,
+		choiceId: string
+	): Choice | undefined => {
+		const round = rounds.find((r) => r.round_id === targetRoundId);
 		return round?.choices.find((c) => c.id === choiceId);
 	};
 
 	return teams.map((team) => {
-		const newTeam = { ...team };
+		// Initialize scores with the game's starting conditions
+		const finalScores: Scores = {
+			expected_profit_score: start_expected_profit_score || 0,
+			liquidity_score: start_liquidity_score || 0,
+			solvency_score: start_solvency_score || 0,
+			IT_score: start_IT_score || 0,
+			capacity_score: start_capacity_score || 0,
+		};
 
-		// TODO: fix scoring
+		// Iterate through all rounds up to the current round index
+		for (let i = 0; i <= roundIndex; i++) {
+			const currentRound = rounds[i];
 
-		// let expected_profit_score = 0;
-		// let liquidity_score = 0;
-		// let solvency_score = 0;
-		// let IT_score = 0;
-		// let capacity_score_used = 0;
+			if (!currentRound) continue; // Should not happen but good practice
 
-		// First, calculate base scores and used capacity
-		// newTeam.choices.forEach((chosenItem) => {
-		// 	const choice = findChoice(chosenItem.round_id, chosenItem.choice_id);
-		// 	if (choice) {
-		// 		expected_profit_score += choice.expected_profit_score;
-		// 		liquidity_score += choice.liquidity_score;
-		// 		solvency_score += choice.solvency_score;
-		// 		IT_score += choice.IT_score;
+			// 1. Apply the round-specific shock to the cumulative scores
+			finalScores.expected_profit_score +=
+				currentRound.round_schock_expected_profit_score || 0;
+			finalScores.liquidity_score +=
+				currentRound.round_schock_liquidity_score || 0;
+			finalScores.solvency_score +=
+				currentRound.round_schock_solvency_score || 0;
+			finalScores.IT_score += currentRound.round_schock_IT_score || 0;
+			finalScores.capacity_score +=
+				currentRound.round_schock_capacity_score || 0;
 
-		// 		const isActive =
-		// 			roundIndex >= chosenItem.roundIndex &&
-		// 			(choice.duration === null ||
-		// 				roundIndex < chosenItem.roundIndex + choice.duration);
-		// 		if (isActive) {
-		// 			capacity_score_used += choice.capacity_score;
-		// 		}
-		// 	}
-		// });
+			// Find the choice this team made in the current round
+			const teamChoiceInRound = team.choices.find((c) => c.roundIndex === i);
 
-		// Second, apply interaction effects
-		// newTeam.choices.forEach((chosenItem) => {
-		// 	const choice = findChoice(chosenItem.round_id, chosenItem.choice_id);
-		// 	if (choice && choice.interactionEffects) {
-		// 		choice.interactionEffects.forEach((effect) => {
-		// 			const hasTargetChoice = newTeam.choices.some(
-		// 				(c) =>
-		// 					c.choice_id === effect.targetChoiceId &&
-		// 					c.round_id === effect.roundId
-		// 			);
-		// 			if (hasTargetChoice) {
-		// 				expected_profit_score += effect.bonusScore;
-		// 			}
-		// 		});
-		// 	}
-		// });
+			if (teamChoiceInRound) {
+				const choiceData = findChoice(
+					teamChoiceInRound.round_id,
+					teamChoiceInRound.choice_id
+				);
 
-		// newTeam.expected_profit_score =
-		// 	initialBaseCapacity.expected_profit_score + expected_profit_score;
-		// newTeam.liquidity_score =
-		// 	initialBaseCapacity.liquidity_score + liquidity_score;
-		// newTeam.solvency_score =
-		// 	initialBaseCapacity.solvency_score + solvency_score;
-		// newTeam.IT_score = initialBaseCapacity.IT_score + IT_score;
-		// newTeam.capacity_score =
-		// 	initialBaseCapacity.capacity_score + roundCapacityBonus;
+				if (choiceData) {
+					// Check if the choice's effect is still active
+					const duration = choiceData.duration;
+					const isChoiceActive =
+						duration === undefined ||
+						duration === null ||
+						i < teamChoiceInRound.roundIndex + duration;
 
-		return newTeam;
+					if (isChoiceActive) {
+						// 2. Apply the choice-specific score changes
+						finalScores.expected_profit_score +=
+							choiceData.expected_profit_score || 0;
+						finalScores.liquidity_score += choiceData.liquidity_score || 0;
+						finalScores.solvency_score += choiceData.solvency_score || 0;
+						finalScores.IT_score += choiceData.IT_score || 0;
+						// Capacity score is a bit different, let's treat it as a resource
+						finalScores.capacity_score -= choiceData.capacity_score || 0;
+					}
+				}
+			}
+		}
+
+		// Return the new team object with the calculated scores
+		return {
+			...team,
+			...finalScores,
+		};
 	});
 };

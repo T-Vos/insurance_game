@@ -1,6 +1,6 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { Team, Round, Choice, ChosenItem, Game } from '@/lib/types';
+import { Team, Round, Choice, TeamChoice, Game } from '@/lib/types';
 
 export function useSelectChoice(game: Game | null) {
 	const handleSelectChoice = async (
@@ -16,12 +16,12 @@ export function useSelectChoice(game: Game | null) {
 		const team = game.teams[teamIndex];
 
 		const roundChoice = team.choices.find(
-			(c: ChosenItem) => c.round_id === roundId
+			(c: TeamChoice) => c.round_id === roundId
 		);
 		if (roundChoice?.saved) return; // cannot change saved choice
 
-		const updatedChoices: ChosenItem[] = [
-			...team.choices.filter((c: ChosenItem) => c.round_id !== roundId),
+		const updatedChoices: TeamChoice[] = [
+			...team.choices.filter((c: TeamChoice) => c.round_id !== roundId),
 			{
 				round_id: roundId,
 				choice_id: choice.id,
