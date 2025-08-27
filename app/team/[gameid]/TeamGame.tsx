@@ -4,12 +4,15 @@ import { db } from '@/lib/firebase/config';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
-import { Choice, ChosenItem, Game, Round, Team } from '@/lib/types';
+import { ChosenItem, Game, Round, Team } from '@/lib/types';
 import RoundTimer from '../components/RoundTimer';
+import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 
 export default function TeamGame({ gameId }: { gameId: string }) {
 	const [game, setGame] = useState<Game | null>(null);
 	const [teamId, setTeamId] = useState<string | null>(null);
+
+	const { handleSelectChoice } = useSelectChoice(game);
 
 	useEffect(() => {
 		if (!gameId) return;
@@ -33,42 +36,6 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 
 		return () => unsubscribe();
 	}, [gameId]);
-
-	const handleSelectChoice = async (
-		teamId: Team['id'],
-		roundId: Round['round_id'],
-		choice: Choice
-	) => {
-		if (!game) return;
-
-		const teamIndex = game.teams.findIndex((t: Team) => t.id === teamId);
-		if (teamIndex === -1) return;
-
-		const team = game.teams[teamIndex];
-
-		// Check if this round is already saved
-		const roundChoice = team.choices.find(
-			(c: ChosenItem) => c.round_id === roundId
-		);
-		if (roundChoice?.saved) return; // cannot change saved choice
-
-		const updatedChoices: ChosenItem[] = [
-			...team.choices.filter((c: ChosenItem) => c.round_id !== roundId),
-			{
-				round_id: roundId,
-				choice_id: choice.id,
-				roundIndex: game.currentRoundIndex,
-				saved: false,
-			},
-		];
-
-		const updatedTeams = [...game.teams];
-		updatedTeams[teamIndex] = { ...team, choices: updatedChoices };
-
-		await updateDoc(doc(db, 'insurance_game', gameId), {
-			teams: updatedTeams,
-		});
-	};
 
 	const handleSaveChoice = async (
 		teamId: Team['id'],

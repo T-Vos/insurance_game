@@ -9,7 +9,7 @@ import {
 	LucideSquare,
 	LucideChevronLeft,
 } from 'lucide-react';
-import { PageState, Game, Team, Round, Choice } from '@/lib/types';
+import { PageState, Game, Team, Round } from '@/lib/types';
 import GameRounds from '../components/GameRounds';
 import GameConfig from '../components/GameConfig';
 import RevealedInfo from '../components/RevealedInfo';
@@ -30,6 +30,7 @@ import { initialGameData } from '@/lib/initialGame';
 import Footer from '../components/footer';
 import RoundsProgress from '../components/roundProgress';
 import clsx from 'clsx';
+import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 
 const App = () => {
 	const [auth, setAuth] = useState<Auth | null>(null);
@@ -87,7 +88,18 @@ const App = () => {
 			async (snapshot) => {
 				if (snapshot.exists()) {
 					console.log('Game doc exists, fetching data...');
-					setGameData(snapshot.data() as Game);
+					const data = snapshot.data() as Game;
+
+					setGameData(data);
+
+					const currentRound = data.rounds[data.currentRoundIndex];
+					const roundRunning =
+						!!currentRound?.round_started_at &&
+						!currentRound?.round_finished_at;
+
+					setIsGameRunning(roundRunning);
+
+					setLocalCurrentRoundIndex(data.currentRoundIndex || 0);
 				}
 				setLoading(false);
 			},
@@ -226,61 +238,6 @@ const App = () => {
 		} catch (error) {
 			console.error('Failed to stop game:', error);
 		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleSelectChoice = async (
-		team: Team['id'],
-		roundId: Round['round_id'],
-		choice: Choice
-	) => {
-		if (!db || !gameData) return;
-		setLoading(true);
-
-		const gameDocRef = doc(db, gameDocPath);
-		const updatedGameData = { ...gameData };
-
-		const updatedTeams = gameData.teams.map((team) => {
-			// if (team.id === teamId) {
-			// 	const choiceIndex = team.choices.findIndex(
-			// 		(c) => c.round_id === roundId && c.choice_id === choice.id
-			// 	);
-
-			// 	let newChoices: ChosenItem[];
-			// 	if (choiceIndex >= 0) {
-			// 		newChoices = team.choices.filter((c, index) => index !== choiceIndex);
-			// 	} else {
-			// 		if (team.capacity_score >= choice.capacity_score) {
-			// 			newChoices = [
-			// 				...team.choices,
-			// 				{
-			// 					round_id: roundId,
-			// 					choice_id: choice.id,
-			// 					roundIndex: currentRoundIndex,
-			// 				},
-			// 			];
-			// 		} else {
-			// 			console.log('Not enough capacity to select this choice.');
-			// 			return team;
-			// 		}
-			// 	}
-			// 	return { ...team, choices: newChoices };
-			// }
-			return team;
-		});
-
-		updatedGameData.teams = calculateScores(
-			updatedTeams,
-			gameData.rounds,
-			currentRoundIndex
-		);
-
-		try {
-			await setDoc(gameDocRef, updatedGameData);
-			setLoading(false);
-		} catch (error) {
-			console.error('Failed to update team choices:', error);
 			setLoading(false);
 		}
 	};
@@ -425,6 +382,8 @@ const App = () => {
 		}
 	};
 
+	const { handleSelectChoice } = useSelectChoice(gameData);
+
 	const renderPage = () => {
 		switch (pageState) {
 			case PageState.ROUNDS:
@@ -479,14 +438,14 @@ const App = () => {
 
 	if (loading || !gameData) {
 		return (
-			<div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+			<div className="flex items-center justify-center min-h-screen dark:bg-gray-900 dark:text-gray-200">
 				<div className="text-xl font-medium">Initializing App...</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-200 flex">
+		<div className="min-h-screen  flex">
 			{/* Sidebar */}
 			<aside className="w-64 bg-gray-200 dark:bg-gray-800 p-4 flex flex-col">
 				<h2 className="text-lg font-bold text-teal-600 dark:text-teal-400 mb-4">

@@ -4,6 +4,7 @@ import './globals.css';
 import ThemeToggle from '@/components/ThemeToggle';
 import DNBLogo from '@/components/dnb';
 import AuthSync from '@/lib/firebase/auth-sync';
+import clsx from 'clsx';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -28,7 +29,11 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+				className={clsx(
+					geistSans.variable,
+					geistMono.variable,
+					`antialiased bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-200`
+				)}
 			>
 				<AuthSync />
 				<div className="flex flex-col">
