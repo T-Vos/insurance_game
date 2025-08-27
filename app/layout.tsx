@@ -29,10 +29,10 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<div className="bg-background  flex flex-col text-foreground">
+				<div className="flex flex-col">
 					<main className="flex-1 min-h-screen">{children}</main>
 
-					<footer className="border-t-8 border-blue-900 bg-background text-foreground px-6 py-8">
+					<footer className="border-t-8 border-blue-900 px-6 py-8">
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center text-center md:text-left">
 							<div className="sm:order-last md:order-1 flex justify-center md:justify-end">
 								<DNBLogo />

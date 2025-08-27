@@ -13,11 +13,11 @@ export enum PageState {
 export interface Choice {
 	id: string;
 	description: string;
-	expected_profit_score: number; // Winst in Euro's 150
-	liquidity_score: number; // Liquiditeit in Euros 250
-	solvency_score: number; // Kapitaal in percentage
-	IT_score: number; // IT/OPS in percentage 90 %
-	capacity_score: number; // ORG percentage 75 %
+	expected_profit_score?: number; // Winst in Euro's 150
+	liquidity_score?: number; // Liquiditeit in Euros 250
+	solvency_score?: number; // Kapitaal in percentage
+	IT_score?: number; // IT/OPS in percentage 90 %
+	capacity_score?: number; // ORG percentage 75 %
 	duration: number | null;
 	reveals: RevealMessage[];
 	interactionEffects?: InteractionEffect[];
@@ -32,10 +32,10 @@ export interface blockedingCircumstance {
  * Represents a game round, containing a set of choices.
  */
 export interface Round {
-	round_id: string;
+	round_id: string | number;
 	round_duration: number; // Duration in seconds
-	round_started_at: number | null;
-	round_finished_at: number | null;
+	round_started_at: number | null | string;
+	round_finished_at: number | null | string;
 	round_index: number;
 	round_name: string;
 	choices: Choice[];
@@ -45,8 +45,8 @@ export interface Round {
  * Represents an interaction effect between choices.
  */
 export interface InteractionEffect {
-	targetChoiceId: string;
-	roundId: string;
+	targetChoiceId: Choice['id'];
+	roundId: Round['round_id'];
 	bonusScore: number;
 }
 
@@ -54,9 +54,9 @@ export interface InteractionEffect {
  * Represents a chosen item, linking a team to a specific choice in a round.
  */
 export interface ChosenItem {
-	round_id: string;
-	choice_id: string;
-	roundIndex: number;
+	round_id: Round['round_id'];
+	choice_id: Choice['id'];
+	roundIndex: Round['round_index'];
 	saved: boolean;
 }
 
@@ -64,14 +64,16 @@ export interface ChosenItem {
  * Represents a team, including its name, score, capacity, and a list of choices they have made.
  */
 export interface Team {
-	id: string;
+	id: string | number;
 	teamName: string;
 	choices: ChosenItem[];
-	expected_profit_score: number; // Winst in Euro's 150
-	liquidity_score: number; // Liquiditeit in Euros 250
-	solvency_score: number; // Kapitaal in percentage
-	IT_score: number; // IT/OPS in percentage 90 %
-	capacity_score: number; // ORG percentage 75 %
+	expected_profit_score?: number; // Winst in Euro's 150
+	liquidity_score?: number; // Liquiditeit in Euros 250
+	solvency_score?: number; // Kapitaal in percentage
+	IT_score?: number; // IT/OPS in percentage 90 %
+	capacity_score?: number; // ORG percentage 75 %
+	isEditing?: boolean;
+	editingName?: string | undefined;
 }
 
 /**
@@ -84,7 +86,7 @@ export interface Game {
 	rounds: Round[];
 	teams: Team[];
 	currentRoundIndex: number;
-	currentRoundId: string;
+	currentRoundId: Round['round_id'] | null;
 	gameStartedAt: number | null;
 	gameFinishedAt: number | null;
 	createdAt: number;

@@ -107,7 +107,7 @@ const App = () => {
 
 		const gameDocRef = doc(db, gameDocPath);
 		const updatedRounds = gameData.rounds.map((round, index) => {
-			const updatedRound = {
+			const updatedRound: Round = {
 				...round,
 				round_started_at: null,
 				round_finished_at: null,
@@ -232,7 +232,7 @@ const App = () => {
 	};
 
 	const handleSelectChoice = async (
-		teamId: Team['id'],
+		team: Team['id'],
 		roundId: Round['round_id'],
 		choice: Choice
 	) => {
@@ -617,7 +617,7 @@ const App = () => {
 
 				<Footer
 					GAME_ID={GAME_ID}
-					userId={userId || 'unknown'}
+					userId={auth?.currentUser?.email || 'unknown'}
 					setShowResetModal={setShowResetModal}
 				/>
 			</main>

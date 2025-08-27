@@ -4,7 +4,7 @@ import { db } from '@/lib/config';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
-import { Choice, ChosenItem, Game, Team } from '@/lib/types';
+import { Choice, ChosenItem, Game, Round, Team } from '@/lib/types';
 import RoundTimer from '../components/RoundTimer';
 
 export default function TeamGame({ gameId }: { gameId: string }) {
@@ -35,8 +35,8 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	}, [gameId]);
 
 	const handleSelectChoice = async (
-		teamId: string,
-		roundId: string,
+		teamId: Team['id'],
+		roundId: Round['round_id'],
 		choice: Choice
 	) => {
 		if (!game) return;
@@ -52,8 +52,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		);
 		if (roundChoice?.saved) return; // cannot change saved choice
 
-		// Only one choice per round
-		const updatedChoices = [
+		const updatedChoices: ChosenItem[] = [
 			...team.choices.filter((c: ChosenItem) => c.round_id !== roundId),
 			{
 				round_id: roundId,
@@ -71,7 +70,10 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		});
 	};
 
-	const handleSaveChoice = async (teamId: string, roundId: string) => {
+	const handleSaveChoice = async (
+		teamId: Team['id'],
+		roundId: Round['round_id']
+	) => {
 		if (!game) return;
 
 		const teamIndex = game.teams.findIndex((t: Team) => t.id === teamId);
@@ -119,19 +121,22 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		currentRound.round_started_at !== null &&
 		currentRound.round_started_at != '';
 	return (
-		<div className="flex items-center justify-center flex-col min-h-screen">
-			<div className=" w-full max-w-3xl">
-				<div className="rounded-xl shadow-lg p-6">
-					<div className="flex items-center justify-center flex-col">
-						<RoundTimer
-							roundDuration={currentRound.round_duration}
-							roundStartedAt={currentRound.round_started_at}
-							confirmed={isChoiceSaved}
-						/>
-						<h3 className="text-xl">{currentRound.round_name}</h3>
-					</div>
+		<div className="flex items-center justify-center flex-col min-h-screen bg-gradient-to-b from-blue-900 to-blue-950 text-gray-100 px-4">
+			<div className="w-full max-w-md space-y-6">
+				{/* Round Info */}
+				<div className="rounded-2xl shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
+					<RoundTimer
+						roundDuration={currentRound.round_duration}
+						roundStartedAt={currentRound.round_started_at}
+						confirmed={isChoiceSaved}
+					/>
+					<h3 className="text-2xl font-semibold mt-3">
+						{currentRound.round_name}
+					</h3>
 				</div>
-				<div className="pt-8">
+
+				{/* Choices Section */}
+				<div className="rounded-2xl shadow-lg bg-white p-5 min-h-[300px] flex items-center justify-center">
 					{roundStarted ? (
 						<TeamBoard
 							team={currentTeam}
@@ -140,8 +145,8 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 							handleSaveChoice={handleSaveChoice}
 						/>
 					) : (
-						<div className=" text-center w-full">
-							Wacht tot de ronde gestart wordt
+						<div className="text-center animate-pulse text-gray-600">
+							⏳ Wacht tot de ronde gestart wordt
 						</div>
 					)}
 				</div>

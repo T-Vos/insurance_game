@@ -4,6 +4,7 @@ export const initialGameData: Game = {
 	id: 'GeopoliticalShock2025',
 	key: 'DNB_2025_R1',
 	name: 'Insurance Simulation',
+	admin_user_ids: [],
 	rounds: [
 		{
 			round_id: 'round_1',

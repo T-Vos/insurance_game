@@ -7,8 +7,12 @@ import clsx from 'clsx';
 interface TeamBoardProps {
 	team: Team;
 	currentRound: Round;
-	handleSelectChoice: (teamId: string, roundId: string, choice: Choice) => void;
-	handleSaveChoice?: (teamId: string, roundId: string) => void;
+	handleSelectChoice: (
+		teamId: Team['id'],
+		roundId: Round['round_id'],
+		choice: Choice
+	) => void;
+	handleSaveChoice?: (teamId: Team['id'], roundId: Round['round_id']) => void;
 }
 export default function TeamBoard({
 	team,
@@ -22,7 +26,7 @@ export default function TeamBoard({
 		(c: ChosenItem) => c.round_id === currentRound.round_id
 	);
 
-	const saved = selectedChoice?.saved ?? false;
+	const saved: boolean = selectedChoice?.saved ?? false;
 
 	return (
 		// <div className="rounded-2xl p-6 shadow-xl border-t-4 border-gray-700 bg-white">

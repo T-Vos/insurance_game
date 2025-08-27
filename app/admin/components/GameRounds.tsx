@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LucideCheckSquare, LucideSquare } from 'lucide-react';
+// import { LucideCheckSquare, LucideSquare } from 'lucide-react';
 import { Choice, Round, Team } from '@/lib/types';
 import TeamBoard from '@/components/TeamBoard';
 
@@ -56,7 +56,7 @@ const GameRounds = ({
 					}`}
 				>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-						{teams.map((team) => (
+						{teams.map((team: Team) => (
 							<div
 								key={team.id}
 								className="bg-gray-800 rounded-2xl p-6 shadow-xl border-t-4 border-gray-700"
@@ -64,7 +64,7 @@ const GameRounds = ({
 								<h3 className="text-2xl font-semibold text-teal-300">
 									{team.teamName}
 								</h3>
-								<div className="mt-1 flex justify-between text-sm font-medium">
+								{/* <div className="mt-1 flex justify-between text-sm font-medium">
 									<p className="text-gray-400">
 										Score:{' '}
 										<span className="font-bold text-teal-500">
@@ -77,7 +77,7 @@ const GameRounds = ({
 											{team.capacity}
 										</span>
 									</p>
-								</div>
+								</div> */}
 
 								<div className="mt-4">
 									<TeamBoard

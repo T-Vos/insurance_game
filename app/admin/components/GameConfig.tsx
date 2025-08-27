@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Round, Choice, RevealMessage, InteractionEffect } from '@/lib/types';
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
+import { generateGameKey } from '@/lib/generate_game_key';
 
 type GameConfigProps = {
 	roundChoices: Round[];
@@ -65,12 +66,10 @@ const GameConfig = ({
 	};
 
 	const handleAddChoice = () => {
-		const newChoiceId = Math.max(...editingChoices.map((c) => c.id), 0) + 1;
+		const newChoiceId = generateGameKey(14); // Generate a unique ID for the new choice
 		const newChoice: Choice = {
 			id: newChoiceId,
 			description: 'New choice',
-			score: 0,
-			capacity: 0,
 			duration: 1,
 			reveals: [],
 			interactionEffects: [],
@@ -78,7 +77,8 @@ const GameConfig = ({
 		setEditingChoices((prevChoices) => [...prevChoices, newChoice]);
 	};
 
-	const handleRemoveChoice = (choiceId: number) => {
+	const handleRemoveChoice = (choiceId: string) => {
+		// TODO remove from database
 		setEditingChoices((prevChoices) =>
 			prevChoices.filter((choice) => choice.id !== choiceId)
 		);
@@ -178,7 +178,7 @@ type ChoicesListProps = {
 		choiceIndex: number,
 		newChoiceData: Partial<Choice>
 	) => void;
-	handleRemoveChoice: (choiceId: number) => void;
+	handleRemoveChoice: (choiceId: string) => void;
 	handleAddChoice: () => void;
 	roundChoices: Round[];
 };
@@ -226,7 +226,7 @@ type ChoiceEditorProps = {
 		choiceIndex: number,
 		newChoiceData: Partial<Choice>
 	) => void;
-	handleRemoveChoice: (choiceId: number) => void;
+	handleRemoveChoice: (choiceId: string) => void;
 	roundChoices: Round[];
 };
 
@@ -291,7 +291,7 @@ const ChoiceEditor = ({
 
 	const handleAddInteraction = () => {
 		const newInteraction: InteractionEffect = {
-			targetChoiceId: 0,
+			targetChoiceId: roundChoices[0]?.choices[0]?.id || '',
 			roundId: roundChoices[0]?.round_id || '',
 			bonusScore: 0,
 		};
@@ -355,7 +355,7 @@ const ChoiceEditor = ({
 			>
 				<div className="pt-4">
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 items-end">
-						<div className="grow">
+						{/* <div className="grow">
 							<label className="block text-gray-400 text-sm font-bold mb-1">
 								Score
 							</label>
@@ -369,8 +369,8 @@ const ChoiceEditor = ({
 								}
 								className="w-full bg-gray-700 text-white rounded px-3 py-2"
 							/>
-						</div>
-						<div className="grow">
+						</div> */}
+						{/* <div className="grow">
 							<label className="block text-gray-400 text-sm font-bold mb-1">
 								Capacity
 							</label>
@@ -384,14 +384,14 @@ const ChoiceEditor = ({
 								}
 								className="w-full bg-gray-700 text-white rounded px-3 py-2"
 							/>
-						</div>
+						</div> */}
 						<div className="grow">
 							<label className="block text-gray-400 text-sm font-bold mb-1">
 								Duration
 							</label>
 							<input
 								type="number"
-								value={choice.duration}
+								value={choice.duration ?? ''}
 								onChange={(e) =>
 									handleUpdateChoice(choiceIndex, {
 										duration: parseInt(e.target.value, 10),

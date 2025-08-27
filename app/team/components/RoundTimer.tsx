@@ -3,7 +3,7 @@ import { Check, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface RoundTimerProps {
-	roundStartedAt: number | null; // UNIX timestamp in seconds
+	roundStartedAt: number | null | string; // UNIX timestamp in seconds
 	roundDuration: number | null; // total duration in seconds
 	confirmed?: boolean;
 }
@@ -15,6 +15,11 @@ export default function RoundTimer({
 }: RoundTimerProps) {
 	const [timeLeft, setTimeLeft] = useState<number>(roundDuration || 0);
 
+	const _roundStart: number =
+		typeof roundStartedAt == 'string'
+			? parseInt(roundStartedAt)
+			: roundStartedAt || 0;
+
 	useEffect(() => {
 		// Only start the timer if the round has started
 		if (!roundStartedAt || !roundDuration) {
@@ -23,7 +28,7 @@ export default function RoundTimer({
 
 		const interval = setInterval(() => {
 			const now = Math.floor(Date.now() / 1000); // current UNIX timestamp in seconds
-			const elapsed = now - roundStartedAt;
+			const elapsed = now - _roundStart;
 			const remaining = Math.max(roundDuration - elapsed, 0);
 			setTimeLeft(remaining);
 		}, 1000);
@@ -53,7 +58,6 @@ export default function RoundTimer({
 						/>
 						<circle
 							cx="64"
-							cy="64"
 							cy="64"
 							r={radius}
 							stroke="blue"

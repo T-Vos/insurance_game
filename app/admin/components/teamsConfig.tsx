@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Team } from './lib/types';
+import { Team } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface TeamsConfigProps {
@@ -21,8 +21,6 @@ const TeamsConfig = ({
 		const newTeam: Team = {
 			id: uuidv4(),
 			teamName: newTeamName.trim(),
-			score: 0,
-			capacity: 0,
 			isEditing: false,
 			choices: [],
 		};
@@ -105,7 +103,7 @@ const TeamsConfig = ({
 										{team.teamName}
 									</h3>
 								)}
-								<div className="mt-1 flex justify-between text-sm font-medium">
+								{/* <div className="mt-1 flex justify-between text-sm font-medium">
 									<p className="text-gray-400">
 										Score:{' '}
 										<span className="font-bold text-teal-500">
@@ -118,7 +116,7 @@ const TeamsConfig = ({
 											{team.capacity}
 										</span>
 									</p>
-								</div>
+								</div> */}
 							</div>
 						))}
 					</div>
