@@ -392,7 +392,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							teams={teams}
 							roundChoices={roundChoices}
 							currentRoundIndex={localCurrentRoundIndex}
-							handleSelectChoice={handleSelectChoice}
+							// handleSelectChoice={handleSelectChoice}
 						/>
 						<div className="mt-8">
 							<RevealedInfo
@@ -406,6 +406,8 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 			case PageState.RULES_CONFIG:
 				return (
 					<GameConfig
+						key={'gameConfig'}
+						// handleUpdateGameConfig={console.log('update')}
 						roundChoices={roundChoices}
 						currentRoundIndex={localCurrentRoundIndex}
 						handleUpdateRound={handleUpdateRound}

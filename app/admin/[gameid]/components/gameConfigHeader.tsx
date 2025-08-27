@@ -15,7 +15,7 @@ import { cardstyle, title_changeable } from './styling';
 export type GameConfigHeaderProps = {
 	gameData: Game | null;
 	handleAddRound: () => void;
-	onUpdateGameConfig: (key: keyof Game, value: string) => void;
+	onUpdateGameConfig: (key: keyof Game, value: string | number) => void;
 };
 
 export const GameConfigHeader = ({
@@ -38,7 +38,7 @@ export const GameConfigHeader = ({
 
 	const finishEditingName = () => {
 		setIsEditingName(false);
-		if (editingName.trim() !== gameData.name) {
+		if (editingName.trim() !== gameData?.name) {
 			onUpdateGameConfig('name', editingName.trim());
 		}
 	};
@@ -67,7 +67,7 @@ export const GameConfigHeader = ({
 								finishEditingName();
 							}
 							if (e.key === 'Escape') {
-								setEditingName(gameData.name);
+								setEditingName(gameData?.name ?? '');
 								setIsEditingName(false);
 							}
 						}}

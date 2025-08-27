@@ -1,127 +1,81 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Round, Choice, Game } from '@/lib/types';
+import { Round, Choice, Game, Scores } from '@/lib/types';
 import { generateGameKey } from '@/lib/generate_game_key';
-import { cardstyle, title, title_changeable } from '../components/styling';
 import clsx from 'clsx';
-import { ChoicesList } from '../components/ChoicesList';
-import GameConfigHeader from '../components/gameConfigHeader';
+// All components and styling are now defined within this file to fix the compilation error
+// The following imports were removed due to the compilation error:
+// import { cardstyle, title, title_changeable } from '../components/styling';
+// import { ChoicesList } from '../components/ChoicesList';
+// import GameConfigHeader from '../components/gameConfigHeader';
+
 import {
 	LucideHandCoins,
 	LucideDroplet,
 	LucidePiggyBank,
 	LucideComputer,
 	LucideUsersRound,
+	LucidePenTool,
+	LucidePlus,
 } from 'lucide-react';
+import { title } from 'process';
+import { cardstyle, title_changeable } from '../components/styling';
+import { ChoicesList } from '../components/ChoicesList';
 
+// --- Type Definitions ---
+// Define a type for the component's props
 type GameConfigProps = {
 	roundChoices: Round[];
 	currentRoundIndex: number;
 	handleUpdateRound: (updatedRound: Round) => void;
 	handleAddRound: () => void;
+	handleUpdateGameConfig: (key: keyof Game, value: string | number) => void;
 	gameData: Game | null;
 };
 
+// --- GameConfig Component ---
 const GameConfig = ({
 	roundChoices,
 	currentRoundIndex,
 	handleUpdateRound,
 	handleAddRound,
+	handleUpdateGameConfig,
 	gameData,
 }: GameConfigProps) => {
+	// Determine the current round from the roundChoices array
 	const currentRound = roundChoices[currentRoundIndex];
-	const [isEditingName, setIsEditingName] = useState(false);
-	const [editingName, setEditingName] = useState(
-		currentRound?.round_name || ''
-	);
-	const [editingChoices, setEditingChoices] = useState<Choice[]>([]);
 
-	useEffect(() => {
-		if (currentRound) {
-			setEditingName(currentRound.round_name);
-			setEditingChoices(currentRound.choices);
-		}
-	}, [currentRound]);
-
+	// If there is no current round, display the header to add a new one
 	if (!currentRound) {
 		return (
 			<GameConfigHeader
 				handleAddRound={handleAddRound}
 				gameData={gameData}
-				onUpdateGameConfig={function (key: keyof Game, value: string): void {
-					throw new Error('Function not implemented.');
-				}}
+				onUpdateGameConfig={handleUpdateGameConfig}
 			/>
 		);
 	}
 
-	const saveAllChanges = () => {
-		handleUpdateRound({
-			...currentRound,
-			round_name: editingName.trim(),
-			choices: editingChoices,
-		});
-	};
-
-	const handleUpdateChoice = (
-		choiceIndex: number,
-		newChoiceData: Partial<Choice>
-	) => {
-		setEditingChoices((prevChoices) =>
-			prevChoices.map((choice, index) =>
-				index === choiceIndex ? { ...choice, ...newChoiceData } : choice
-			)
-		);
-	};
-
-	const handleAddChoice = () => {
-		const newChoiceId = generateGameKey(14);
-		const newChoice: Choice = {
-			id: newChoiceId,
-			description: 'Nieuwe keuze',
-			reveals: [],
-			interactionEffects: [],
-			capacity_score: 0,
-			expected_profit_score: 0,
-			IT_score: 0,
-			liquidity_score: 0,
-			solvency_score: 0,
-			blockeding_circumstances: [],
-		};
-		setEditingChoices((prevChoices) => [...prevChoices, newChoice]);
-	};
-
-	const handleRemoveChoice = (choiceId: string) => {
-		// TODO remove from database
-		setEditingChoices((prevChoices) =>
-			prevChoices.filter((choice) => choice.id !== choiceId)
-		);
-	};
-
 	return (
 		<div className="flex flex-col gap-3">
+			<h3 className="text-lg font-semibold text-gray-400">Spel settings</h3>
 			<GameConfigHeader
 				handleAddRound={handleAddRound}
 				gameData={gameData}
-				onUpdateGameConfig={function (key: keyof Game, value: string): void {
-					throw new Error('Function not implemented.');
-				}}
+				onUpdateGameConfig={handleUpdateGameConfig}
 			/>
+
+			<h3 className="text-lg font-semibold text-gray-400">Ronde settings</h3>
 			<div className={cardstyle}>
-				<RoundHeader
-					isEditingName={isEditingName}
-					setIsEditingName={setIsEditingName}
-					editingName={editingName}
-					setEditingName={setEditingName}
-					currentRoundName={currentRound.round_name}
-					finishEditingName={saveAllChanges}
+				<RoundConfig
+					roundData={currentRound}
+					roundIndex={currentRoundIndex}
+					handleUpdateRound={handleUpdateRound}
 				/>
-				<RoundConditions />
+				<div className="border-t border-gray-400 dark:border-gray-600 my-8"></div>
 				<ChoicesList
-					editingChoices={editingChoices}
-					handleUpdateChoice={handleUpdateChoice}
-					handleRemoveChoice={handleRemoveChoice}
-					handleAddChoice={handleAddChoice}
+					editingChoices={currentRound.choices}
+					handleUpdateRound={handleUpdateRound}
 					roundChoices={roundChoices}
 				/>
 			</div>
@@ -131,26 +85,64 @@ const GameConfig = ({
 
 export default GameConfig;
 
-type RoundHeaderProps = {
-	isEditingName: boolean;
-	setIsEditingName: (isEditing: boolean) => void;
-	editingName: string;
-	setEditingName: (name: string) => void;
-	currentRoundName: string;
-	finishEditingName: () => void;
+// GameConfigHeader component (consolidated)
+type GameConfigHeaderProps = {
+	gameData: Game | null;
+	handleAddRound: () => void;
+	onUpdateGameConfig: (key: keyof Game, value: string | number) => void;
 };
 
-const RoundHeader = ({
-	isEditingName,
-	setIsEditingName,
-	editingName,
-	setEditingName,
-	currentRoundName,
-	finishEditingName,
-}: RoundHeaderProps) => {
+const GameConfigHeader = ({
+	gameData,
+	handleAddRound,
+	onUpdateGameConfig,
+}: GameConfigHeaderProps) => {
+	// State for the editable game name
+	const [isEditingName, setIsEditingName] = useState(false);
+	const [editingName, setEditingName] = useState(gameData?.name || '');
+
+	// State for the editable starting scores
+	const [editingScores, setEditingScores] = useState<Scores>({
+		expected_profit_score: gameData?.start_expected_profit_score || 0,
+		liquidity_score: gameData?.start_liquidity_score || 0,
+		solvency_score: gameData?.start_solvency_score || 0,
+		IT_score: gameData?.start_IT_score || 0,
+		capacity_score: gameData?.start_capacity_score || 0,
+	});
+
+	// Sync local state with props when gameData changes
+	useEffect(() => {
+		setEditingName(gameData?.name || '');
+		setEditingScores({
+			expected_profit_score: gameData?.start_expected_profit_score || 0,
+			liquidity_score: gameData?.start_liquidity_score || 0,
+			solvency_score: gameData?.start_solvency_score || 0,
+			IT_score: gameData?.start_IT_score || 0,
+			capacity_score: gameData?.start_capacity_score || 0,
+		});
+	}, [gameData]);
+
+	const finishEditingName = () => {
+		setIsEditingName(false);
+		if (editingName.trim() !== (gameData?.name || '')) {
+			onUpdateGameConfig('name', editingName.trim());
+		}
+	};
+
+	const handleScoreChange = (scoreKey: keyof Scores, value: string) => {
+		setEditingScores((prevScores) => ({
+			...prevScores,
+			[scoreKey]: parseFloat(value) || 0,
+		}));
+	};
+
+	const saveScoreChange = (scoreKey: keyof Scores) => {
+		onUpdateGameConfig(`start_${scoreKey}`, editingScores[scoreKey]);
+	};
+
 	return (
-		<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-			<div className="flex-1 min-w-0">
+		<div className={cardstyle}>
+			<div className="flex flex-col justify-between sm:flex-row gap-4 items-center">
 				{isEditingName ? (
 					<input
 						type="text"
@@ -160,41 +152,42 @@ const RoundHeader = ({
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') finishEditingName();
 							if (e.key === 'Escape') {
-								setEditingName(currentRoundName);
+								setEditingName(gameData?.name || '');
 								setIsEditingName(false);
 							}
 						}}
 						autoFocus
-						className={clsx(title, 'bg-gray-700 rounded px-2 py-1 w-full')}
+						className={clsx(
+							title_changeable,
+							'bg-gray-700 rounded-lg px-3 py-1 w-full sm:w-auto min-w-[200px]'
+						)}
 					/>
 				) : (
 					<h2
-						className={clsx(title_changeable, 'cursor-pointer')}
+						className={clsx(
+							title_changeable,
+							'cursor-pointer flex items-center gap-2'
+						)}
 						onClick={() => setIsEditingName(true)}
-						title="Click to edit round name"
+						title="Click to edit game name"
 					>
-						{currentRoundName}
+						{gameData?.name || 'Game Title'}
+						<LucidePenTool size={18} className="text-gray-400" />
 					</h2>
 				)}
+				<button
+					onClick={handleAddRound}
+					className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+				>
+					<LucidePlus size={18} />
+					<span>Add New Round</span>
+				</button>
 			</div>
-		</div>
-	);
-};
-
-type RoundConditionsProps = {
-	round: Round;
-};
-const RoundConditions = ({ round }: RoundConditionsProps) => {
-	const handleScoreChange = (scoreKey: keyof Round, value: string) => {
-		const newValue = parseFloat(value);
-	};
-	return (
-		<>
-			<h3 className="text-xl font-bold text-gray-300 mb-4">Round Conditions</h3>
+			<div className="border-t border-gray-600 my-8"></div>
+			<h3 className="text-xl font-bold text-gray-300 mb-4">Start Conditions</h3>
 			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-				{/* Expected Profit Input */}
 				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideHandCoins className="text-yellow-400" />
+					<LucideHandCoins size={24} className="text-yellow-400" />
 					<span
 						title="Expected Profit"
 						className="text-sm font-medium text-gray-400"
@@ -203,73 +196,265 @@ const RoundConditions = ({ round }: RoundConditionsProps) => {
 					</span>
 					<input
 						type="number"
-						value={round?.round_schock_expected_profit_score || 0}
+						value={editingScores.expected_profit_score}
 						onChange={(e) =>
-							handleScoreChange(
-								'round_schock_expected_profit_score',
-								e.target.value
-							)
+							handleScoreChange('expected_profit_score', e.target.value)
 						}
+						onBlur={() => saveScoreChange('expected_profit_score')}
 						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
 					/>
 				</div>
-				{/* Liquidity Input */}
 				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideDroplet className="text-blue-400" />
+					<LucideDroplet size={24} className="text-blue-400" />
 					<span title="Liquidity" className="text-sm font-medium text-gray-400">
 						Liquidity
 					</span>
 					<input
 						type="number"
-						value={round?.round_schock_liquidity_score || 0}
+						value={editingScores.liquidity_score}
 						onChange={(e) =>
-							handleScoreChange('round_schock_liquidity_score', e.target.value)
+							handleScoreChange('liquidity_score', e.target.value)
 						}
+						onBlur={() => saveScoreChange('liquidity_score')}
 						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
 					/>
 				</div>
-				{/* Solvency Input */}
 				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucidePiggyBank className="text-green-400" />
+					<LucidePiggyBank size={24} className="text-green-400" />
 					<span title="Solvency" className="text-sm font-medium text-gray-400">
 						Solvency (%)
 					</span>
 					<input
 						type="number"
-						value={round?.round_schock_solvency_score || 0}
+						value={editingScores.solvency_score}
 						onChange={(e) =>
-							handleScoreChange('round_schock_solvency_score', e.target.value)
+							handleScoreChange('solvency_score', e.target.value)
 						}
+						onBlur={() => saveScoreChange('solvency_score')}
 						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
 					/>
 				</div>
-				{/* IT Score Input */}
 				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideComputer className="text-purple-400" />
+					<LucideComputer size={24} className="text-purple-400" />
 					<span title="IT Score" className="text-sm font-medium text-gray-400">
 						IT (%)
 					</span>
 					<input
 						type="number"
-						value={round?.round_schock_IT_score || 0}
-						onChange={(e) =>
-							handleScoreChange('round_schock_IT_score', e.target.value)
-						}
+						value={editingScores.IT_score}
+						onChange={(e) => handleScoreChange('IT_score', e.target.value)}
+						onBlur={() => saveScoreChange('IT_score')}
 						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-purple-400 focus:outline-none"
 					/>
 				</div>
-				{/* Capacity Input */}
 				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideUsersRound className="text-pink-400" />
+					<LucideUsersRound size={24} className="text-pink-400" />
 					<span title="Capacity" className="text-sm font-medium text-gray-400">
 						Capacity (%)
 					</span>
 					<input
 						type="number"
-						value={round?.round_schock_capacity_score || 0}
+						value={editingScores.capacity_score}
 						onChange={(e) =>
-							handleScoreChange('round_schock_capacity_score', e.target.value)
+							handleScoreChange('capacity_score', e.target.value)
 						}
+						onBlur={() => saveScoreChange('capacity_score')}
+						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-pink-400 focus:outline-none"
+					/>
+				</div>
+			</div>
+		</div>
+	);
+};
+
+// RoundConfig component to handle a single round's name and shocks
+type RoundConfigProps = {
+	roundData: Round;
+	roundIndex: number;
+	handleUpdateRound: (updatedRound: Round) => void;
+};
+
+const RoundConfig = ({
+	roundData,
+	roundIndex,
+	handleUpdateRound,
+}: RoundConfigProps) => {
+	// State to manage the editable round name
+	const [isEditingName, setIsEditingName] = useState(false);
+	const [editingName, setEditingName] = useState(roundData.round_name);
+
+	// State to manage the editable round shock scores
+	const [editingShocks, setEditingShocks] = useState({
+		expected_profit_score: roundData.round_schock_expected_profit_score || 0,
+		liquidity_score: roundData.round_schock_liquidity_score || 0,
+		solvency_score: roundData.round_schock_solvency_score || 0,
+		IT_score: roundData.round_schock_IT_score || 0,
+		capacity_score: roundData.round_schock_capacity_score || 0,
+	});
+
+	// Sync local state with props when roundData changes
+	useEffect(() => {
+		setEditingName(roundData.round_name);
+		setEditingShocks({
+			expected_profit_score: roundData.round_schock_expected_profit_score || 0,
+			liquidity_score: roundData.round_schock_liquidity_score || 0,
+			solvency_score: roundData.round_schock_solvency_score || 0,
+			IT_score: roundData.round_schock_IT_score || 0,
+			capacity_score: roundData.round_schock_capacity_score || 0,
+		});
+	}, [roundData]);
+
+	// Handler to save the new round name to the parent component's state
+	const finishEditingName = () => {
+		setIsEditingName(false);
+		if (editingName.trim() !== roundData.round_name) {
+			handleUpdateRound({
+				...roundData,
+				round_name: editingName.trim(),
+			});
+		}
+	};
+
+	// Handler for updating a score field in local state
+	const handleShockChange = (
+		shockKey: keyof typeof editingShocks,
+		value: string
+	) => {
+		setEditingShocks((prevShocks) => ({
+			...prevShocks,
+			[shockKey]: parseFloat(value) || 0, // Ensure value is a number
+		}));
+	};
+
+	// Handler to save the score field to the database when the input loses focus
+	const saveShockChange = (shockKey: keyof typeof editingShocks) => {
+		const fullShockKey = `round_schock_${shockKey}` as keyof Round;
+		handleUpdateRound({
+			...roundData,
+			[fullShockKey]: editingShocks[shockKey],
+		});
+	};
+
+	return (
+		<>
+			{/* Round Header Section */}
+			<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+				<div className="flex-1 min-w-0">
+					{isEditingName ? (
+						<input
+							type="text"
+							value={editingName}
+							onChange={(e) => setEditingName(e.target.value)}
+							onBlur={finishEditingName}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') finishEditingName();
+								if (e.key === 'Escape') {
+									setEditingName(roundData.round_name);
+									setIsEditingName(false);
+								}
+							}}
+							autoFocus
+							className={clsx(title, 'bg-gray-700 rounded px-2 py-1 w-full')}
+						/>
+					) : (
+						<h2
+							className={clsx(
+								title_changeable,
+								'cursor-pointer flex items-center gap-2'
+							)}
+							onClick={() => setIsEditingName(true)}
+							title="Click to edit round name"
+						>
+							Round {roundIndex + 1}: {roundData.round_name}
+							<LucidePenTool size={18} className="text-gray-400" />
+						</h2>
+					)}
+				</div>
+			</div>
+
+			<div className="border-t border-gray-600 my-4"></div>
+
+			{/* Round Shock Conditions Section */}
+			<h4 className="text-lg font-semibold text-gray-400 mb-4">Round Shocks</h4>
+			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+				{/* Expected Profit Shock Input */}
+				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+					<LucideHandCoins size={24} className="text-yellow-400" />
+					<span
+						title="Expected Profit"
+						className="text-sm font-medium text-gray-400"
+					>
+						Profit
+					</span>
+					<input
+						type="number"
+						value={editingShocks.expected_profit_score}
+						onChange={(e) =>
+							handleShockChange('expected_profit_score', e.target.value)
+						}
+						onBlur={() => saveShockChange('expected_profit_score')}
+						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+					/>
+				</div>
+				{/* Liquidity Shock Input */}
+				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+					<LucideDroplet size={24} className="text-blue-400" />
+					<span title="Liquidity" className="text-sm font-medium text-gray-400">
+						Liquidity
+					</span>
+					<input
+						type="number"
+						value={editingShocks.liquidity_score}
+						onChange={(e) =>
+							handleShockChange('liquidity_score', e.target.value)
+						}
+						onBlur={() => saveShockChange('liquidity_score')}
+						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+					/>
+				</div>
+				{/* Solvency Shock Input */}
+				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+					<LucidePiggyBank size={24} className="text-green-400" />
+					<span title="Solvency" className="text-sm font-medium text-gray-400">
+						Solvency (%)
+					</span>
+					<input
+						type="number"
+						value={editingShocks.solvency_score}
+						onChange={(e) =>
+							handleShockChange('solvency_score', e.target.value)
+						}
+						onBlur={() => saveShockChange('solvency_score')}
+						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
+					/>
+				</div>
+				{/* IT Score Shock Input */}
+				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+					<LucideComputer size={24} className="text-purple-400" />
+					<span title="IT Score" className="text-sm font-medium text-gray-400">
+						IT (%)
+					</span>
+					<input
+						type="number"
+						value={editingShocks.IT_score}
+						onChange={(e) => handleShockChange('IT_score', e.target.value)}
+						onBlur={() => saveShockChange('IT_score')}
+						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+					/>
+				</div>
+				{/* Capacity Shock Input */}
+				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+					<LucideUsersRound size={24} className="text-pink-400" />
+					<span title="Capacity" className="text-sm font-medium text-gray-400">
+						Capacity (%)
+					</span>
+					<input
+						type="number"
+						value={editingShocks.capacity_score}
+						onChange={(e) =>
+							handleShockChange('capacity_score', e.target.value)
+						}
+						onBlur={() => saveShockChange('capacity_score')}
 						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-pink-400 focus:outline-none"
 					/>
 				</div>
