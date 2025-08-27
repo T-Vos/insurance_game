@@ -18,7 +18,12 @@ import ConfirmationModal from '../components/ConfirmationModal';
 
 // Firebase imports
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { getAuth, signInAnonymously, Auth } from 'firebase/auth';
+import {
+	getAuth,
+	signInAnonymously,
+	Auth,
+	onAuthStateChanged,
+} from 'firebase/auth';
 import { db, app } from '@/lib/firebase/config';
 import { calculateScores } from '@/lib/calculateScores';
 import { initialGameData } from '@/lib/initialGame';
@@ -28,7 +33,7 @@ import clsx from 'clsx';
 
 const App = () => {
 	const [auth, setAuth] = useState<Auth | null>(null);
-	const [userId, setUserId] = useState<string | null>(null);
+	const [userEmail, setUserEmail] = useState<string | null>(null);
 	const [gameData, setGameData] = useState<Game | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [showResetModal, setShowResetModal] = useState<boolean>(false);
@@ -48,30 +53,28 @@ const App = () => {
 	const initialBaseCapacity = 7;
 
 	useEffect(() => {
-		const initAuth = async () => {
-			// Check for the development environment variable
-			if (process.env.NEXT_PUBLIC_DEVELOPMENT === 'TRUE') {
-				console.log('Development mode detected. Skipping Firebase auth.');
-				// Set a fake user ID for development
-				setUserId('dev_user_123');
-				setLoading(false); // Make sure to set loading to false
-				return; // Exit the function to prevent Firebase auth
-			}
-
-			// Production/normal auth flow
-			try {
-				console.log('Initializing Firebase auth...');
-				const authInstance = getAuth(app);
-				await signInAnonymously(authInstance);
+		const authInstance = getAuth(app);
+		// Listen for auth state changes to ensure the user is loaded
+		const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
+			if (user) {
+				// User is authenticated (anonymous or otherwise)
+				console.log('Firebase auth state loaded:', user.uid);
 				setAuth(authInstance);
-				setUserId(authInstance.currentUser?.uid || 'anonymous');
-			} catch (error) {
-				console.error('Firebase auth failed:', error);
-			} finally {
-				setLoading(false);
+				setUserEmail(user.email);
+			} else {
+				// No user, so sign in anonymously
+				console.log('No user found, signing in anonymously...');
+				try {
+					await signInAnonymously(authInstance);
+				} catch (error) {
+					console.error('Anonymous sign-in failed:', error);
+				}
 			}
-		};
-		initAuth();
+			setLoading(false);
+		});
+
+		// Clean up the listener on component unmount
+		return () => unsubscribe();
 	}, []);
 
 	useEffect(() => {
@@ -86,10 +89,6 @@ const App = () => {
 					console.log('Game doc exists, fetching data...');
 					setGameData(snapshot.data() as Game);
 				}
-				//  else {
-				// 	console.log('Game doc missing, creating initial...');
-				// 	await setDoc(gameDocRef, initialGameData);
-				// }
 				setLoading(false);
 			},
 			(error) => {
@@ -617,7 +616,7 @@ const App = () => {
 
 				<Footer
 					GAME_ID={GAME_ID}
-					userId={auth?.currentUser?.email || 'unknown'}
+					userId={userEmail || 'unknown'}
 					setShowResetModal={setShowResetModal}
 				/>
 			</main>

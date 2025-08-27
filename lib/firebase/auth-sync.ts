@@ -1,7 +1,7 @@
 'use client';
 
 import { getAuth, onIdTokenChanged } from 'firebase/auth';
-import { app } from '@/lib/firebase/config'; // Your Firebase app instance
+import { app } from '@/lib/firebase/config';
 import { useEffect } from 'react';
 import { setCookie, destroyCookie } from 'nookies';
 

@@ -7,12 +7,17 @@ import {
 	cert,
 	ServiceAccount,
 } from 'firebase-admin/app';
-import serviceAccount from '@/insurance-game-6fbbd-firebase-adminsdk-fbsvc-3b349b586e.json';
 
-// Initialize firebase-admin only once
+const projectId =
+	process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_PROJECT_ID;
+
 if (!getApps().length) {
 	initializeApp({
-		credential: cert(serviceAccount as ServiceAccount),
+		credential: cert({
+			projectId: projectId,
+			clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+			privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+		}),
 	});
 }
 export async function middleware(req: NextRequest) {

@@ -9,6 +9,7 @@ import { generateUniqueGameKey } from '@/lib/generate_game_key';
 import { ArrowRight, Paperclip, Pencil, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import Tooltip from '@/components/Tooltip';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
 	const [games, setGames] = useState<Game[]>([]);
@@ -86,6 +87,9 @@ export default function AdminDashboard() {
 		console.log('Change game name for:', game);
 	};
 
+	const button_class =
+		'inline-flex items-center justify-center p-2 rounded hover:bg-gray-700 relative group cursor-pointer focus:outline-none';
+
 	if (loading) return <div>Loading games...</div>;
 
 	return (
@@ -99,12 +103,17 @@ export default function AdminDashboard() {
 				+ Create New Game
 			</button>
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 grid-">
+			<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 				{games.map((game) => (
-					<div key={game.id} className="bg-gray-800 p-4 rounded-xl  transition">
-						<h2 className="font-bold text-xl">{game.name}</h2>
-						<p className="text-sm text-gray-400">Key: {game.key}</p>
-						<div className="flex gap-2 mt-4">
+					<div
+						key={game.id}
+						className="bg-gray-800 flex flex-col justify-between lg:flex-row lg:items-center p-4 rounded-xl transition"
+					>
+						<div>
+							<h2 className="font-bold text-xl">{game.name}</h2>
+							<p className="text-sm text-gray-400">Key: {game.key}</p>
+						</div>
+						<div className="flex justify-end gap-2 mt-4">
 							<Tooltip content="Share QR Code">
 								<button
 									onClick={() =>
@@ -112,7 +121,7 @@ export default function AdminDashboard() {
 											`${window.location.origin}/team/join?code=${game.key}`
 										)
 									}
-									className="p-2 rounded hover:bg-gray-700 relative group"
+									className={button_class}
 									aria-label="Share QR Code"
 								>
 									<QrCode className="w-5 h-5" />
@@ -121,7 +130,7 @@ export default function AdminDashboard() {
 							<Tooltip content="Copy rule set">
 								<button
 									onClick={() => copyRuleSet(game)}
-									className="p-2 rounded hover:bg-gray-700 relative group"
+									className={button_class}
 									aria-label="Copy Rule Set"
 								>
 									<Paperclip className="w-5 h-5" />
@@ -130,20 +139,20 @@ export default function AdminDashboard() {
 							<Tooltip content="Change name">
 								<button
 									onClick={() => changeGameName(game)}
-									className="p-2 rounded hover:bg-gray-700 relative group"
+									className={button_class}
 									aria-label="Change Name"
 								>
 									<Pencil className="w-5 h-5" />
 								</button>
 							</Tooltip>
 							<Tooltip content="Go to dashboard">
-								<button
-									onClick={() => router.push(`/admin/${game.id}`)}
-									className="p-2 rounded hover:bg-gray-700 relative group"
+								<Link
+									href={`/admin/${game.id}`}
+									className={button_class}
 									aria-label="Go to Dashboard"
 								>
 									<ArrowRight className="w-5 h-5" />
-								</button>
+								</Link>
 							</Tooltip>
 						</div>
 					</div>
