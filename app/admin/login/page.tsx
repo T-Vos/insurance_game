@@ -5,15 +5,11 @@ import {
 	getAuth,
 	signInWithEmailAndPassword,
 	signOut,
-	OAuthProvider,
-	signInWithPopup,
 	onAuthStateChanged,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import clsx from 'clsx';
-import { SquareArrowOutUpRight } from 'lucide-react';
-
 export default function AdminLoginPage() {
 	const router = useRouter();
 	const [email, setEmail] = useState('');
@@ -47,28 +43,16 @@ export default function AdminLoginPage() {
 			}
 		});
 
-		// Cleanup the listener on component unmount
 		return () => unsubscribe();
 	}, [router]);
 
-	const handleSubmit = (e: React.FormEvent) => {
-		console.log('Form submitted');
-		setLoading(true);
+	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
-		handleLogin('email');
-	};
-
-	const handleLogin = async (method: 'email' | 'microsoft') => {
-		console.log(`Attempting login with method: ${method}`);
+		setLoading(true);
 		setError('');
 		const auth = getAuth();
 		try {
-			if (method === 'email') {
-				await signInWithEmailAndPassword(auth, email, password);
-			} else {
-				const provider = new OAuthProvider('microsoft.com');
-				await signInWithPopup(auth, provider);
-			}
+			await signInWithEmailAndPassword(auth, email, password);
 		} catch (err: unknown) {
 			console.error(err);
 			if (err instanceof Error) {
@@ -86,7 +70,7 @@ export default function AdminLoginPage() {
 					Admin Login
 				</h2>
 				{error && <p className="text-red-400 mb-4 text-center">{error}</p>}
-				<form onSubmit={handleSubmit}>
+				<form onSubmit={handleLogin}>
 					<div className="flex flex-col space-y-4">
 						<input
 							type="email"
@@ -115,16 +99,6 @@ export default function AdminLoginPage() {
 						</button>
 					</div>
 				</form>
-
-				<div className="my-6 text-center text-gray-400">OR</div>
-
-				<button
-					onClick={() => handleLogin('microsoft')}
-					className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition flex items-center justify-center space-x-2"
-				>
-					<SquareArrowOutUpRight />
-					<span>Login with Microsoft</span>
-				</button>
 			</div>
 		</div>
 	);
