@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getAuth } from 'firebase/auth';
-import { db } from '@/lib/config';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Game } from '@/lib/types';
@@ -18,53 +18,42 @@ export default function AdminDashboard() {
 	const router = useRouter();
 
 	useEffect(() => {
-		if (process.env.NEXT_PUBLIC_DEVELOPMENT === 'TRUE') {
-			console.log('Development mode detected. Showing all games.');
-			setUserId('dev_admin_user_123');
-
-			const fetchAllGames = async () => {
-				setLoading(true);
-				const gamesRef = collection(db, 'insurance_game');
-				const snapshot = await getDocs(gamesRef);
-				const fetchedGames: Game[] = snapshot.docs.map(
-					(doc) => ({ id: doc.id, ...doc.data() } as Game)
-				);
-				setGames(fetchedGames);
-				setLoading(false);
-			};
-
-			fetchAllGames();
-			return;
-		}
-
 		const auth = getAuth();
-		const currentUser = auth.currentUser;
+		// Listen for auth state changes to ensure the user is loaded
+		const unsubscribe = onAuthStateChanged(auth, async (user) => {
+			if (user) {
+				console.log('User session loaded. Fetching games for UID:', user.uid);
+				setUserId(user.uid);
+				setLoading(true);
+				try {
+					const gamesRef = collection(db, 'insurance_game');
+					// This query now runs only when we are sure the user is available
+					const q = query(
+						gamesRef,
+						where('admin_user_ids', 'array-contains', user.uid)
+					);
+					const snapshot = await getDocs(q);
+					const fetchedGames: Game[] = snapshot.docs.map(
+						(doc) => ({ id: doc.id, ...doc.data() } as Game)
+					);
+					console.log('Fetched games:', fetchedGames);
+					setGames(fetchedGames);
+				} catch (error) {
+					console.error('Failed to fetch games:', error);
+					// Handle error, e.g., show an error message
+				} finally {
+					setLoading(false);
+				}
+			} else {
+				// No user found, redirect to login
+				console.error('No user session found. Redirecting...');
+				setLoading(false);
+				router.push('/admin/login');
+			}
+		});
 
-		if (!currentUser) {
-			alert('You must be logged in as admin');
-			router.push('/login');
-			return;
-		}
-
-		setUserId(currentUser.uid);
-
-		const fetchGames = async () => {
-			setLoading(true);
-			const gamesRef = collection(db, 'insurance_game');
-			const q = query(
-				gamesRef,
-				where('admin_user_ids', 'array-contains', currentUser.uid)
-			);
-
-			const snapshot = await getDocs(q);
-			const fetchedGames: Game[] = snapshot.docs.map(
-				(doc) => ({ id: doc.id, ...doc.data() } as Game)
-			);
-			setGames(fetchedGames);
-			setLoading(false);
-		};
-
-		fetchGames();
+		// Cleanup the listener when the component unmounts
+		return () => unsubscribe();
 	}, [router]);
 
 	const handleCreateGame = async () => {

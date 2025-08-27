@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	getAuth,
@@ -7,9 +7,10 @@ import {
 	signOut,
 	OAuthProvider,
 	signInWithPopup,
+	onAuthStateChanged,
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/config';
+import { db } from '@/lib/firebase/config';
 
 export default function AdminLoginPage() {
 	const router = useRouter();
@@ -17,30 +18,48 @@ export default function AdminLoginPage() {
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState('');
 
+	useEffect(() => {
+		const auth = getAuth();
+		const unsubscribe = onAuthStateChanged(auth, async (user) => {
+			if (user) {
+				// User is authenticated. Now, check if they are an admin.
+				console.log('Auth state changed. User found:', user.uid);
+
+				try {
+					const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+					if (adminDoc.exists()) {
+						// User is an admin, redirect to dashboard.
+						// The middleware will now find the cookie.
+						router.push('/admin/');
+					} else {
+						// Not an admin, sign out and show error.
+						setError('You are not authorized as admin.');
+						await signOut(auth);
+					}
+				} catch (err) {
+					console.error('Error checking admin status:', err);
+					setError('Failed to verify admin status.');
+					await signOut(auth);
+				}
+			}
+		});
+
+		// Cleanup the listener on component unmount
+		return () => unsubscribe();
+	}, [router]);
+
 	const handleLogin = async (method: 'email' | 'microsoft') => {
 		setError('');
 		const auth = getAuth();
 		try {
-			let user;
 			if (method === 'email') {
-				const result = await signInWithEmailAndPassword(auth, email, password);
-				user = result.user;
+				await signInWithEmailAndPassword(auth, email, password);
 			} else {
 				const provider = new OAuthProvider('microsoft.com');
-				const result = await signInWithPopup(auth, provider);
-				user = result.user;
+				await signInWithPopup(auth, provider);
 			}
-
-			// Check admin authorization
-			const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-			if (!adminDoc.exists()) {
-				setError('You are not authorized as admin.');
-				await signOut(auth);
-				return;
-			}
-
-			// Redirect to dashboard
-			router.push('/admin/');
+			// SUCCESSFUL LOGIN, DO NOT REDIRECT HERE.
+			// The useEffect listener will handle the redirect.
 		} catch (err: unknown) {
 			console.error(err);
 			if (err instanceof Error) {

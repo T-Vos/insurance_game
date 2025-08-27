@@ -1,4 +1,4 @@
-import { db } from '@/lib/config';
+import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export function generateGameKey(length = 6): string {

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import ThemeToggle from '@/components/ThemeToggle';
 import DNBLogo from '@/components/dnb';
+import AuthSync from '@/lib/firebase/auth-sync';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -29,6 +30,7 @@ export default function RootLayout({
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
+				<AuthSync />
 				<div className="flex flex-col">
 					<main className="flex-1 min-h-screen">{children}</main>
 

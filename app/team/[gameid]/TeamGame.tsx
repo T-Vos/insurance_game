@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/config';
+import { db } from '@/lib/firebase/config';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
