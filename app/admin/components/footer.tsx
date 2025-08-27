@@ -1,5 +1,6 @@
 import React from 'react';
 import { LucideRefreshCw } from 'lucide-react';
+import LogoutButton from '@/components/LogoutButton';
 
 type HeaderProps = {
 	GAME_ID: string;
@@ -20,13 +21,16 @@ const Footer: React.FC<HeaderProps> = ({
 			<p className="text-sm font-mono break-all text-gray-500 mb-2 sm:mb-0">
 				User ID: <span className="font-bold">{userId}</span>
 			</p>
-			<button
-				onClick={() => setShowResetModal(true)}
-				className="flex items-center space-x-2 text-sm text-red-400 hover:text-red-300 transition duration-200"
-			>
-				<LucideRefreshCw size={16} />
-				<span>Reset Scores</span>
-			</button>
+			<div className="flex items-center space-x-9">
+				<button
+					onClick={() => setShowResetModal(true)}
+					className="flex items-center space-x-2 text-sm text-red-400 hover:text-red-300 transition duration-200"
+				>
+					<LucideRefreshCw size={16} />
+					<span>Reset Scores</span>
+				</button>
+				<LogoutButton />
+			</div>
 		</div>
 	</div>
 );
