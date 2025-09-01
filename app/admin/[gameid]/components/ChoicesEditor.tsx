@@ -13,7 +13,7 @@ type ChoiceEditorProps = {
 	choice: Choice;
 	choiceIndex: Choice['choice_index'];
 	handleUpdateChoice: (
-		choiceIndex: number,
+		choiceIndex: Choice['choice_index'],
 		newChoiceData: Partial<Choice>
 	) => void;
 	handleRemoveChoice: (choiceId: string) => void;

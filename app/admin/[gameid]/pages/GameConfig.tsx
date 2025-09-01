@@ -55,7 +55,7 @@ const GameConfig = ({
 	}
 
 	const handleUpdateChoice = (
-		choiceIndex: number,
+		choiceIndex: Choice['choice_index'],
 		newChoiceData: Partial<Choice>
 	) => {
 		setEditingChoices((prevChoices) =>
@@ -69,6 +69,7 @@ const GameConfig = ({
 		const newChoiceId = generateGameKey(14);
 		const newChoice: Choice = {
 			id: newChoiceId,
+			choice_index: editingChoices.length || 0 + 1,
 			description: 'New choice',
 			duration: 1,
 			reveals: [],

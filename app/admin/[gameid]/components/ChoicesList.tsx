@@ -5,7 +5,7 @@ import { ChoiceEditor } from './ChoicesEditor';
 type ChoicesListProps = {
 	editingChoices: Choice[];
 	handleUpdateChoice: (
-		choiceIndex: number,
+		choiceIndex: Choice['choice_index'],
 		newChoiceData: Partial<Choice>
 	) => void;
 	handleRemoveChoice: (choiceId: string) => void;

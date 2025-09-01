@@ -24,7 +24,7 @@ export interface Choice extends Scores {
 	duration?: number | null;
 	reveals: RevealMessage[];
 	interactionEffects?: InteractionEffect[];
-	choice_index: number;
+	choice_index?: number | null;
 	blockeding_circumstances?: blockedingCircumstance[]; // Circumstances that block the choice
 }
 

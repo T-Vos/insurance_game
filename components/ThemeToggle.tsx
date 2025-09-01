@@ -30,8 +30,9 @@ export default function ThemeToggle() {
 	};
 
 	return (
-		<button onClick={() => toggleTheme} className="p-2 border rounded">
-			Toggle Theme
-		</button>
+		<></>
+		// <button onClick={() => toggleTheme} className="p-2 border rounded">
+		// 	Toggle Theme
+		// </button>
 	);
 }
