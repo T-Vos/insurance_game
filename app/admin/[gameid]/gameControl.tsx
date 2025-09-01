@@ -185,23 +185,23 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 	const handleRemoveRound = async (roundId: Round['round_id']) => {
 		console.log('deleting round ' + roundId);
-		// if (!db || !gameData) return;
-		// setLoading(true);
+		if (!db || !gameData || !gameData.rounds) return;
+		setLoading(true);
 
-		// const gameDocRef = doc(db, gameDocPath);
+		const gameDocRef = doc(db, gameDocPath);
 
-		// const updatedGameData = {
-		// 	...gameData,
-		// 	rounds: gameData.rounds.filter((round) => round.round_id !== roundId),
-		// };
+		const updatedGameData = {
+			...gameData,
+			rounds: gameData.rounds.filter((round) => round.round_id !== roundId),
+		};
 
-		// try {
-		// 	await setDoc(gameDocRef, updatedGameData);
-		// 	setLoading(false);
-		// } catch (error) {
-		// 	console.error('Failed to add new round:', error);
-		// 	setLoading(false);
-		// }
+		try {
+			await setDoc(gameDocRef, updatedGameData);
+			setLoading(false);
+		} catch (error) {
+			console.error('Failed to add new round:', error);
+			setLoading(false);
+		}
 	};
 
 	// const handleNextRound = async () => {
@@ -292,9 +292,6 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 	// Handle updating a round in the database
 	const handleUpdateRound = async (updatedRound: Round) => {
 		if (!db || !gameData || !gameData.rounds) return;
-		console.log('UPDATE ROUND');
-		console.log(JSON.stringify(updatedRound));
-
 		const gameDocRef = doc(db, gameDocPath);
 		const updatedRounds = gameData.rounds.map((round) =>
 			round.round_id === updatedRound.round_id ? updatedRound : round

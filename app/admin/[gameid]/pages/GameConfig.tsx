@@ -303,45 +303,43 @@ const RoundConfig = ({
 
 	return (
 		<>
-			<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-				<div className="flex flex-col justify-between sm:flex-row gap-4 items-center">
-					{isEditingName ? (
-						<input
-							type="text"
-							value={editingName}
-							onChange={(e) => setEditingName(e.target.value)}
-							onBlur={finishEditingName}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') finishEditingName();
-								if (e.key === 'Escape') {
-									setEditingName(roundData.round_name);
-									setIsEditingName(false);
-								}
-							}}
-							autoFocus
-							className={clsx(title, 'bg-gray-700 rounded px-2 py-1 w-full')}
-						/>
-					) : (
-						<h2
-							className={clsx(
-								title_changeable,
-								'cursor-pointer flex items-center gap-2'
-							)}
-							onClick={() => setIsEditingName(true)}
-							title="Click to edit round name"
-						>
-							Round {roundIndex + 1}: {roundData.round_name}
-							<LucidePenTool size={18} className="text-gray-400" />
-						</h2>
-					)}
-					{/* <button
-						onClick={() => handleRemoveRound(roundData.round_id)}
-						className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+			<div className="flex flex-col justify-between sm:flex-row gap-4 items-center">
+				{isEditingName ? (
+					<input
+						type="text"
+						value={editingName}
+						onChange={(e) => setEditingName(e.target.value)}
+						onBlur={finishEditingName}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') finishEditingName();
+							if (e.key === 'Escape') {
+								setEditingName(roundData.round_name);
+								setIsEditingName(false);
+							}
+						}}
+						autoFocus
+						className={clsx(title, 'bg-gray-700 rounded px-2 py-1 w-full')}
+					/>
+				) : (
+					<h2
+						className={clsx(
+							title_changeable,
+							'cursor-pointer flex items-center gap-2'
+						)}
+						onClick={() => setIsEditingName(true)}
+						title="Click to edit round name"
 					>
-						<LucideTrash size={18} />
-						<span>Ronde verwijderen</span>
-					</button> */}
-				</div>
+						Round {roundIndex + 1}: {roundData.round_name}
+						<LucidePenTool size={18} className="text-gray-400" />
+					</h2>
+				)}
+				<button
+					onClick={() => handleRemoveRound(roundData.round_id)}
+					className="flex items-center cursor-pointer space-x-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+				>
+					<LucideTrash size={18} />
+					<span>Ronde verwijderen</span>
+				</button>
 			</div>
 			<div className="border-t border-gray-600 my-4"></div>
 			<h4 className="text-lg font-semibold text-gray-400 mb-4">Round Shocks</h4>
