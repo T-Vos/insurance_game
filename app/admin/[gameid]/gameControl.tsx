@@ -163,7 +163,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		setLocalCurrentRoundIndex(prevRoundIndex);
 		const newRoundId =
 			updatedRounds[prevRoundIndex]?.round_id || gameData.currentRoundId;
-		const updatedTeams = calculateScores(teams, updatedRounds, prevRoundIndex);
+		const updatedTeams = calculateScores(gameData, currentRoundIndex);
 
 		const updatedGameData = {
 			...gameData,
@@ -289,6 +289,20 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		}
 	};
 
+	const handleUpdateGameConfig = async (
+		key: keyof Game,
+		value: string | number
+	) => {
+		if (!db || !gameData) return;
+		const gameDocRef = doc(db, gameDocPath);
+		const updatedGame = { ...gameData, [key]: value };
+		try {
+			await setDoc(gameDocRef, updatedGame);
+		} catch (error) {
+			console.error('Failed to update game:', error);
+		}
+	};
+
 	// Handle adding a team to the database
 	const handleAddTeam = async (team: Team) => {
 		if (!db || !gameData) return;
@@ -338,7 +352,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 			liquidity_score: 0,
 			solvency_score: 0,
 			IT_score: 0,
-			capacity_score: initialBaseCapacity,
+			capacity_score: 0,
 			choices: [],
 		}));
 
@@ -357,30 +371,6 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		}
 	};
 
-	// Handle round navigation in the database
-	const handleSetCurrentRound = async (roundIndex: number) => {
-		if (!db || !gameData) return;
-		const gameDocRef = doc(db, gameDocPath);
-		const roundId = gameData.rounds[roundIndex]?.round_id || 'round_1';
-
-		const updatedTeams = calculateScores(teams, roundChoices, roundIndex);
-
-		try {
-			await setDoc(
-				gameDocRef,
-				{
-					...gameData,
-					currentRoundIndex: roundIndex,
-					currentRoundId: roundId,
-					teams: updatedTeams,
-				},
-				{ merge: true }
-			);
-		} catch (error) {
-			console.error('Failed to set current round:', error);
-		}
-	};
-
 	const { handleSelectChoice } = useSelectChoice(gameData);
 
 	const renderPage = () => {
@@ -392,13 +382,15 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							teams={teams}
 							roundChoices={roundChoices}
 							currentRoundIndex={localCurrentRoundIndex}
-							// handleSelectChoice={handleSelectChoice}
+							handleSelectChoice={handleSelectChoice}
+							key={'GamRounds'}
 						/>
 						<div className="mt-8">
 							<RevealedInfo
 								teams={teams}
 								currentRoundIndex={localCurrentRoundIndex}
 								roundChoices={roundChoices}
+								key={'reveladInformation'}
 							/>
 						</div>
 					</>
@@ -407,7 +399,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 				return (
 					<GameConfig
 						key={'gameConfig'}
-						// handleUpdateGameConfig={console.log('update')}
+						handleUpdateGameConfig={handleUpdateGameConfig}
 						roundChoices={roundChoices}
 						currentRoundIndex={localCurrentRoundIndex}
 						handleUpdateRound={handleUpdateRound}

@@ -7,8 +7,8 @@ type GameRoundsProps = {
 	roundChoices: Round[];
 	currentRoundIndex: number;
 	handleSelectChoice: (
-		teamId: number | string,
-		roundId: number | string,
+		teamId: Team['id'],
+		roundId: Round['round_id'],
 		choice: Choice
 	) => void;
 };
@@ -51,8 +51,8 @@ function TeamRoundCard(
 	team: Team,
 	currentRound: Round,
 	handleSelectChoice: (
-		teamId: number | string,
-		roundId: number | string,
+		teamId: Team['id'],
+		roundId: Round['round_id'],
 		choice: Choice
 	) => void
 ) {

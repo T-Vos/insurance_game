@@ -33,7 +33,6 @@ type GameConfigProps = {
 	gameData: Game | null;
 };
 
-// --- GameConfig Component ---
 const GameConfig = ({
 	roundChoices,
 	currentRoundIndex,
@@ -73,11 +72,10 @@ const GameConfig = ({
 					handleUpdateRound={handleUpdateRound}
 				/>
 				<div className="border-t border-gray-400 dark:border-gray-600 my-8"></div>
-				<ChoicesList
+				{/* <ChoicesList
 					editingChoices={currentRound.choices}
-					handleUpdateRound={handleUpdateRound}
 					roundChoices={roundChoices}
-				/>
+				/> */}
 			</div>
 		</div>
 	);
@@ -129,10 +127,14 @@ const GameConfigHeader = ({
 		}
 	};
 
-	const handleScoreChange = (scoreKey: keyof Scores, value: string) => {
+	// TODO: rewrite this to parse the int later
+	const handleScoreChange = (
+		scoreKey: keyof Scores,
+		value: string | number
+	) => {
 		setEditingScores((prevScores) => ({
 			...prevScores,
-			[scoreKey]: parseFloat(value) || 0,
+			[scoreKey]: typeof value === 'number' ? value : parseFloat(value) || 0,
 		}));
 	};
 
@@ -185,84 +187,11 @@ const GameConfigHeader = ({
 			</div>
 			<div className="border-t border-gray-600 my-8"></div>
 			<h3 className="text-xl font-bold text-gray-300 mb-4">Start Conditions</h3>
-			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideHandCoins size={24} className="text-yellow-400" />
-					<span
-						title="Expected Profit"
-						className="text-sm font-medium text-gray-400"
-					>
-						Profit
-					</span>
-					<input
-						type="number"
-						value={editingScores.expected_profit_score}
-						onChange={(e) =>
-							handleScoreChange('expected_profit_score', e.target.value)
-						}
-						onBlur={() => saveScoreChange('expected_profit_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-					/>
-				</div>
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideDroplet size={24} className="text-blue-400" />
-					<span title="Liquidity" className="text-sm font-medium text-gray-400">
-						Liquidity
-					</span>
-					<input
-						type="number"
-						value={editingScores.liquidity_score}
-						onChange={(e) =>
-							handleScoreChange('liquidity_score', e.target.value)
-						}
-						onBlur={() => saveScoreChange('liquidity_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-					/>
-				</div>
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucidePiggyBank size={24} className="text-green-400" />
-					<span title="Solvency" className="text-sm font-medium text-gray-400">
-						Solvency (%)
-					</span>
-					<input
-						type="number"
-						value={editingScores.solvency_score}
-						onChange={(e) =>
-							handleScoreChange('solvency_score', e.target.value)
-						}
-						onBlur={() => saveScoreChange('solvency_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
-					/>
-				</div>
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideComputer size={24} className="text-purple-400" />
-					<span title="IT Score" className="text-sm font-medium text-gray-400">
-						IT (%)
-					</span>
-					<input
-						type="number"
-						value={editingScores.IT_score}
-						onChange={(e) => handleScoreChange('IT_score', e.target.value)}
-						onBlur={() => saveScoreChange('IT_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-					/>
-				</div>
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideUsersRound size={24} className="text-pink-400" />
-					<span title="Capacity" className="text-sm font-medium text-gray-400">
-						Capacity (%)
-					</span>
-					<input
-						type="number"
-						value={editingScores.capacity_score}
-						onChange={(e) =>
-							handleScoreChange('capacity_score', e.target.value)
-						}
-						onBlur={() => saveScoreChange('capacity_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-pink-400 focus:outline-none"
-					/>
-				</div>
-			</div>
+			<ScoreBar
+				handleScoreChange={handleScoreChange}
+				saveScoreChange={saveScoreChange}
+				editingScores={editingScores}
+			/>
 		</div>
 	);
 };
@@ -318,11 +247,11 @@ const RoundConfig = ({
 	// Handler for updating a score field in local state
 	const handleShockChange = (
 		shockKey: keyof typeof editingShocks,
-		value: string
+		value: string | number
 	) => {
 		setEditingShocks((prevShocks) => ({
 			...prevShocks,
-			[shockKey]: parseFloat(value) || 0, // Ensure value is a number
+			[shockKey]: typeof value === 'number' ? value : parseFloat(value) || 0,
 		}));
 	};
 
@@ -371,94 +300,101 @@ const RoundConfig = ({
 					)}
 				</div>
 			</div>
-
 			<div className="border-t border-gray-600 my-4"></div>
-
 			{/* Round Shock Conditions Section */}
 			<h4 className="text-lg font-semibold text-gray-400 mb-4">Round Shocks</h4>
-			<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-				{/* Expected Profit Shock Input */}
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideHandCoins size={24} className="text-yellow-400" />
-					<span
-						title="Expected Profit"
-						className="text-sm font-medium text-gray-400"
-					>
-						Profit
-					</span>
-					<input
-						type="number"
-						value={editingShocks.expected_profit_score}
-						onChange={(e) =>
-							handleShockChange('expected_profit_score', e.target.value)
-						}
-						onBlur={() => saveShockChange('expected_profit_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-					/>
-				</div>
-				{/* Liquidity Shock Input */}
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideDroplet size={24} className="text-blue-400" />
-					<span title="Liquidity" className="text-sm font-medium text-gray-400">
-						Liquidity
-					</span>
-					<input
-						type="number"
-						value={editingShocks.liquidity_score}
-						onChange={(e) =>
-							handleShockChange('liquidity_score', e.target.value)
-						}
-						onBlur={() => saveShockChange('liquidity_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-					/>
-				</div>
-				{/* Solvency Shock Input */}
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucidePiggyBank size={24} className="text-green-400" />
-					<span title="Solvency" className="text-sm font-medium text-gray-400">
-						Solvency (%)
-					</span>
-					<input
-						type="number"
-						value={editingShocks.solvency_score}
-						onChange={(e) =>
-							handleShockChange('solvency_score', e.target.value)
-						}
-						onBlur={() => saveShockChange('solvency_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
-					/>
-				</div>
-				{/* IT Score Shock Input */}
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideComputer size={24} className="text-purple-400" />
-					<span title="IT Score" className="text-sm font-medium text-gray-400">
-						IT (%)
-					</span>
-					<input
-						type="number"
-						value={editingShocks.IT_score}
-						onChange={(e) => handleShockChange('IT_score', e.target.value)}
-						onBlur={() => saveShockChange('IT_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-					/>
-				</div>
-				{/* Capacity Shock Input */}
-				<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-					<LucideUsersRound size={24} className="text-pink-400" />
-					<span title="Capacity" className="text-sm font-medium text-gray-400">
-						Capacity (%)
-					</span>
-					<input
-						type="number"
-						value={editingShocks.capacity_score}
-						onChange={(e) =>
-							handleShockChange('capacity_score', e.target.value)
-						}
-						onBlur={() => saveShockChange('capacity_score')}
-						className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-pink-400 focus:outline-none"
-					/>
-				</div>
-			</div>
+			<ScoreBar
+				handleScoreChange={handleShockChange}
+				saveScoreChange={saveShockChange}
+				editingScores={editingShocks}
+			/>
 		</>
+	);
+};
+
+type scoreBarProps = {
+	editingScores: Scores;
+	handleScoreChange: (scoreKey: keyof Scores, value: string | number) => void;
+	saveScoreChange: (scoreKey: keyof Scores) => void;
+};
+
+const ScoreBar = ({
+	editingScores: editingScores,
+	handleScoreChange: handleScoreChange,
+	saveScoreChange: saveScoreChange,
+}: scoreBarProps) => {
+	return (
+		<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+				<LucideHandCoins size={24} className="text-yellow-400" />
+				<span
+					title="Expected Profit"
+					className="text-sm font-medium text-gray-400"
+				>
+					Profit
+				</span>
+				<input
+					type="number"
+					value={editingScores.expected_profit_score}
+					onChange={(e) =>
+						handleScoreChange('expected_profit_score', e.target.value)
+					}
+					onBlur={() => saveScoreChange('expected_profit_score')}
+					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+				/>
+			</div>
+			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+				<LucideDroplet size={24} className="text-blue-400" />
+				<span title="Liquidity" className="text-sm font-medium text-gray-400">
+					Liquidity
+				</span>
+				<input
+					type="number"
+					value={editingScores.liquidity_score}
+					onChange={(e) => handleScoreChange('liquidity_score', e.target.value)}
+					onBlur={() => saveScoreChange('liquidity_score')}
+					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+				/>
+			</div>
+			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+				<LucidePiggyBank size={24} className="text-green-400" />
+				<span title="Solvency" className="text-sm font-medium text-gray-400">
+					Solvency (%)
+				</span>
+				<input
+					type="number"
+					value={editingScores.solvency_score}
+					onChange={(e) => handleScoreChange('solvency_score', e.target.value)}
+					onBlur={() => saveScoreChange('solvency_score')}
+					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
+				/>
+			</div>
+			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+				<LucideComputer size={24} className="text-purple-400" />
+				<span title="IT Score" className="text-sm font-medium text-gray-400">
+					IT (%)
+				</span>
+				<input
+					type="number"
+					value={editingScores.IT_score}
+					onChange={(e) => handleScoreChange('IT_score', e.target.value)}
+					onBlur={() => saveScoreChange('IT_score')}
+					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+				/>
+			</div>
+			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
+				<LucideUsersRound size={24} className="text-pink-400" />
+				<span title="Capacity" className="text-sm font-medium text-gray-400">
+					Capacity (%)
+				</span>
+				<input
+					type="number"
+					value={editingScores.capacity_score}
+					onChange={(e) => handleScoreChange('capacity_score', e.target.value)}
+					onBlur={() => saveScoreChange('capacity_score')}
+					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-pink-400 focus:outline-none"
+				/>
+			</div>
+		</div>
 	);
 };

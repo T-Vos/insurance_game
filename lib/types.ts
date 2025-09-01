@@ -74,7 +74,6 @@ export interface Team extends Scores {
 	// Extend Scores interface
 	id: string;
 	teamName: string;
-	team_members: string[];
 	choices: TeamChoice[]; // Each entry tracks the choice made in a round
 }
 

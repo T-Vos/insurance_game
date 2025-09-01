@@ -23,6 +23,11 @@ const TeamsConfig = ({
 			teamName: newTeamName.trim(),
 			isEditing: false,
 			choices: [],
+			capacity_score: 0,
+			expected_profit_score: 0,
+			IT_score: 0,
+			liquidity_score: 0,
+			solvency_score: 0,
 		};
 		handleAddTeam(newTeam);
 		setNewTeamName('');

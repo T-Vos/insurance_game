@@ -101,10 +101,12 @@ export default function AdminDashboard() {
 						key={game.id}
 						className="bg-gray-800 flex flex-col justify-between lg:flex-row lg:items-center p-4 rounded-xl transition"
 					>
-						<div>
-							<h2 className="font-bold text-xl">{game.name}</h2>
-							<p className="text-sm text-gray-400">Key: {game.key}</p>
-						</div>
+						<Link href={`/admin/${game.id}`} aria-label="Go to Dashboard">
+							<div>
+								<h2 className="font-bold text-xl">{game.name}</h2>
+								<p className="text-sm text-gray-400">Key: {game.key}</p>
+							</div>
+						</Link>
 						<div className="flex justify-end gap-2 mt-4">
 							<Tooltip content="Share QR Code">
 								<button
