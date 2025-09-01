@@ -8,5 +8,5 @@ export default async function Page({
 }) {
 	const { gameid } = await params;
 	if (!gameid) return <div>Invalid game code</div>;
-	return <GameControl gameId={gameid} />;
+	return <GameControl key={'GameControl'} gameId={gameid} />;
 }

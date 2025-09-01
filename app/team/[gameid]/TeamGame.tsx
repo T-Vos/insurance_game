@@ -68,7 +68,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 
 	if (!teamId) return <div>Please log in first.</div>;
 	if (!game) return <div>Loading or game not found...</div>;
-
+	if (!game.rounds) return <div>Geen Rondes gevonde </div>;
 	const currentTeam = game.teams.find((t: Team) => t.id === teamId);
 	const currentRound = game.rounds[game.currentRoundIndex];
 

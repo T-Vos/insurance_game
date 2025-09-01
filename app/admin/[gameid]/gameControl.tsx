@@ -91,7 +91,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 					setGameData(data);
 
-					const currentRound = data.rounds[data.currentRoundIndex];
+					const currentRound = (data.rounds ?? [])[data.currentRoundIndex];
 					const roundRunning =
 						!!currentRound?.round_started_at &&
 						!currentRound?.round_finished_at;
@@ -116,7 +116,8 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		setLoading(true);
 
 		const gameDocRef = doc(db, gameDocPath);
-		const updatedRounds = gameData.rounds.map((round, index) => {
+		if (!gameData.rounds || gameData.rounds.length == 0) return;
+		const updatedRounds = (gameData.rounds ?? []).map((round, index) => {
 			const updatedRound: Round = {
 				...round,
 				round_started_at: null,
@@ -152,7 +153,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		setLoading(true);
 
 		const gameDocRef = doc(db, gameDocPath);
-		const updatedRounds = [...gameData.rounds];
+		const updatedRounds = [...(gameData.rounds ?? [])];
 
 		// Reset the current round's finish time
 		updatedRounds[currentRoundIndex].round_finished_at = null;
@@ -180,6 +181,27 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		} finally {
 			setLoading(false);
 		}
+	};
+
+	const handleRemoveRound = async (roundId: Round['round_id']) => {
+		console.log('deleting round ' + roundId);
+		// if (!db || !gameData) return;
+		// setLoading(true);
+
+		// const gameDocRef = doc(db, gameDocPath);
+
+		// const updatedGameData = {
+		// 	...gameData,
+		// 	rounds: gameData.rounds.filter((round) => round.round_id !== roundId),
+		// };
+
+		// try {
+		// 	await setDoc(gameDocRef, updatedGameData);
+		// 	setLoading(false);
+		// } catch (error) {
+		// 	console.error('Failed to add new round:', error);
+		// 	setLoading(false);
+		// }
 	};
 
 	// const handleNextRound = async () => {
@@ -218,7 +240,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 	// };
 
 	const handleStopGame = async () => {
-		if (!db || !gameData || !isGameRunning) return;
+		if (!db || !gameData || !isGameRunning || !gameData.rounds) return;
 		setLoading(true);
 
 		const gameDocRef = doc(db, gameDocPath);
@@ -243,11 +265,11 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 	const handleAddRound = async () => {
 		if (!db || !gameData) return;
-		setLoading(true);
+		if (!gameData.rounds) gameData.rounds = [];
 
 		const gameDocRef = doc(db, gameDocPath);
 		const newRound: Round = {
-			round_id: `round_${gameData.rounds.length + 1}`,
+			round_id: `round_${gameData?.rounds.length + 1}`,
 			round_duration: 3600,
 			round_started_at: null,
 			round_finished_at: null,
@@ -262,16 +284,14 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 		try {
 			await setDoc(gameDocRef, updatedGameData);
-			setLoading(false);
 		} catch (error) {
 			console.error('Failed to add new round:', error);
-			setLoading(false);
 		}
 	};
 
 	// Handle updating a round in the database
 	const handleUpdateRound = async (updatedRound: Round) => {
-		if (!db || !gameData) return;
+		if (!db || !gameData || !gameData.rounds) return;
 		console.log('UPDATE ROUND');
 		console.log(JSON.stringify(updatedRound));
 
@@ -404,6 +424,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 						handleUpdateRound={handleUpdateRound}
 						handleAddRound={handleAddRound}
 						gameData={gameData}
+						handleRemoveRound={handleRemoveRound}
 					/>
 				);
 			case PageState.TEAMS_CONFIG:
@@ -467,7 +488,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 						<div className="flex flex-col space-y-2">
 							{roundChoices.map((round, index) => (
 								<button
-									key={round.round_id}
+									key={`SideBarRound_${round.round_id}`}
 									onClick={() => setLocalCurrentRoundIndex(index)}
 									className={clsx(
 										'px-4 py-2 cursor-pointer text-left rounded-lg font-medium transition duration-300',

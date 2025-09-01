@@ -99,7 +99,12 @@ export const ChoiceEditor = ({
 
 	const handleAddInteraction = () => {
 		const newInteraction: InteractionEffect = {
-			targetChoiceId: roundChoices[0]?.choices[0]?.id || '',
+			targetChoiceId:
+				roundChoices[0] &&
+				Array.isArray(roundChoices[0].choices) &&
+				roundChoices[0].choices[0]
+					? roundChoices[0].choices[0].id
+					: '',
 			roundId: roundChoices[0]?.round_id || '',
 			bonusScore: 0,
 		};
@@ -332,13 +337,14 @@ const InteractionEffects = ({
 							<option value="" disabled>
 								Select a choice
 							</option>
-							{roundChoices
-								.find((r) => r.round_id === interaction.roundId)
-								?.choices.map((targetChoice) => (
-									<option key={targetChoice.id} value={targetChoice.id}>
-										{targetChoice.description}
-									</option>
-								))}
+							{(
+								roundChoices.find((r) => r.round_id === interaction.roundId)
+									?.choices ?? []
+							).map((targetChoice) => (
+								<option key={targetChoice.id} value={targetChoice.id}>
+									{targetChoice.description}
+								</option>
+							))}
 						</select>
 					</div>
 					<div>

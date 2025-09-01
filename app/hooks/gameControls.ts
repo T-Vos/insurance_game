@@ -17,7 +17,7 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 
 	const isGameRunning = !!gameData?.gameStartedAt && !gameData?.gameFinishedAt;
 	const isLastRound =
-		(gameData?.currentRoundIndex ?? -1) >= (gameData?.rounds.length || 0) - 1;
+		(gameData?.currentRoundIndex ?? -1) >= (gameData?.rounds?.length || 0) - 1;
 
 	const handleNextRound = async () => {
 		if (!db || !gameData || !isGameRunning || isLastRound) {
@@ -29,7 +29,7 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 
 		const gameDocRef = doc(db, gameDocPath);
 		const currentRoundIndex = gameData.currentRoundIndex;
-		const updatedRounds = [...gameData.rounds];
+		const updatedRounds = [...(gameData.rounds ?? [])];
 
 		updatedRounds[currentRoundIndex] = {
 			...updatedRounds[currentRoundIndex],

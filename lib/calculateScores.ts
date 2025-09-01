@@ -17,15 +17,18 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 		start_IT_score,
 		start_capacity_score,
 	} = gameData;
-
 	// Helper function to find a choice's data from a given round
 	const findChoice = (
 		targetRoundId: string | number,
 		choiceId: string
 	): Choice | undefined => {
+		if (!rounds) return;
 		const round = rounds.find((r) => r.round_id === targetRoundId);
+		if (!round?.choices) return;
 		return round?.choices.find((c) => c.id === choiceId);
 	};
+
+	if (!rounds) return gameData.teams;
 
 	return teams.map((team) => {
 		// Initialize scores with the game's starting conditions

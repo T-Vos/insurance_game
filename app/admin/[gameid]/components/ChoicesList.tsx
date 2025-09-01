@@ -3,7 +3,7 @@ import { LucidePlus } from 'lucide-react';
 import { ChoiceEditor } from './ChoicesEditor';
 
 type ChoicesListProps = {
-	editingChoices: Choice[];
+	editingChoices: Choice[] | null;
 	handleUpdateChoice: (
 		choiceIndex: Choice['choice_index'],
 		newChoiceData: Partial<Choice>
@@ -35,16 +35,20 @@ export const ChoicesList = ({
 				</button>
 			</div>
 
-			{editingChoices.map((choice, choiceIndex) => (
-				<ChoiceEditor
-					key={choice.id}
-					choice={choice}
-					choiceIndex={choiceIndex}
-					handleUpdateChoice={handleUpdateChoice}
-					handleRemoveChoice={handleRemoveChoice}
-					roundChoices={roundChoices}
-				/>
-			))}
+			{editingChoices && editingChoices.length > 0 ? (
+				editingChoices.map((choice, choiceIndex) => (
+					<ChoiceEditor
+						key={choice.id}
+						choice={choice}
+						choiceIndex={choiceIndex}
+						handleUpdateChoice={handleUpdateChoice}
+						handleRemoveChoice={handleRemoveChoice}
+						roundChoices={roundChoices}
+					/>
+				))
+			) : (
+				<>Nog geen keuzes</>
+			)}
 		</div>
 	);
 };

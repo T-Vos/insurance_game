@@ -18,7 +18,7 @@ const RoundsProgress: React.FC<RoundsProgressProps> = ({
 
 				return (
 					<div
-						key={round.round_id}
+						key={`RoundProgress_${round.round_id}`}
 						className="flex-1 flex flex-col items-center relative"
 					>
 						<div

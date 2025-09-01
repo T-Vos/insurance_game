@@ -23,7 +23,7 @@ export default function TeamBoard({
 	handleSaveChoice,
 }: TeamBoardProps) {
 	if (!team || !currentRound) return <div>Loading team data...</div>;
-
+	if (!currentRound.choices) return <div>Geen keuzes beschikbaar</div>;
 	const selectedChoice = team.choices.find(
 		(c: TeamChoice) => c.round_id === currentRound.round_id
 	);

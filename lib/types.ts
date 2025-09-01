@@ -42,7 +42,7 @@ export interface Round {
 	round_finished_at: number | null | string;
 	round_index: number;
 	round_name: string;
-	choices: Choice[];
+	choices?: Choice[] | null;
 	round_schock_expected_profit_score?: number;
 	round_schock_liquidity_score?: number;
 	round_schock_solvency_score?: number;
@@ -72,7 +72,6 @@ export interface TeamChoice {
 export interface Team extends Scores {
 	editingName?: string | undefined;
 	isEditing?: boolean;
-	// Extend Scores interface
 	id: string;
 	teamName: string;
 	choices: TeamChoice[]; // Each entry tracks the choice made in a round
@@ -85,7 +84,7 @@ export interface Game {
 	id: string;
 	key: string;
 	name: string;
-	rounds: Round[];
+	rounds?: Round[] | null;
 	teams: Team[];
 	currentRoundIndex: number;
 	currentRoundId: Round['round_id'] | null;

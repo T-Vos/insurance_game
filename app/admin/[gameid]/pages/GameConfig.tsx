@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Round, Game, Scores, Choice } from '@/lib/types';
 import clsx from 'clsx';
-import { LucidePenTool, LucidePlus } from 'lucide-react';
+import { LucidePenTool, LucidePlus, LucideTrash } from 'lucide-react';
 import { title } from 'process';
 import { cardstyle, title_changeable } from '../components/styling';
 import { ChoicesList } from '../components/ChoicesList';
@@ -15,6 +15,7 @@ type GameConfigProps = {
 	handleUpdateRound: (updatedRound: Round) => void;
 	handleAddRound: () => void;
 	handleUpdateGameConfig: (key: keyof Game, value: string | number) => void;
+	handleRemoveRound: (RoundId: Round['round_id']) => void;
 	gameData: Game | null;
 };
 
@@ -24,6 +25,7 @@ const GameConfig = ({
 	handleUpdateRound,
 	handleAddRound,
 	handleUpdateGameConfig,
+	handleRemoveRound,
 	gameData,
 }: GameConfigProps) => {
 	const currentRound = roundChoices[currentRoundIndex];
@@ -31,7 +33,7 @@ const GameConfig = ({
 
 	useEffect(() => {
 		if (currentRound) {
-			setEditingChoices(currentRound.choices);
+			setEditingChoices(currentRound.choices || []);
 		}
 	}, [currentRound]);
 
@@ -105,6 +107,7 @@ const GameConfig = ({
 					roundData={currentRound}
 					roundIndex={currentRoundIndex}
 					handleUpdateRound={handleUpdateRound}
+					handleRemoveRound={handleRemoveRound}
 				/>
 				<div className="border-t border-gray-400 dark:border-gray-600 my-8"></div>
 				<ChoicesList
@@ -162,19 +165,23 @@ const GameConfigHeader = ({
 		}
 	};
 
-	// TODO: rewrite this to parse the int later
 	const handleScoreChange = (
 		scoreKey: keyof Scores,
 		value: string | number
 	) => {
 		setEditingScores((prevScores) => ({
 			...prevScores,
-			[scoreKey]: typeof value === 'number' ? value : parseFloat(value) || 0,
+			[scoreKey]: value,
 		}));
 	};
 
 	const saveScoreChange = (scoreKey: keyof Scores) => {
-		onUpdateGameConfig(`start_${scoreKey}`, editingScores[scoreKey]);
+		onUpdateGameConfig(
+			`start_${scoreKey}`,
+			typeof editingScores[scoreKey] === 'number'
+				? editingScores[scoreKey]
+				: parseFloat(editingScores[scoreKey]) || 0
+		);
 	};
 
 	return (
@@ -235,12 +242,14 @@ type RoundConfigProps = {
 	roundData: Round;
 	roundIndex: number;
 	handleUpdateRound: (updatedRound: Round) => void;
+	handleRemoveRound: (roundDelete: Round['round_id']) => void;
 };
 
 const RoundConfig = ({
 	roundData,
 	roundIndex,
 	handleUpdateRound,
+	handleRemoveRound,
 }: RoundConfigProps) => {
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(roundData.round_name);
@@ -295,7 +304,7 @@ const RoundConfig = ({
 	return (
 		<>
 			<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-				<div className="flex-1 min-w-0">
+				<div className="flex flex-col justify-between sm:flex-row gap-4 items-center">
 					{isEditingName ? (
 						<input
 							type="text"
@@ -325,6 +334,13 @@ const RoundConfig = ({
 							<LucidePenTool size={18} className="text-gray-400" />
 						</h2>
 					)}
+					{/* <button
+						onClick={() => handleRemoveRound(roundData.round_id)}
+						className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+					>
+						<LucideTrash size={18} />
+						<span>Ronde verwijderen</span>
+					</button> */}
 				</div>
 			</div>
 			<div className="border-t border-gray-600 my-4"></div>
