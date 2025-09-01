@@ -1,32 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Round, Choice, Game, Scores } from '@/lib/types';
-import { generateGameKey } from '@/lib/generate_game_key';
+import { Round, Game, Scores, Choice } from '@/lib/types';
 import clsx from 'clsx';
-// All components and styling are now defined within this file to fix the compilation error
-// The following imports were removed due to the compilation error:
-// import { cardstyle, title, title_changeable } from '../components/styling';
-// import { ChoicesList } from '../components/ChoicesList';
-// import GameConfigHeader from '../components/gameConfigHeader';
-
-import {
-	LucideHandCoins,
-	LucideDroplet,
-	LucidePiggyBank,
-	LucideComputer,
-	LucideUsersRound,
-	LucidePenTool,
-	LucidePlus,
-} from 'lucide-react';
+import { LucidePenTool, LucidePlus } from 'lucide-react';
 import { title } from 'process';
 import { cardstyle, title_changeable } from '../components/styling';
 import { ChoicesList } from '../components/ChoicesList';
+import { generateGameKey } from '@/lib/generate_game_key';
+import ScoreBar from '../components/ScoreBar';
 
-// --- Type Definitions ---
-// Define a type for the component's props
 type GameConfigProps = {
 	roundChoices: Round[];
-	currentRoundIndex: number;
+	currentRoundIndex: Game['currentRoundIndex'];
 	handleUpdateRound: (updatedRound: Round) => void;
 	handleAddRound: () => void;
 	handleUpdateGameConfig: (key: keyof Game, value: string | number) => void;
@@ -41,10 +26,24 @@ const GameConfig = ({
 	handleUpdateGameConfig,
 	gameData,
 }: GameConfigProps) => {
-	// Determine the current round from the roundChoices array
 	const currentRound = roundChoices[currentRoundIndex];
+	const [editingChoices, setEditingChoices] = useState<Choice[]>([]);
 
-	// If there is no current round, display the header to add a new one
+	useEffect(() => {
+		if (currentRound) {
+			setEditingChoices(currentRound.choices);
+		}
+	}, [currentRound]);
+
+	useEffect(() => {
+		if (editingChoices.length > 0) {
+			handleUpdateRound({
+				...currentRound,
+				choices: editingChoices,
+			});
+		}
+	}, [editingChoices]);
+
 	if (!currentRound) {
 		return (
 			<GameConfigHeader
@@ -54,6 +53,41 @@ const GameConfig = ({
 			/>
 		);
 	}
+
+	const handleUpdateChoice = (
+		choiceIndex: number,
+		newChoiceData: Partial<Choice>
+	) => {
+		setEditingChoices((prevChoices) =>
+			prevChoices.map((choice, index) =>
+				index === choiceIndex ? { ...choice, ...newChoiceData } : choice
+			)
+		);
+	};
+
+	const handleAddChoice = () => {
+		const newChoiceId = generateGameKey(14);
+		const newChoice: Choice = {
+			id: newChoiceId,
+			description: 'New choice',
+			duration: 1,
+			reveals: [],
+			interactionEffects: [],
+			capacity_score: 0,
+			expected_profit_score: 0,
+			IT_score: 0,
+			liquidity_score: 0,
+			solvency_score: 0,
+			blockeding_circumstances: [],
+		};
+		setEditingChoices((prevChoices) => [...prevChoices, newChoice]);
+	};
+
+	const handleRemoveChoice = (choiceId: string) => {
+		setEditingChoices((prevChoices) =>
+			prevChoices.filter((choice) => choice.id !== choiceId)
+		);
+	};
 
 	return (
 		<div className="flex flex-col gap-3">
@@ -72,10 +106,14 @@ const GameConfig = ({
 					handleUpdateRound={handleUpdateRound}
 				/>
 				<div className="border-t border-gray-400 dark:border-gray-600 my-8"></div>
-				{/* <ChoicesList
-					editingChoices={currentRound.choices}
+				<ChoicesList
+					editingChoices={editingChoices}
 					roundChoices={roundChoices}
-				/> */}
+					handleAddChoice={handleAddChoice}
+					handleRemoveChoice={handleRemoveChoice}
+					handleUpdateChoice={handleUpdateChoice}
+					key={'ChoicesList'}
+				/>
 			</div>
 		</div>
 	);
@@ -83,7 +121,6 @@ const GameConfig = ({
 
 export default GameConfig;
 
-// GameConfigHeader component (consolidated)
 type GameConfigHeaderProps = {
 	gameData: Game | null;
 	handleAddRound: () => void;
@@ -95,11 +132,9 @@ const GameConfigHeader = ({
 	handleAddRound,
 	onUpdateGameConfig,
 }: GameConfigHeaderProps) => {
-	// State for the editable game name
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(gameData?.name || '');
 
-	// State for the editable starting scores
 	const [editingScores, setEditingScores] = useState<Scores>({
 		expected_profit_score: gameData?.start_expected_profit_score || 0,
 		liquidity_score: gameData?.start_liquidity_score || 0,
@@ -108,7 +143,6 @@ const GameConfigHeader = ({
 		capacity_score: gameData?.start_capacity_score || 0,
 	});
 
-	// Sync local state with props when gameData changes
 	useEffect(() => {
 		setEditingName(gameData?.name || '');
 		setEditingScores({
@@ -196,7 +230,6 @@ const GameConfigHeader = ({
 	);
 };
 
-// RoundConfig component to handle a single round's name and shocks
 type RoundConfigProps = {
 	roundData: Round;
 	roundIndex: number;
@@ -208,11 +241,9 @@ const RoundConfig = ({
 	roundIndex,
 	handleUpdateRound,
 }: RoundConfigProps) => {
-	// State to manage the editable round name
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(roundData.round_name);
 
-	// State to manage the editable round shock scores
 	const [editingShocks, setEditingShocks] = useState({
 		expected_profit_score: roundData.round_schock_expected_profit_score || 0,
 		liquidity_score: roundData.round_schock_liquidity_score || 0,
@@ -221,7 +252,6 @@ const RoundConfig = ({
 		capacity_score: roundData.round_schock_capacity_score || 0,
 	});
 
-	// Sync local state with props when roundData changes
 	useEffect(() => {
 		setEditingName(roundData.round_name);
 		setEditingShocks({
@@ -233,7 +263,6 @@ const RoundConfig = ({
 		});
 	}, [roundData]);
 
-	// Handler to save the new round name to the parent component's state
 	const finishEditingName = () => {
 		setIsEditingName(false);
 		if (editingName.trim() !== roundData.round_name) {
@@ -244,7 +273,6 @@ const RoundConfig = ({
 		}
 	};
 
-	// Handler for updating a score field in local state
 	const handleShockChange = (
 		shockKey: keyof typeof editingShocks,
 		value: string | number
@@ -255,7 +283,6 @@ const RoundConfig = ({
 		}));
 	};
 
-	// Handler to save the score field to the database when the input loses focus
 	const saveShockChange = (shockKey: keyof typeof editingShocks) => {
 		const fullShockKey = `round_schock_${shockKey}` as keyof Round;
 		handleUpdateRound({
@@ -266,7 +293,6 @@ const RoundConfig = ({
 
 	return (
 		<>
-			{/* Round Header Section */}
 			<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
 				<div className="flex-1 min-w-0">
 					{isEditingName ? (
@@ -301,7 +327,6 @@ const RoundConfig = ({
 				</div>
 			</div>
 			<div className="border-t border-gray-600 my-4"></div>
-			{/* Round Shock Conditions Section */}
 			<h4 className="text-lg font-semibold text-gray-400 mb-4">Round Shocks</h4>
 			<ScoreBar
 				handleScoreChange={handleShockChange}
@@ -309,92 +334,5 @@ const RoundConfig = ({
 				editingScores={editingShocks}
 			/>
 		</>
-	);
-};
-
-type scoreBarProps = {
-	editingScores: Scores;
-	handleScoreChange: (scoreKey: keyof Scores, value: string | number) => void;
-	saveScoreChange: (scoreKey: keyof Scores) => void;
-};
-
-const ScoreBar = ({
-	editingScores: editingScores,
-	handleScoreChange: handleScoreChange,
-	saveScoreChange: saveScoreChange,
-}: scoreBarProps) => {
-	return (
-		<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-				<LucideHandCoins size={24} className="text-yellow-400" />
-				<span
-					title="Expected Profit"
-					className="text-sm font-medium text-gray-400"
-				>
-					Profit
-				</span>
-				<input
-					type="number"
-					value={editingScores.expected_profit_score}
-					onChange={(e) =>
-						handleScoreChange('expected_profit_score', e.target.value)
-					}
-					onBlur={() => saveScoreChange('expected_profit_score')}
-					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-				/>
-			</div>
-			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-				<LucideDroplet size={24} className="text-blue-400" />
-				<span title="Liquidity" className="text-sm font-medium text-gray-400">
-					Liquidity
-				</span>
-				<input
-					type="number"
-					value={editingScores.liquidity_score}
-					onChange={(e) => handleScoreChange('liquidity_score', e.target.value)}
-					onBlur={() => saveScoreChange('liquidity_score')}
-					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-				/>
-			</div>
-			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-				<LucidePiggyBank size={24} className="text-green-400" />
-				<span title="Solvency" className="text-sm font-medium text-gray-400">
-					Solvency (%)
-				</span>
-				<input
-					type="number"
-					value={editingScores.solvency_score}
-					onChange={(e) => handleScoreChange('solvency_score', e.target.value)}
-					onBlur={() => saveScoreChange('solvency_score')}
-					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-green-400 focus:outline-none"
-				/>
-			</div>
-			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-				<LucideComputer size={24} className="text-purple-400" />
-				<span title="IT Score" className="text-sm font-medium text-gray-400">
-					IT (%)
-				</span>
-				<input
-					type="number"
-					value={editingScores.IT_score}
-					onChange={(e) => handleScoreChange('IT_score', e.target.value)}
-					onBlur={() => saveScoreChange('IT_score')}
-					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-				/>
-			</div>
-			<div className="flex flex-col items-center gap-2 bg-gray-700 rounded-lg p-3">
-				<LucideUsersRound size={24} className="text-pink-400" />
-				<span title="Capacity" className="text-sm font-medium text-gray-400">
-					Capacity (%)
-				</span>
-				<input
-					type="number"
-					value={editingScores.capacity_score}
-					onChange={(e) => handleScoreChange('capacity_score', e.target.value)}
-					onBlur={() => saveScoreChange('capacity_score')}
-					className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-pink-400 focus:outline-none"
-				/>
-			</div>
-		</div>
 	);
 };

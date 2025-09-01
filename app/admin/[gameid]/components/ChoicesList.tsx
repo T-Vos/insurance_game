@@ -28,7 +28,7 @@ export const ChoicesList = ({
 				</h3>
 				<button
 					onClick={handleAddChoice}
-					className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+					className="flex cursor-pointer items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
 				>
 					<LucidePlus size={18} />
 					<span>Keuze toevoegen</span>

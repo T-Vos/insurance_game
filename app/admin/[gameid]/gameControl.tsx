@@ -272,7 +272,8 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 	// Handle updating a round in the database
 	const handleUpdateRound = async (updatedRound: Round) => {
 		if (!db || !gameData) return;
-		setLoading(true);
+		console.log('UPDATE ROUND');
+		console.log(JSON.stringify(updatedRound));
 
 		const gameDocRef = doc(db, gameDocPath);
 		const updatedRounds = gameData.rounds.map((round) =>
@@ -282,10 +283,8 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 		try {
 			await setDoc(gameDocRef, updatedGameData);
-			setLoading(false);
 		} catch (error) {
 			console.error('Failed to update round:', error);
-			setLoading(false);
 		}
 	};
 

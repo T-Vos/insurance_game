@@ -1,10 +1,17 @@
-import { Choice, Round, RevealMessage, InteractionEffect } from '@/lib/types';
+import {
+	Choice,
+	Round,
+	RevealMessage,
+	InteractionEffect,
+	Scores,
+} from '@/lib/types';
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import ScoreBar from './ScoreBar';
 
 type ChoiceEditorProps = {
 	choice: Choice;
-	choiceIndex: number;
+	choiceIndex: Choice['choice_index'];
 	handleUpdateChoice: (
 		choiceIndex: number,
 		newChoiceData: Partial<Choice>
@@ -22,6 +29,24 @@ export const ChoiceEditor = ({
 }: ChoiceEditorProps) => {
 	const [isOpened, setIsOpened] = useState(false);
 	const toggleCollapse = () => setIsOpened(!isOpened);
+
+	const [editingScores, setEditingScores] = useState<Scores>({
+		expected_profit_score: choice?.expected_profit_score || 0,
+		liquidity_score: choice?.liquidity_score || 0,
+		solvency_score: choice?.solvency_score || 0,
+		IT_score: choice?.IT_score || 0,
+		capacity_score: choice?.capacity_score || 0,
+	});
+
+	useEffect(() => {
+		setEditingScores({
+			expected_profit_score: choice?.expected_profit_score || 0,
+			liquidity_score: choice?.liquidity_score || 0,
+			solvency_score: choice?.solvency_score || 0,
+			IT_score: choice?.IT_score || 0,
+			capacity_score: choice?.capacity_score || 0,
+		});
+	}, [choice]);
 
 	const handleUpdateReveal = (
 		revealIndex: number,
@@ -95,6 +120,18 @@ export const ChoiceEditor = ({
 			interactionEffects: updatedInteractions,
 		});
 	};
+	const handleScoreChange = (
+		scoreKey: keyof Scores,
+		value: string | number
+	) => {
+		setEditingScores((prevScores) => ({
+			...prevScores,
+			[scoreKey]: typeof value === 'number' ? value : parseFloat(value) || 0,
+		}));
+	};
+	const saveScoreChange = (scoreKey: keyof Scores) => {
+		handleUpdateChoice(choiceIndex, { [scoreKey]: editingScores[scoreKey] });
+	};
 
 	return (
 		<div className="bg-gray-900 rounded-xl p-6 shadow-2xl mb-6 border-l-4 border-teal-500">
@@ -125,7 +162,7 @@ export const ChoiceEditor = ({
 				</div>
 				<button
 					onClick={() => handleRemoveChoice(choice.id)}
-					className="text-red-400 hover:text-red-300 transition duration-200"
+					className="text-red-400 cursor-pointer hover:text-red-300 transition duration-200"
 				>
 					<LucideTrash size={20} />
 				</button>
@@ -137,23 +174,11 @@ export const ChoiceEditor = ({
 				}`}
 			>
 				<div className="pt-4">
-					{/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 items-end">
-						<div className="grow">
-							<label className="block text-gray-400 text-sm font-bold mb-1">
-								Duration
-							</label>
-							<input
-								type="number"
-								value={choice.duration ?? ''}
-								onChange={(e) =>
-									handleUpdateChoice(choiceIndex, {
-										duration: parseInt(e.target.value, 10),
-									})
-								}
-								className="w-full bg-gray-700 text-white rounded px-3 py-2"
-							/>
-						</div>
-					</div> */}
+					<ScoreBar
+						editingScores={editingScores}
+						handleScoreChange={handleScoreChange}
+						saveScoreChange={saveScoreChange}
+					/>
 
 					<RevealMessages
 						reveals={choice.reveals}
