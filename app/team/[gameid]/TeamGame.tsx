@@ -1,13 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase/config';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { getTeamSession } from '@/lib/session';
 import TeamBoard from '@/components/TeamBoard';
 import { TeamChoice, Game, Round, Team } from '@/lib/types';
-import RoundTimer from '../components/RoundTimer';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
-import { LucideFileWarning, LucidePresentation } from 'lucide-react';
+import { cardstyle } from '@/app/admin/[gameid]/components/styling';
+import MessageBubble from '@/components/messageBubble';
+
+const pill_layout = 'rounded-2xl mt-3 shadow-lg p-6 flex flex-col items-center';
 
 export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [game, setGame] = useState<Game | null>(null);
@@ -123,43 +125,44 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		currentRound.round_started_at !== null &&
 		currentRound.round_started_at != '';
 	return (
-		<div className="flex items-center justify-center flex-col min-h-screen bg-gradient-to-b from-blue-900 to-blue-950 text-gray-100 px-4">
+		<div className="flex items-center justify-center flex-col min-h-screen px-4">
 			<div className="w-full max-w-md space-y-6 mb-3">
-				{/* Round Info */}
-				<div className="rounded-2xl mt-3 shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
-					{/* <RoundTimer
-						roundDuration={currentRound.round_duration}
-						roundStartedAt={currentRound.round_started_at}
-						confirmed={isChoiceSaved}
-					/> */}
-					<h3 className="text-2xl font-semibold mt-3">
-						{currentRound.round_name}
-					</h3>
+				<div className={cardstyle}>
+					<h3 className="font-semibold mt-3">{currentRound.round_name}</h3>
 				</div>
-				<div className="rounded-2xl shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
-					<h3 className="text-2xl font-semibold mt-3">
-						<LucidePresentation /> Informatie board
-					</h3>
-					<p>
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Officia
-						laudantium quam fugit, hic magnam, ratione voluptatibus unde iure
-						ullam, quo est magni itaque quidem quae reiciendis quia natus?
-						Repudiandae, in.
-					</p>
-				</div>
-				<div className="rounded-2xl shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
-					<h3 className="text-2xl font-semibold mt-3">
-						<LucideFileWarning /> Informatie CEO
-					</h3>
-					<p>
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Officia
-						laudantium quam fugit, hic magnam, ratione voluptatibus unde iure
-						ullam, quo est magni itaque quidem quae reiciendis quia natus?
-						Repudiandae, in.
-					</p>
-				</div>
-				<div className="rounded-2xl shadow-lg bg-white p-5 min-h-[300px] flex flex-col items-center justify-center">
-					<p>Keuzes ronde</p>
+
+				{currentTeam.choices.flatMap((chosenItem) => {
+					// Find the round in the original game data
+					const originalRound = game.rounds?.find(
+						(r) => r.round_id === chosenItem.round_id
+					);
+					if (!originalRound) return [];
+
+					// Find the choice that was made
+					const originalChoice = originalRound.choices?.find(
+						(c) => c.id === chosenItem.choice_id
+					);
+					if (!originalChoice?.reveals) return [];
+
+					return originalChoice.reveals
+						.filter(
+							(reveal) =>
+								chosenItem.roundIndex + (reveal.revealedInRounds - 1) ===
+								game.currentRoundIndex
+						)
+						.map((revealMessage, index) => (
+							<MessageBubble
+								key={index}
+								name="Hoi"
+								time={Date.now().toString()}
+								text={revealMessage.text}
+								image="/portrait.jpg"
+								sent={false}
+							/>
+						));
+				})}
+
+				<div className={cardstyle}>
 					{roundStarted ? (
 						<TeamBoard
 							team={currentTeam}

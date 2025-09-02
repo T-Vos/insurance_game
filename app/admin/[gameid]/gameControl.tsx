@@ -417,7 +417,6 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 								teams={teams}
 								currentRoundIndex={localCurrentRoundIndex}
 								roundChoices={roundChoices}
-								key={'reveladInformation'}
 							/>
 						</div>
 					</>

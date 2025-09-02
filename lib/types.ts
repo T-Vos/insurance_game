@@ -144,4 +144,5 @@ export interface Game {
 export interface RevealMessage {
 	text: string;
 	revealedInRounds: number;
+	revealdForRole?: null | roleType;
 }

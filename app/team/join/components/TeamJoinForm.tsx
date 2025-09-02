@@ -50,8 +50,8 @@ export default function TeamJoinForm() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6 max-w-md mx-auto min-h-screen flex flex-col justify-center border-2 border-gray-300 bg-gray-50 dark:bg-gray-900">
-			<h1 className="text-2xl sm:text-3xl font-bold text-center mb-8 text-gray-900 dark:text-gray-100">
+		<div className="p-4 sm:p-6 max-w-md mx-auto min-h-screen flex flex-col justify-center">
+			<h1 className="text-2xl sm:text-3xl font-bold text-center mb-8">
 				Meedoen
 			</h1>
 			<form onSubmit={handleJoin} className="flex flex-col gap-5">
