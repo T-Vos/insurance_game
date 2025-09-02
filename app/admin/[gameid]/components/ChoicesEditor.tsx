@@ -45,13 +45,15 @@ export const ChoiceEditor = ({
 	);
 
 	useEffect(() => {
-		setEditingScores({
-			expected_profit_score: choice?.expected_profit_score || 0,
-			liquidity_score: choice?.liquidity_score || 0,
-			solvency_score: choice?.solvency_score || 0,
-			IT_score: choice?.IT_score || 0,
-			capacity_score: choice?.capacity_score || 0,
-		});
+		if (!editingScores || Object.keys(editingScores).length === 0) {
+			setEditingScores({
+				expected_profit_score: choice?.expected_profit_score || 0,
+				liquidity_score: choice?.liquidity_score || 0,
+				solvency_score: choice?.solvency_score || 0,
+				IT_score: choice?.IT_score || 0,
+				capacity_score: choice?.capacity_score || 0,
+			});
+		}
 	}, [choice]);
 
 	const handleUpdateReveal = (

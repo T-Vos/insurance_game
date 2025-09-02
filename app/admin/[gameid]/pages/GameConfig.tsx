@@ -150,14 +150,16 @@ const GameConfigHeader = ({
 	});
 
 	useEffect(() => {
-		setEditingName(gameData?.name || '');
-		setEditingScores({
-			expected_profit_score: gameData?.start_expected_profit_score || 0,
-			liquidity_score: gameData?.start_liquidity_score || 0,
-			solvency_score: gameData?.start_solvency_score || 0,
-			IT_score: gameData?.start_IT_score || 0,
-			capacity_score: gameData?.start_capacity_score || 0,
-		});
+		if (!editingScores || Object.keys(editingScores).length === 0) {
+			setEditingName(gameData?.name || '');
+			setEditingScores({
+				expected_profit_score: gameData?.start_expected_profit_score || 0,
+				liquidity_score: gameData?.start_liquidity_score || 0,
+				solvency_score: gameData?.start_solvency_score || 0,
+				IT_score: gameData?.start_IT_score || 0,
+				capacity_score: gameData?.start_capacity_score || 0,
+			});
+		}
 	}, [gameData]);
 
 	const finishEditingName = () => {
