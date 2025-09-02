@@ -8,17 +8,17 @@ import { use } from 'react';
 export default function TeamGamePage({
 	params,
 }: {
-	params: Promise<{ gameId: string }>;
+	params: Promise<{ gameid: string }>;
 }) {
-	const { gameId } = use(params);
+	const { gameid } = use(params);
 
 	// We can now safely check the gameId directly.
-	if (!gameId) {
+	if (!gameid) {
 		// The console logs will now show the correct values.
-		console.log('GAME ID: ' + gameId);
+		console.log('GAME ID: ' + gameid);
 		console.log('Params: ' + JSON.stringify(params));
 		return <div>Invalid game code</div>;
 	}
 
-	return <TeamGame gameId={gameId} />;
+	return <TeamGame gameId={gameid} />;
 }
