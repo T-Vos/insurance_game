@@ -82,7 +82,10 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		setIsBlocked(blockedStatus);
 	}, [game, teamId]);
 
-	const handleSaveChoice = async (teamId: string, roundId: string) => {
+	const handleSaveChoice = async (
+		teamId: Team['id'],
+		roundId: Round['round_id']
+	) => {
 		const res = await fetch(`/api/game/${gameid}/save-choice`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },

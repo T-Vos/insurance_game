@@ -6,6 +6,7 @@ import { Team, TeamChoice } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
 	try {
+		console.log('SAVE CHOICE');
 		const { gameId, teamId, roundId } = await req.json();
 		if (!gameId || !teamId || !roundId) {
 			return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
