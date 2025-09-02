@@ -82,33 +82,17 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		setIsBlocked(blockedStatus);
 	}, [game, teamId]);
 
-	const handleSaveChoice = async (
-		teamId: Team['id'],
-		roundId: Round['round_id']
-	) => {
-		if (!game) return;
-
-		const teamIndex = game.teams.findIndex((t: Team) => t.id === teamId);
-		if (teamIndex === -1) return;
-
-		const team = game.teams[teamIndex];
-		const roundChoiceIndex = team.choices.findIndex(
-			(c: TeamChoice) => c.round_id === roundId
-		);
-		if (roundChoiceIndex === -1) return;
-
-		const updatedChoices = [...team.choices];
-		updatedChoices[roundChoiceIndex] = {
-			...updatedChoices[roundChoiceIndex],
-			saved: true,
-		};
-
-		const updatedTeams = [...game.teams];
-		updatedTeams[teamIndex] = { ...team, choices: updatedChoices };
-
-		await updateDoc(doc(db, 'insurance_game', gameid), {
-			teams: updatedTeams,
+	const handleSaveChoice = async (teamId: string, roundId: string) => {
+		const res = await fetch(`/api/game/${gameid}/save-choice`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ gameId: gameid, teamId, roundId }),
 		});
+
+		const data = await res.json();
+		if (!res.ok) {
+			alert(data.error || 'Failed to save choice');
+		}
 	};
 
 	if (!teamId) return <div>Please log in first.</div>;

@@ -137,7 +137,7 @@ export const ChoiceEditor = ({
 	) => {
 		setEditingScores((prevScores) => ({
 			...prevScores,
-			[scoreKey]: typeof value === 'number' ? value : parseFloat(value) || 0,
+			[scoreKey]: value,
 		}));
 	};
 	const saveScoreChange = (scoreKey: keyof Scores) => {
