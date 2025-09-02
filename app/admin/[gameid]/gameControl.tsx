@@ -160,12 +160,13 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 		const gameDocRef = doc(db, gameDocPath);
 		const updatedRounds = [...(gameData.rounds ?? [])];
 
-		// Reset the current round's finish time
 		updatedRounds[currentRoundIndex].round_finished_at = null;
+		updatedRounds[currentRoundIndex].round_started_at = null;
 
 		const prevRoundIndex = currentRoundIndex - 1;
-		// Optionally reset the previous round's start time
-		updatedRounds[prevRoundIndex].round_started_at = null;
+		updatedRounds[prevRoundIndex].round_started_at = Date.now();
+		updatedRounds[prevRoundIndex].round_finished_at = null;
+
 		setLocalCurrentRoundIndex(prevRoundIndex);
 		const newRoundId =
 			updatedRounds[prevRoundIndex]?.round_id || gameData.currentRoundId;
@@ -526,7 +527,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 								onClick={handlePreviousRound}
 								disabled={currentRoundIndex == 0}
 								className={clsx(
-									`px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300`,
+									`px-4 py-2 flex cursor-pointer items-center justify-center space-x-2 rounded-lg font-medium transition duration-300`,
 									currentRoundIndex == 0
 										? 'bg-gray-300 text-gray-400 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed'
 										: 'bg-blue-500 text-white hover:bg-blue-600'
@@ -538,7 +539,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							<button
 								onClick={handleNextRound}
 								disabled={isLastRound}
-								className={`px-4 py-2 flex items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 ${
+								className={`px-4 py-2 flex cursor-pointer items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 ${
 									isLastRound
 										? 'bg-gray-300 text-gray-400 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed'
 										: 'bg-blue-500 text-white hover:bg-blue-600'
