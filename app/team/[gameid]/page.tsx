@@ -4,9 +4,15 @@ import TeamGame from './TeamGame';
 export default async function TeamGamePage({
 	params,
 }: {
-	params: Promise<{ gameId: string }>;
+	params: { gameId: string };
 }) {
 	const { gameId } = await params;
-	if (!gameId) return <div>Invalid game code</div>;
+
+	if (!gameId) {
+		console.log('GAME ID' + gameId);
+		console.log('Paramas' + params);
+		return <div>Invalid game code</div>;
+	}
+
 	return <TeamGame gameId={gameId} />;
 }
