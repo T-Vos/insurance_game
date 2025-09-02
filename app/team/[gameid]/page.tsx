@@ -1,12 +1,16 @@
+'use client';
+
 import React from 'react';
 import TeamGame from './TeamGame';
 
-export default async function TeamGamePage({
+import { use } from 'react';
+
+export default function TeamGamePage({
 	params,
 }: {
 	params: Promise<{ gameId: string }>;
 }) {
-	const { gameId } = await params;
+	const { gameId } = use(params);
 
 	// We can now safely check the gameId directly.
 	if (!gameId) {
