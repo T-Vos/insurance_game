@@ -43,8 +43,9 @@ export default function TeamBoard({
 			<div className="mt-4 space-y-3">
 				{currentRound.choices.map((choice: Choice, index: number) => {
 					const isSelected = selectedChoice?.choice_id === choice.id;
+					const isSaved = isSelected && selectedChoice.saved;
 					const letter = letters[index];
-					return choiceButton(choice, isSelected, letter);
+					return choiceButton(choice, isSelected, letter, isSaved);
 				})}
 			</div>
 			{handleSaveChoice && (
@@ -69,13 +70,15 @@ export default function TeamBoard({
 	function choiceButton(
 		choice: Choice,
 		isSelected: boolean,
-		letter: string
+		letter: string,
+		isSaved?: boolean
 	): React.JSX.Element {
 		const buttonClasses = clsx(
 			'relative w-full text-left py-3 px-4 rounded-lg transition-all duration-200 flex justify-between items-center group',
 			'enabled:hover:bg-gray-100 enabled:cursor-pointer',
 			'dark:text-gray-200 dark:hover:bg-gray-600 dark:bg-gray-700 enabled:dark:hover:bg-gray-600',
 			isSelected && 'shadow-md',
+			isSaved && 'border-2 border-yellow-400',
 			_Disabled && 'opacity-50'
 		);
 

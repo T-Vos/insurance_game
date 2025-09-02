@@ -5,6 +5,7 @@ import {
 	LucideComputer,
 	LucideUsersRound,
 } from 'lucide-react';
+
 export const scoreTypes = [
 	{ name: 'expected_profit_score', icon: LucideHandCoins },
 	{ name: 'liquidity_score', icon: LucideDroplet },

@@ -41,6 +41,7 @@ const GameConfig = ({
 	}, [currentRound]);
 
 	const saveChoices = () => {
+		console.log('SAVE CHOICE');
 		handleUpdateRound({
 			...currentRound,
 			choices: editingChoices,
@@ -83,6 +84,7 @@ const GameConfig = ({
 			liquidity_score: 0,
 			solvency_score: 0,
 			blockeding_circumstances: [],
+			delayedEffect: [],
 		};
 		setEditingChoices((prevChoices) => [...prevChoices, newChoice]);
 	};
@@ -337,7 +339,7 @@ const RoundConfig = ({
 						onClick={() => setIsEditingName(true)}
 						title="Click to edit round name"
 					>
-						Round {roundIndex + 1}: {roundData.round_name}
+						{roundData.round_name}
 						<LucidePenTool size={18} className="text-gray-400" />
 					</h2>
 				)}

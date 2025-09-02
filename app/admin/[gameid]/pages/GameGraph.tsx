@@ -11,11 +11,14 @@ const scoreTypes = [
 ] as const;
 
 type GameScoresTableProps = {
-	game: Game;
+	game?: Game | null;
 };
 
 const GameGraphs = ({ game }: GameScoresTableProps) => {
+	if (!game) return <div>Geen spel gevonden</div>;
 	const { rounds, teams } = game;
+	if (!rounds) return <div>Geen rondes gevonden</div>;
+	if (!teams) return <div>Geen teams gevonden</div>;
 
 	// Calculate scores per team per round
 	const scoresPerTeamPerRound: Record<

@@ -7,6 +7,7 @@ import TeamBoard from '@/components/TeamBoard';
 import { TeamChoice, Game, Round, Team } from '@/lib/types';
 import RoundTimer from '../components/RoundTimer';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
+import { LucideFileWarning, LucidePresentation } from 'lucide-react';
 
 export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [game, setGame] = useState<Game | null>(null);
@@ -123,27 +124,48 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		currentRound.round_started_at != '';
 	return (
 		<div className="flex items-center justify-center flex-col min-h-screen bg-gradient-to-b from-blue-900 to-blue-950 text-gray-100 px-4">
-			<div className="w-full max-w-md space-y-6">
+			<div className="w-full max-w-md space-y-6 mb-3">
 				{/* Round Info */}
-				<div className="rounded-2xl shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
-					<RoundTimer
+				<div className="rounded-2xl mt-3 shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
+					{/* <RoundTimer
 						roundDuration={currentRound.round_duration}
 						roundStartedAt={currentRound.round_started_at}
 						confirmed={isChoiceSaved}
-					/>
+					/> */}
 					<h3 className="text-2xl font-semibold mt-3">
 						{currentRound.round_name}
 					</h3>
 				</div>
-				{/* Choices Section */}
-				<div className="rounded-2xl shadow-lg bg-white p-5 min-h-[300px] flex items-center justify-center">
+				<div className="rounded-2xl shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
+					<h3 className="text-2xl font-semibold mt-3">
+						<LucidePresentation /> Informatie board
+					</h3>
+					<p>
+						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Officia
+						laudantium quam fugit, hic magnam, ratione voluptatibus unde iure
+						ullam, quo est magni itaque quidem quae reiciendis quia natus?
+						Repudiandae, in.
+					</p>
+				</div>
+				<div className="rounded-2xl shadow-lg p-6 bg-white text-gray-800 flex flex-col items-center">
+					<h3 className="text-2xl font-semibold mt-3">
+						<LucideFileWarning /> Informatie CEO
+					</h3>
+					<p>
+						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Officia
+						laudantium quam fugit, hic magnam, ratione voluptatibus unde iure
+						ullam, quo est magni itaque quidem quae reiciendis quia natus?
+						Repudiandae, in.
+					</p>
+				</div>
+				<div className="rounded-2xl shadow-lg bg-white p-5 min-h-[300px] flex flex-col items-center justify-center">
+					<p>Keuzes ronde</p>
 					{roundStarted ? (
 						<TeamBoard
 							team={currentTeam}
 							currentRound={currentRound}
-							handleSelectChoice={
-								(teamId, roundId, choice) =>
-									handleSelectChoice(gameid, teamId, roundId, choice) // <-- Update this line
+							handleSelectChoice={(teamId, roundId, choice) =>
+								handleSelectChoice(gameid, teamId, roundId, choice)
 							}
 							handleSaveChoice={handleSaveChoice}
 							disabled={isBlocked}
@@ -154,7 +176,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 						</div>
 					)}
 				</div>
-				{isBlocked ? 'geblocked' : 'niet geblocked'}
 			</div>
 		</div>
 	);

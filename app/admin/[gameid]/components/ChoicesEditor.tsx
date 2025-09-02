@@ -186,9 +186,12 @@ export const ChoiceEditor = ({
 		field: keyof delayedEffect,
 		value: string | number
 	) => {
+		console.log('update');
 		const updatedEffects = [...(choice.delayedEffect || [])];
-		const parsedValue =
-			typeof value === 'string' ? parseFloat(value) || 0 : value;
+		let parsedValue = value;
+		if (field != 'effective_round') {
+			parsedValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+		}
 
 		updatedEffects[effectIndex] = {
 			...updatedEffects[effectIndex],
@@ -203,6 +206,7 @@ export const ChoiceEditor = ({
 			(_, index) => index !== effectIndex
 		);
 		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
+		handleSaveChoice();
 	};
 
 	return (
@@ -258,6 +262,7 @@ export const ChoiceEditor = ({
 						handleUpdateReveal={handleUpdateReveal}
 						handleRemoveReveal={handleRemoveReveal}
 						handleAddReveal={handleAddReveal}
+						handleSaveReveal={handleSaveChoice}
 					/>
 
 					<InteractionEffects
@@ -266,11 +271,12 @@ export const ChoiceEditor = ({
 						handleUpdateInteraction={handleUpdateInteraction}
 						handleRemoveInteraction={handleRemoveInteraction}
 						handleAddInteraction={handleAddInteraction}
+						handleSaveInteraction={handleSaveChoice}
 					/>
 					<DurationEffect
 						editingDuration={editingDuration}
 						handleDurationChange={handleDurationChange}
-						saveDurationChange={saveDurationChange}
+						saveDurationChange={handleSaveChoice}
 					/>
 					<DelayedEffects
 						delayedEffects={choice.delayedEffect}
@@ -278,6 +284,7 @@ export const ChoiceEditor = ({
 						handleUpdateDelayedEffect={handleUpdateDelayedEffect}
 						handleRemoveDelayedEffect={handleRemoveDelayedEffect}
 						handleAddDelayedEffect={handleAddDelayedEffect}
+						handleSaveEffect={handleSaveChoice}
 					/>
 				</div>
 			</div>
@@ -295,6 +302,7 @@ type DelayedEffectsProps = {
 	) => void;
 	handleRemoveDelayedEffect: (effectIndex: number) => void;
 	handleAddDelayedEffect: () => void;
+	handleSaveEffect: () => void;
 };
 
 const DelayedEffects = ({
@@ -303,6 +311,7 @@ const DelayedEffects = ({
 	handleUpdateDelayedEffect,
 	handleRemoveDelayedEffect,
 	handleAddDelayedEffect,
+	handleSaveEffect,
 }: DelayedEffectsProps) => {
 	const scoreKeys: (keyof Scores)[] = [
 		'expected_profit_score',
@@ -331,6 +340,7 @@ const DelayedEffects = ({
 										e.target.value
 									)
 								}
+								onBlur={handleSaveEffect}
 								className="w-full bg-gray-700 text-white rounded px-3 py-2"
 							>
 								<option value="" disabled>
@@ -368,6 +378,7 @@ const DelayedEffects = ({
 											e.target.value
 										)
 									}
+									onBlur={handleSaveEffect}
 									className="w-full bg-gray-700 text-white rounded px-3 py-2"
 								/>
 							</div>
@@ -395,6 +406,7 @@ type RevealMessagesProps = {
 	) => void;
 	handleRemoveReveal: (revealIndex: number) => void;
 	handleAddReveal: () => void;
+	handleSaveReveal: () => void;
 };
 
 const RevealMessages = ({
@@ -402,6 +414,7 @@ const RevealMessages = ({
 	handleUpdateReveal,
 	handleRemoveReveal,
 	handleAddReveal,
+	handleSaveReveal,
 }: RevealMessagesProps) => {
 	return (
 		<div className="mt-6">
@@ -415,6 +428,7 @@ const RevealMessages = ({
 						onChange={(e) =>
 							handleUpdateReveal(revealIndex, 'text', e.target.value)
 						}
+						onBlur={handleSaveReveal}
 						className="flex-grow dark:bg-gray-700 text-white rounded px-3 py-2"
 					/>
 					<input
@@ -428,6 +442,7 @@ const RevealMessages = ({
 								e.target.value
 							)
 						}
+						onBlur={handleSaveReveal}
 						className="w-20 bg-gray-700 text-white rounded px-3 py-2"
 					/>
 					<button
@@ -459,6 +474,7 @@ type InteractionEffectsProps = {
 	) => void;
 	handleRemoveInteraction: (interactionIndex: number) => void;
 	handleAddInteraction: () => void;
+	handleSaveInteraction: () => void;
 };
 
 const InteractionEffects = ({
@@ -467,6 +483,7 @@ const InteractionEffects = ({
 	handleUpdateInteraction,
 	handleRemoveInteraction,
 	handleAddInteraction,
+	handleSaveInteraction,
 }: InteractionEffectsProps) => {
 	return (
 		<div className="mt-6">
@@ -579,7 +596,7 @@ const DurationEffect = ({
 	saveDurationChange,
 }: DurationEffectProps) => {
 	return (
-		<div className="p-3">
+		<div className="">
 			<h4 className="text-lg font-bold text-gray-300 mb-2">Duration effect</h4>
 			<input
 				type="number"
