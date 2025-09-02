@@ -8,6 +8,7 @@ interface TeamBoardProps {
 	team: Team;
 	currentRound: Round;
 	isAdminView?: boolean;
+	disabled?: boolean;
 	handleSelectChoice: (
 		teamId: Team['id'],
 		roundId: Round['round_id'],
@@ -19,6 +20,7 @@ export default function TeamBoard({
 	team,
 	currentRound,
 	isAdminView = false,
+	disabled = false,
 	handleSelectChoice,
 	handleSaveChoice,
 }: TeamBoardProps) {
@@ -30,6 +32,8 @@ export default function TeamBoard({
 
 	const _Disabled: boolean = isAdminView
 		? false
+		: disabled
+		? disabled
 		: selectedChoice?.saved ?? false;
 
 	return (

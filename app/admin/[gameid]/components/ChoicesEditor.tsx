@@ -38,6 +38,10 @@ export const ChoiceEditor = ({
 		capacity_score: choice?.capacity_score || 0,
 	});
 
+	const [editingDuration, setEditingDuration] = useState<number | string>(
+		choice?.duration || 0
+	);
+
 	useEffect(() => {
 		setEditingScores({
 			expected_profit_score: choice?.expected_profit_score || 0,
@@ -135,7 +139,23 @@ export const ChoiceEditor = ({
 		}));
 	};
 	const saveScoreChange = (scoreKey: keyof Scores) => {
-		handleUpdateChoice(choiceIndex, { [scoreKey]: editingScores[scoreKey] });
+		const _score =
+			typeof editingScores[scoreKey] === 'number'
+				? editingScores[scoreKey]
+				: parseFloat(editingScores[scoreKey]) || 0;
+		handleUpdateChoice(choiceIndex, { [scoreKey]: _score });
+	};
+
+	const handleDurationChange = (value: string | number) => {
+		setEditingDuration(value);
+	};
+	const saveDurationChange = (scoreKey: string) => {
+		handleUpdateChoice(choiceIndex, {
+			['duration']:
+				typeof editingDuration === 'string'
+					? parseFloat(editingDuration) || 0
+					: editingDuration,
+		});
 	};
 
 	return (
@@ -198,6 +218,11 @@ export const ChoiceEditor = ({
 						handleUpdateInteraction={handleUpdateInteraction}
 						handleRemoveInteraction={handleRemoveInteraction}
 						handleAddInteraction={handleAddInteraction}
+					/>
+					<DurationEffect
+						editingDuration={editingDuration}
+						handleDurationChange={handleDurationChange}
+						saveDurationChange={saveDurationChange}
 					/>
 				</div>
 			</div>
@@ -382,6 +407,31 @@ const InteractionEffects = ({
 				<LucidePlus size={18} />
 				<span>Add Interaction Effect</span>
 			</button>
+		</div>
+	);
+};
+
+type DurationEffectProps = {
+	editingDuration?: number | string | null;
+	handleDurationChange: (scoreKey: string, value: string | number) => void;
+	saveDurationChange: (scoreKey: string) => void;
+};
+
+const DurationEffect = ({
+	editingDuration,
+	handleDurationChange,
+	saveDurationChange,
+}: DurationEffectProps) => {
+	return (
+		<div className="mt-6">
+			<h4 className="text-lg font-bold text-gray-300 mb-2">Duration effect</h4>
+			<input
+				type="number"
+				value={editingDuration || 0}
+				onChange={(e) => handleDurationChange('duration', e.target.value)}
+				onBlur={() => saveDurationChange('duration')}
+				className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+			/>
 		</div>
 	);
 };

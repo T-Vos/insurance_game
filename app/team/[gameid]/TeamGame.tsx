@@ -11,6 +11,7 @@ import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 export default function TeamGame({ gameId }: { gameId: string }) {
 	const [game, setGame] = useState<Game | null>(null);
 	const [teamId, setTeamId] = useState<string | null>(null);
+	const [isBlocked, setIsBlocked] = useState<boolean>(false);
 
 	const { handleSelectChoice } = useSelectChoice(game);
 
@@ -36,6 +37,50 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 
 		return () => unsubscribe();
 	}, [gameId]);
+
+	useEffect(() => {
+		if (!game || !teamId || !game.rounds) {
+			setIsBlocked(false);
+			return;
+		}
+
+		const currentTeam = game.teams.find((t: Team) => t.id === teamId);
+		if (!currentTeam || !currentTeam.choices) {
+			setIsBlocked(false);
+			return;
+		}
+
+		// Iterate through choices to find the latest one that might be blocking
+		let blockedStatus = false;
+		for (let i = currentTeam.choices.length - 1; i >= 0; i--) {
+			const teamChoice = currentTeam.choices[i];
+
+			// Find the full choice object from the game data
+			const roundWithChoice = game.rounds.find(
+				(r) => r.round_id === teamChoice.round_id
+			);
+
+			if (!roundWithChoice || !roundWithChoice.choices) {
+				setIsBlocked(false);
+				continue;
+			}
+
+			const choiceDetails = roundWithChoice.choices.find(
+				(c) => c.id === teamChoice.choice_id
+			);
+
+			if (choiceDetails?.duration && choiceDetails.duration > 0) {
+				// The current round index is relative to the round where the choice was made
+				const roundsSinceChoice =
+					game.currentRoundIndex - teamChoice.roundIndex;
+				if (roundsSinceChoice < choiceDetails.duration) {
+					blockedStatus = true;
+					break;
+				}
+			}
+		}
+		setIsBlocked(blockedStatus);
+	}, [game, teamId]);
 
 	const handleSaveChoice = async (
 		teamId: Team['id'],
@@ -110,6 +155,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 							currentRound={currentRound}
 							handleSelectChoice={handleSelectChoice}
 							handleSaveChoice={handleSaveChoice}
+							disabled={isBlocked}
 						/>
 					) : (
 						<div className="text-center animate-pulse text-gray-600">
