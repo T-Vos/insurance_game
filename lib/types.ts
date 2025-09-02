@@ -119,6 +119,16 @@ export interface Game {
 	start_solvency_score?: number;
 	start_IT_score?: number;
 	start_capacity_score?: number;
+	critical_expected_profit_score?: number;
+	critical_liquidity_score?: number;
+	critical_solvency_score?: number;
+	critical_IT_score?: number;
+	critical_capacity_score?: number;
+	gameover_expected_profit_score?: number;
+	gameover_liquidity_score?: number;
+	gameover_solvency_score?: number;
+	gameover_IT_score?: number;
+	gameover_capacity_score?: number;
 }
 
 /**
