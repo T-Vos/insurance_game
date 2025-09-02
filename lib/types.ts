@@ -15,6 +15,12 @@ export const scoreTypes = [
 ] as const;
 export type ScoreType = (typeof scoreTypes)[number]['name'];
 
+export const roleTypes = [
+	{ name: 'CEO', icon: LucideHandCoins },
+	{ name: 'CFO', icon: LucideDroplet },
+] as const;
+export type roleType = (typeof roleTypes)[number]['name'];
+
 /**
  * Represents the different pages or views in the application.
  */

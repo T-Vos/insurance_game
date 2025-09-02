@@ -10,6 +10,7 @@ import { ArrowRight, Paperclip, Pencil, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import Tooltip from '@/components/Tooltip';
 import Link from 'next/link';
+import { copyRuleSetHook } from '@/lib/game_management';
 export default function AdminDashboard() {
 	const [games, setGames] = useState<Game[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -71,8 +72,10 @@ export default function AdminDashboard() {
 		router.push(`/admin/${docRef.id}`);
 	};
 
-	const copyRuleSet = (game: Game) => {
-		console.log('Change game name for:', game);
+	const copyRuleSet = async (game: Game) => {
+		const newName = `Kopie van ${game.name}`;
+		const newGame = await copyRuleSetHook(game, newName);
+		router.push(`/admin/${newGame.id}`);
 	};
 
 	const changeGameName = (game: Game) => {
