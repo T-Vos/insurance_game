@@ -30,7 +30,11 @@ export default function TeamBoard({
 		(c: TeamChoice) => c.round_id === currentRound.round_id
 	);
 
-	const _Disabled: boolean = disabled;
+	const _Disabled: boolean = isAdminView
+		? false
+		: disabled
+		? disabled
+		: selectedChoice?.saved ?? false;
 
 	return (
 		<div className="">

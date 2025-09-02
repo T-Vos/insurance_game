@@ -17,6 +17,7 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 		start_IT_score,
 		start_capacity_score,
 	} = gameData;
+
 	// Helper function to find a choice's data from a given round
 	const findChoice = (
 		targetRoundId: string | number,
@@ -67,7 +68,7 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 				);
 
 				if (choiceData) {
-					// Check if the choice's effect is still active
+					// Check if the choice's immediate effect is still active
 					const duration = choiceData.duration;
 					const isChoiceActive =
 						duration === undefined ||
@@ -75,17 +76,41 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 						i < teamChoiceInRound.roundIndex + duration;
 
 					if (isChoiceActive) {
-						// 2. Apply the choice-specific score changes
+						// 2. Apply the choice-specific immediate score changes
 						finalScores.expected_profit_score +=
 							choiceData.expected_profit_score || 0;
 						finalScores.liquidity_score += choiceData.liquidity_score || 0;
 						finalScores.solvency_score += choiceData.solvency_score || 0;
 						finalScores.IT_score += choiceData.IT_score || 0;
-						// Capacity score is a bit different, let's treat it as a resource
 						finalScores.capacity_score -= choiceData.capacity_score || 0;
 					}
 				}
 			}
+
+			// --- NEW LOGIC FOR DELAYED EFFECTS ---
+			// Iterate through all of the team's past choices to check for delayed effects
+			team.choices.forEach((pastChoice) => {
+				const choiceData = findChoice(
+					pastChoice.round_id,
+					pastChoice.choice_id
+				);
+
+				if (choiceData?.delayedEffect) {
+					// Check if any delayed effect in this choice is effective in the current round
+					choiceData.delayedEffect.forEach((effect) => {
+						if (effect.effective_round === currentRound.round_id) {
+							// Apply the delayed score changes
+							finalScores.expected_profit_score +=
+								effect.expected_profit_score || 0;
+							finalScores.liquidity_score += effect.liquidity_score || 0;
+							finalScores.solvency_score += effect.solvency_score || 0;
+							finalScores.IT_score += effect.IT_score || 0;
+							finalScores.capacity_score -= effect.capacity_score || 0; // Assuming capacity is also a cost
+						}
+					});
+				}
+			});
+			// --- END NEW LOGIC ---
 		}
 
 		// Return the new team object with the calculated scores

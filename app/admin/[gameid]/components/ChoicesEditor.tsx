@@ -4,6 +4,7 @@ import {
 	RevealMessage,
 	InteractionEffect,
 	Scores,
+	delayedEffect,
 } from '@/lib/types';
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -167,6 +168,43 @@ export const ChoiceEditor = ({
 		handleSaveChoice();
 	};
 
+	const handleAddDelayedEffect = () => {
+		const newEffect: delayedEffect = {
+			effective_round: roundChoices[0]?.round_id || '',
+			expected_profit_score: 0,
+			liquidity_score: 0,
+			solvency_score: 0,
+			IT_score: 0,
+			capacity_score: 0,
+		};
+		const updatedEffects = [...(choice.delayedEffect || []), newEffect];
+		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
+	};
+
+	const handleUpdateDelayedEffect = (
+		effectIndex: number,
+		field: keyof delayedEffect,
+		value: string | number
+	) => {
+		const updatedEffects = [...(choice.delayedEffect || [])];
+		const parsedValue =
+			typeof value === 'string' ? parseFloat(value) || 0 : value;
+
+		updatedEffects[effectIndex] = {
+			...updatedEffects[effectIndex],
+			[field]: parsedValue,
+		};
+
+		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
+	};
+
+	const handleRemoveDelayedEffect = (effectIndex: number) => {
+		const updatedEffects = (choice.delayedEffect || []).filter(
+			(_, index) => index !== effectIndex
+		);
+		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
+	};
+
 	return (
 		<div className="bg-gray-900 rounded-xl p-6 shadow-2xl mb-6 border-l-4 border-teal-500">
 			<div className="flex gap-4 items-center mb-4">
@@ -234,8 +272,116 @@ export const ChoiceEditor = ({
 						handleDurationChange={handleDurationChange}
 						saveDurationChange={saveDurationChange}
 					/>
+					<DelayedEffects
+						delayedEffects={choice.delayedEffect}
+						roundChoices={roundChoices}
+						handleUpdateDelayedEffect={handleUpdateDelayedEffect}
+						handleRemoveDelayedEffect={handleRemoveDelayedEffect}
+						handleAddDelayedEffect={handleAddDelayedEffect}
+					/>
 				</div>
 			</div>
+		</div>
+	);
+};
+
+type DelayedEffectsProps = {
+	delayedEffects?: delayedEffect[];
+	roundChoices: Round[];
+	handleUpdateDelayedEffect: (
+		effectIndex: number,
+		field: keyof delayedEffect,
+		value: string | number
+	) => void;
+	handleRemoveDelayedEffect: (effectIndex: number) => void;
+	handleAddDelayedEffect: () => void;
+};
+
+const DelayedEffects = ({
+	delayedEffects,
+	roundChoices,
+	handleUpdateDelayedEffect,
+	handleRemoveDelayedEffect,
+	handleAddDelayedEffect,
+}: DelayedEffectsProps) => {
+	const scoreKeys: (keyof Scores)[] = [
+		'expected_profit_score',
+		'liquidity_score',
+		'solvency_score',
+		'IT_score',
+		'capacity_score',
+	];
+
+	return (
+		<div className="mt-6">
+			<h4 className="text-lg font-bold text-gray-300 mb-2">Delayed Effects</h4>
+			{(delayedEffects || []).map((effect, effectIndex) => (
+				<div key={effectIndex} className="bg-gray-800 p-4 rounded-lg mb-2">
+					<div className="flex items-center justify-between mb-4">
+						<div className="grow mr-4">
+							<label className="block text-gray-400 text-sm font-bold mb-1">
+								Effective Round
+							</label>
+							<select
+								value={effect.effective_round}
+								onChange={(e) =>
+									handleUpdateDelayedEffect(
+										effectIndex,
+										'effective_round',
+										e.target.value
+									)
+								}
+								className="w-full bg-gray-700 text-white rounded px-3 py-2"
+							>
+								<option value="" disabled>
+									Select a round
+								</option>
+								{roundChoices.map((round) => (
+									<option key={round.round_id} value={round.round_id}>
+										{round.round_name}
+									</option>
+								))}
+							</select>
+						</div>
+						<button
+							onClick={() => handleRemoveDelayedEffect(effectIndex)}
+							className="text-red-400 hover:text-red-300 transition duration-200"
+						>
+							<LucideTrash size={18} />
+						</button>
+					</div>
+
+					{/* Score inputs for the delayed effect */}
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+						{scoreKeys.map((scoreKey) => (
+							<div key={scoreKey}>
+								<label className="block text-gray-400 text-sm font-bold mb-1">
+									{scoreKey.replace(/_/g, ' ').replace('score', '')}
+								</label>
+								<input
+									type="number"
+									value={effect[scoreKey]}
+									onChange={(e) =>
+										handleUpdateDelayedEffect(
+											effectIndex,
+											scoreKey,
+											e.target.value
+										)
+									}
+									className="w-full bg-gray-700 text-white rounded px-3 py-2"
+								/>
+							</div>
+						))}
+					</div>
+				</div>
+			))}
+			<button
+				onClick={handleAddDelayedEffect}
+				className="flex items-center space-x-2 text-teal-400 hover:text-teal-300 transition duration-200 mt-2"
+			>
+				<LucidePlus size={18} />
+				<span>Add Delayed Effect</span>
+			</button>
 		</div>
 	);
 };

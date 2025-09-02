@@ -26,6 +26,11 @@ export interface Choice extends Scores {
 	interactionEffects?: InteractionEffect[];
 	choice_index?: number | null;
 	blockeding_circumstances?: blockedingCircumstance[]; // Circumstances that block the choice
+	delayedEffect?: delayedEffect[];
+}
+
+export interface delayedEffect extends Scores {
+	effective_round: Round['round_id'];
 }
 
 export interface blockedingCircumstance {
