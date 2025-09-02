@@ -97,7 +97,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 					setIsGameRunning(roundRunning);
 
-					setLocalCurrentRoundIndex(data.currentRoundIndex || 0);
+					// setLocalCurrentRoundIndex(data.currentRoundIndex || 0);
 				}
 				setLoading(false);
 			},
@@ -109,6 +109,12 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 		return () => unsubscribe();
 	}, [db, gameDocPath]);
+
+	useEffect(() => {
+		if (gameData?.rounds && localCurrentRoundIndex >= gameData.rounds.length) {
+			setLocalCurrentRoundIndex(0);
+		}
+	}, [gameData?.rounds?.length]);
 
 	const handleStartGame = async () => {
 		if (!db || !gameData || isGameRunning) return;

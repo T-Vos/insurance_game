@@ -32,19 +32,22 @@ const GameConfig = ({
 	const [editingChoices, setEditingChoices] = useState<Choice[]>([]);
 
 	useEffect(() => {
-		if (currentRound) {
+		if (
+			currentRound &&
+			JSON.stringify(currentRound.choices) !== JSON.stringify(editingChoices)
+		) {
 			setEditingChoices(currentRound.choices || []);
 		}
 	}, [currentRound]);
 
-	useEffect(() => {
-		if (editingChoices.length > 0) {
-			handleUpdateRound({
-				...currentRound,
-				choices: editingChoices,
-			});
-		}
-	}, [editingChoices]);
+	// useEffect(() => {
+	// 	if (editingChoices.length > 0) {
+	// 		handleUpdateRound({
+	// 			...currentRound,
+	// 			choices: editingChoices,
+	// 		});
+	// 	}
+	// }, [editingChoices]);
 
 	if (!currentRound) {
 		return (
