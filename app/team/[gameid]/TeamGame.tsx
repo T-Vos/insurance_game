@@ -86,6 +86,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		teamId: Team['id'],
 		roundId: Round['round_id']
 	) => {
+		console.log('SAVING TO' + `/api/game/${gameid}/save-choice`);
 		const res = await fetch(`/api/game/${gameid}/save-choice`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -131,14 +132,16 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 						{currentRound.round_name}
 					</h3>
 				</div>
-
 				{/* Choices Section */}
 				<div className="rounded-2xl shadow-lg bg-white p-5 min-h-[300px] flex items-center justify-center">
 					{roundStarted ? (
 						<TeamBoard
 							team={currentTeam}
 							currentRound={currentRound}
-							handleSelectChoice={handleSelectChoice}
+							handleSelectChoice={
+								(teamId, roundId, choice) =>
+									handleSelectChoice(gameid, teamId, roundId, choice) // <-- Update this line
+							}
 							handleSaveChoice={handleSaveChoice}
 							disabled={isBlocked}
 						/>
@@ -148,6 +151,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 						</div>
 					)}
 				</div>
+				Game Id {gameid}
 			</div>
 		</div>
 	);
