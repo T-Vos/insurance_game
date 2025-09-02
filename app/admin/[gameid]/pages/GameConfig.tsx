@@ -95,6 +95,7 @@ const GameConfig = ({
 
 	return (
 		<div className="flex flex-col gap-3">
+			{JSON.stringify(editingChoices)}
 			<h3 className="text-lg font-semibold text-gray-400">Spel settings</h3>
 			<GameConfigHeader
 				handleAddRound={handleAddRound}

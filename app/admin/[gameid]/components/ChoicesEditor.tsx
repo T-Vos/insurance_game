@@ -156,11 +156,13 @@ export const ChoiceEditor = ({
 	};
 
 	const saveDurationChange = () => {
+		const _duration =
+			typeof editingDuration === 'number'
+				? editingDuration
+				: parseFloat(editingDuration) || 0;
+
 		handleUpdateChoice(choiceIndex, {
-			['duration']:
-				typeof editingDuration === 'string'
-					? parseFloat(editingDuration) || 0
-					: editingDuration,
+			['duration']: _duration,
 		});
 		handleSaveChoice();
 	};
