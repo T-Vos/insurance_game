@@ -1,3 +1,18 @@
+import {
+	LucideHandCoins,
+	LucideDroplet,
+	LucidePiggyBank,
+	LucideComputer,
+	LucideUsersRound,
+} from 'lucide-react';
+export const scoreTypes = [
+	{ name: 'expected_profit_score', icon: LucideHandCoins },
+	{ name: 'liquidity_score', icon: LucideDroplet },
+	{ name: 'solvency_score', icon: LucidePiggyBank },
+	{ name: 'IT_score', icon: LucideComputer },
+	{ name: 'capacity_score', icon: LucideUsersRound },
+] as const;
+
 /**
  * Represents the different pages or views in the application.
  */
@@ -5,6 +20,7 @@ export enum PageState {
 	ROUNDS = 'ROUNDS',
 	RULES_CONFIG = 'RULES_CONFIG',
 	TEAMS_CONFIG = 'TEAMS_CONFIG',
+	CHART = 'CHART',
 }
 
 export interface Scores {

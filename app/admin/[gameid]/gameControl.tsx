@@ -8,6 +8,7 @@ import {
 	LucideChevronRight,
 	LucideSquare,
 	LucideChevronLeft,
+	LucideChartArea,
 } from 'lucide-react';
 import { PageState, Game, Team, Round } from '@/lib/types';
 import GameRounds from './pages/GameRounds';
@@ -28,6 +29,7 @@ import clsx from 'clsx';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 import { useRouter } from 'next/navigation';
 import useGameControls from '@/app/hooks/gameControls';
+import GameGraphs from './pages/GameGraph';
 
 const menuItems = [
 	{ name: 'Game Rounds', state: PageState.ROUNDS, icon: LucideHome },
@@ -37,6 +39,7 @@ const menuItems = [
 		icon: LucideSettings,
 	},
 	{ name: 'Team Config', state: PageState.TEAMS_CONFIG, icon: LucideUsers },
+	{ name: 'Score graphs', state: PageState.CHART, icon: LucideChartArea },
 ];
 
 const GameControl = ({ gameId }: { gameId: string }) => {
@@ -440,6 +443,8 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 						handleUpdateTeam={handleUpdateTeam}
 					/>
 				);
+			case PageState.CHART:
+				return <GameGraphs game={gameData} />;
 			default:
 				return null;
 		}
@@ -524,6 +529,18 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 					{isGameRunning && (
 						<>
 							<button
+								onClick={handleNextRound}
+								disabled={isLastRound}
+								className={`px-4 py-2 flex cursor-pointer items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 ${
+									isLastRound
+										? 'bg-gray-300 text-gray-400 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed'
+										: 'bg-blue-500 text-white hover:bg-blue-600'
+								}`}
+							>
+								<span>Volgende ronde</span>
+								<LucideChevronRight size={18} />
+							</button>
+							<button
 								onClick={handlePreviousRound}
 								disabled={currentRoundIndex == 0}
 								className={clsx(
@@ -535,18 +552,6 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							>
 								<span>Vorige ronde</span>
 								<LucideChevronLeft size={18} />
-							</button>
-							<button
-								onClick={handleNextRound}
-								disabled={isLastRound}
-								className={`px-4 py-2 flex cursor-pointer items-center justify-center space-x-2 rounded-lg font-medium transition duration-300 ${
-									isLastRound
-										? 'bg-gray-300 text-gray-400 dark:bg-gray-600 dark:text-gray-400 cursor-not-allowed'
-										: 'bg-blue-500 text-white hover:bg-blue-600'
-								}`}
-							>
-								<span>Volgende ronde</span>
-								<LucideChevronRight size={18} />
 							</button>
 						</>
 					)}

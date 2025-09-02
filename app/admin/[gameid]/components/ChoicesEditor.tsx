@@ -408,14 +408,14 @@ const RevealMessages = ({
 			<h4 className="text-lg font-bold text-gray-300 mb-2">Reveal Messages</h4>
 			{(reveals || []).map((reveal, revealIndex) => (
 				<div key={revealIndex} className="flex items-center space-x-2 mb-2">
-					<input
-						type="text"
+					<textarea
 						value={reveal.text}
+						rows={5}
 						placeholder="Reveal message text"
 						onChange={(e) =>
 							handleUpdateReveal(revealIndex, 'text', e.target.value)
 						}
-						className="flex-grow bg-gray-700 text-white rounded px-3 py-2"
+						className="flex-grow dark:bg-gray-700 text-white rounded px-3 py-2"
 					/>
 					<input
 						type="number"

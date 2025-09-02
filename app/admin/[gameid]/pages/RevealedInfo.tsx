@@ -15,7 +15,7 @@ const RevealedInfo = ({
 	roundChoices,
 }: RevealedInfoProps) => {
 	return (
-		<>TODO</>
+		<>TODO: Informatie</>
 		// <div className="mt-8 p-6 bg-gray-800 rounded-lg shadow-inner">
 		// 	<h2 className="text-2xl font-bold text-teal-400 mb-4">
 		// 		Revealed Information
