@@ -34,37 +34,25 @@ export default function TeamJoinForm() {
 		}
 
 		setJoining(true);
-		const q = query(
-			collection(db, 'insurance_game'),
-			where('key', '==', gameCode)
-		);
-		const snapshot = await getDocs(q);
 
-		if (snapshot.empty) {
-			alert('Game not found');
+		const res = await fetch('/api/join', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ gameCode, teamName }),
+		});
+
+		const data = await res.json();
+
+		if (!res.ok) {
+			alert(data.error || 'Failed to join game');
 			setJoining(false);
 			return;
 		}
 
-		const gameDoc = snapshot.docs[0];
-		const gameId = gameDoc.id;
+		// Store team session in a cookie (client-side)
+		document.cookie = `teamSession=${data.teamId}; path=/`;
 
-		const teamId = crypto.randomUUID();
-		await updateDoc(gameDoc.ref, {
-			teams: arrayUnion({
-				id: teamId,
-				teamName,
-				choices: [],
-				expected_profit_score: 0,
-				liquidity_score: 0,
-				solvency_score: 0,
-				IT_score: 0,
-				capacity_score: 0,
-			}),
-		});
-
-		document.cookie = `teamSession=${teamId}; path=/`;
-		router.push(`/team/${gameId}`);
+		router.push(`/team/${data.gameId}`);
 		setJoining(false);
 	};
 

@@ -149,7 +149,8 @@ export const ChoiceEditor = ({
 	const handleDurationChange = (value: string | number) => {
 		setEditingDuration(value);
 	};
-	const saveDurationChange = (scoreKey: string) => {
+
+	const saveDurationChange = () => {
 		handleUpdateChoice(choiceIndex, {
 			['duration']:
 				typeof editingDuration === 'string'
@@ -413,8 +414,8 @@ const InteractionEffects = ({
 
 type DurationEffectProps = {
 	editingDuration?: number | string | null;
-	handleDurationChange: (scoreKey: string, value: string | number) => void;
-	saveDurationChange: (scoreKey: string) => void;
+	handleDurationChange: (value: string | number) => void;
+	saveDurationChange: () => void;
 };
 
 const DurationEffect = ({
@@ -423,14 +424,14 @@ const DurationEffect = ({
 	saveDurationChange,
 }: DurationEffectProps) => {
 	return (
-		<div className="mt-6">
+		<div className="p-3">
 			<h4 className="text-lg font-bold text-gray-300 mb-2">Duration effect</h4>
 			<input
 				type="number"
 				value={editingDuration || 0}
-				onChange={(e) => handleDurationChange('duration', e.target.value)}
-				onBlur={() => saveDurationChange('duration')}
-				className="w-full text-center bg-gray-900 text-white rounded-md px-2 py-1 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+				onChange={(e) => handleDurationChange(e.target.value)}
+				onBlur={() => saveDurationChange()}
+				className="w-full bg-gray-700 text-white rounded px-3 py-2"
 			/>
 		</div>
 	);

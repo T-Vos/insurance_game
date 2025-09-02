@@ -1,24 +1,11 @@
-'use client';
+import TeamGamePage from './TeamGame';
 
-import React from 'react';
-import TeamGame from './TeamGame';
-
-import { use } from 'react';
-
-export default function TeamGamePage({
+export default async function Page({
 	params,
 }: {
 	params: Promise<{ gameid: string }>;
 }) {
-	const { gameid } = use(params);
+	const { gameid } = await params;
 
-	// We can now safely check the gameId directly.
-	if (!gameid) {
-		// The console logs will now show the correct values.
-		console.log('GAME ID: ' + gameid);
-		console.log('Params: ' + JSON.stringify(params));
-		return <div>Invalid game code</div>;
-	}
-
-	return <TeamGame gameId={gameid} />;
+	return <TeamGamePage gameid={gameid} />;
 }

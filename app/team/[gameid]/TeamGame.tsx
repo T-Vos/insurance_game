@@ -8,7 +8,7 @@ import { TeamChoice, Game, Round, Team } from '@/lib/types';
 import RoundTimer from '../components/RoundTimer';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 
-export default function TeamGame({ gameId }: { gameId: string }) {
+export default function TeamGame({ gameId: gameid }: { gameId: string }) {
 	const [game, setGame] = useState<Game | null>(null);
 	const [teamId, setTeamId] = useState<string | null>(null);
 	const [isBlocked, setIsBlocked] = useState<boolean>(false);
@@ -16,7 +16,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	const { handleSelectChoice } = useSelectChoice(game);
 
 	useEffect(() => {
-		if (!gameId) return;
+		if (!gameid) return;
 
 		const session = getTeamSession();
 		if (!session) {
@@ -25,7 +25,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		}
 		setTeamId(session);
 
-		const gameRef = doc(db, 'insurance_game', gameId);
+		const gameRef = doc(db, 'insurance_game', gameid);
 
 		const unsubscribe = onSnapshot(gameRef, (snapshot) => {
 			if (snapshot.exists()) {
@@ -36,7 +36,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		});
 
 		return () => unsubscribe();
-	}, [gameId]);
+	}, [gameid]);
 
 	useEffect(() => {
 		if (!game || !teamId || !game.rounds) {
@@ -106,7 +106,7 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 		const updatedTeams = [...game.teams];
 		updatedTeams[teamIndex] = { ...team, choices: updatedChoices };
 
-		await updateDoc(doc(db, 'insurance_game', gameId), {
+		await updateDoc(doc(db, 'insurance_game', gameid), {
 			teams: updatedTeams,
 		});
 	};
@@ -117,8 +117,6 @@ export default function TeamGame({ gameId }: { gameId: string }) {
 	const currentTeam = game.teams.find((t: Team) => t.id === teamId);
 	const currentRound = game.rounds[game.currentRoundIndex];
 
-	if (!teamId) return <div>Please log in first.</div>;
-	if (!game) return <div>Loading or game not found...</div>;
 	if (!currentTeam) {
 		return (
 			<div className="text-center text-gray-500">No team data available.</div>

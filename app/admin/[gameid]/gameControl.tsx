@@ -86,7 +86,6 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 			gameDocRef,
 			async (snapshot) => {
 				if (snapshot.exists()) {
-					console.log('Game doc exists, fetching data...');
 					const data = snapshot.data() as Game;
 
 					setGameData(data);
