@@ -10,6 +10,7 @@ type ChoicesListProps = {
 	) => void;
 	handleRemoveChoice: (choiceId: string) => void;
 	handleAddChoice: () => void;
+	handleSaveChoice: () => void;
 	roundChoices: Round[];
 };
 
@@ -18,6 +19,7 @@ export const ChoicesList = ({
 	handleUpdateChoice,
 	handleRemoveChoice,
 	handleAddChoice,
+	handleSaveChoice,
 	roundChoices,
 }: ChoicesListProps) => {
 	return (
@@ -44,6 +46,7 @@ export const ChoicesList = ({
 						handleUpdateChoice={handleUpdateChoice}
 						handleRemoveChoice={handleRemoveChoice}
 						roundChoices={roundChoices}
+						handleSaveChoice={handleSaveChoice}
 					/>
 				))
 			) : (

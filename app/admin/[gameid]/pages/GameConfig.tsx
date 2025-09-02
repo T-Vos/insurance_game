@@ -40,14 +40,12 @@ const GameConfig = ({
 		}
 	}, [currentRound]);
 
-	// useEffect(() => {
-	// 	if (editingChoices.length > 0) {
-	// 		handleUpdateRound({
-	// 			...currentRound,
-	// 			choices: editingChoices,
-	// 		});
-	// 	}
-	// }, [editingChoices]);
+	const saveChoices = () => {
+		handleUpdateRound({
+			...currentRound,
+			choices: editingChoices,
+		});
+	};
 
 	if (!currentRound) {
 		return (
@@ -119,6 +117,7 @@ const GameConfig = ({
 					handleAddChoice={handleAddChoice}
 					handleRemoveChoice={handleRemoveChoice}
 					handleUpdateChoice={handleUpdateChoice}
+					handleSaveChoice={saveChoices}
 					key={'ChoicesList'}
 				/>
 			</div>

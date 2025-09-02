@@ -18,6 +18,7 @@ type ChoiceEditorProps = {
 	) => void;
 	handleRemoveChoice: (choiceId: string) => void;
 	roundChoices: Round[];
+	handleSaveChoice: () => void;
 };
 
 export const ChoiceEditor = ({
@@ -26,6 +27,7 @@ export const ChoiceEditor = ({
 	handleUpdateChoice,
 	handleRemoveChoice,
 	roundChoices,
+	handleSaveChoice,
 }: ChoiceEditorProps) => {
 	const [isOpened, setIsOpened] = useState(false);
 	const toggleCollapse = () => setIsOpened(!isOpened);
@@ -144,6 +146,7 @@ export const ChoiceEditor = ({
 				? editingScores[scoreKey]
 				: parseFloat(editingScores[scoreKey]) || 0;
 		handleUpdateChoice(choiceIndex, { [scoreKey]: _score });
+		handleSaveChoice();
 	};
 
 	const handleDurationChange = (value: string | number) => {
@@ -157,6 +160,7 @@ export const ChoiceEditor = ({
 					? parseFloat(editingDuration) || 0
 					: editingDuration,
 		});
+		handleSaveChoice();
 	};
 
 	return (
@@ -183,6 +187,7 @@ export const ChoiceEditor = ({
 								description: e.target.value,
 							})
 						}
+						onBlur={handleSaveChoice}
 						className="w-full bg-gray-700 text-white rounded px-3 py-2"
 					/>
 				</div>
