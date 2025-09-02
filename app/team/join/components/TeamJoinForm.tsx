@@ -40,10 +40,12 @@ export default function TeamJoinForm() {
 			return;
 		}
 
+		console.log(data);
+
 		// Store team session in a cookie (client-side)
 		document.cookie = `teamSession=${data.teamId}; path=/`;
 
-		router.push(`/team/${data.gameid}`);
+		router.push(`/team/${data.gameId}`);
 		setJoining(false);
 	};
 
