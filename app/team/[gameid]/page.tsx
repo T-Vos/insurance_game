@@ -4,13 +4,15 @@ import TeamGame from './TeamGame';
 export default async function TeamGamePage({
 	params,
 }: {
-	params: { gameId: string };
+	params: Promise<{ gameId: string }>;
 }) {
 	const { gameId } = await params;
 
+	// We can now safely check the gameId directly.
 	if (!gameId) {
-		console.log('GAME ID' + gameId);
-		console.log('Paramas' + params);
+		// The console logs will now show the correct values.
+		console.log('GAME ID: ' + gameId);
+		console.log('Params: ' + JSON.stringify(params));
 		return <div>Invalid game code</div>;
 	}
 
