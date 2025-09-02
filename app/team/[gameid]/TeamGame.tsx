@@ -8,7 +8,7 @@ import { TeamChoice, Game, Round, Team } from '@/lib/types';
 import RoundTimer from '../components/RoundTimer';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 
-export default function TeamGame({ gameId: gameid }: { gameId: string }) {
+export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [game, setGame] = useState<Game | null>(null);
 	const [teamId, setTeamId] = useState<string | null>(null);
 	const [isBlocked, setIsBlocked] = useState<boolean>(false);

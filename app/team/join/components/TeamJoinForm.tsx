@@ -2,15 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { db } from '@/lib/firebase/config';
-import {
-	collection,
-	query,
-	where,
-	getDocs,
-	updateDoc,
-	arrayUnion,
-} from 'firebase/firestore';
 import GameCodeInput from './inputbox';
 
 export default function TeamJoinForm() {
@@ -52,7 +43,7 @@ export default function TeamJoinForm() {
 		// Store team session in a cookie (client-side)
 		document.cookie = `teamSession=${data.teamId}; path=/`;
 
-		router.push(`/team/${data.gameId}`);
+		router.push(`/team/${data.gameid}`);
 		setJoining(false);
 	};
 
