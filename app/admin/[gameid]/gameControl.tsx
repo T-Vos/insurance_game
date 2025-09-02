@@ -403,7 +403,9 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							teams={teams}
 							roundChoices={roundChoices}
 							currentRoundIndex={localCurrentRoundIndex}
-							handleSelectChoice={handleSelectChoice}
+							handleSelectChoice={(teamId, roundId, choice) =>
+								handleSelectChoice(gameId, teamId, roundId, choice)
+							}
 							key={'GamRounds'}
 						/>
 						<div className="mt-8">
