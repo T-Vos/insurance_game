@@ -293,15 +293,19 @@ const RoundConfig = ({
 	) => {
 		setEditingShocks((prevShocks) => ({
 			...prevShocks,
-			[shockKey]: typeof value === 'number' ? value : parseFloat(value) || 0,
+			[shockKey]: value,
 		}));
 	};
 
 	const saveShockChange = (shockKey: keyof typeof editingShocks) => {
 		const fullShockKey = `round_schock_${shockKey}` as keyof Round;
+		const _value =
+			typeof editingShocks[shockKey] === 'number'
+				? editingShocks[shockKey]
+				: parseFloat(editingShocks[shockKey]) || 0;
 		handleUpdateRound({
 			...roundData,
-			[fullShockKey]: editingShocks[shockKey],
+			[fullShockKey]: _value,
 		});
 	};
 
