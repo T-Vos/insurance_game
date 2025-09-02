@@ -4,6 +4,8 @@ import { LucideCheckSquare, LucideSquare } from 'lucide-react';
 import { Choice, TeamChoice, Round, Team } from '@/lib/types';
 import clsx from 'clsx';
 
+const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+
 interface TeamBoardProps {
 	team: Team;
 	currentRound: Round;
@@ -39,9 +41,10 @@ export default function TeamBoard({
 	return (
 		<div className="">
 			<div className="mt-4 space-y-3">
-				{currentRound.choices.map((choice: Choice) => {
+				{currentRound.choices.map((choice: Choice, index: number) => {
 					const isSelected = selectedChoice?.choice_id === choice.id;
-					return choiceButton(choice, isSelected);
+					const letter = letters[index];
+					return choiceButton(choice, isSelected, letter);
 				})}
 			</div>
 			{handleSaveChoice && (
@@ -65,7 +68,8 @@ export default function TeamBoard({
 
 	function choiceButton(
 		choice: Choice,
-		isSelected: boolean
+		isSelected: boolean,
+		letter: string
 	): React.JSX.Element {
 		const buttonClasses = clsx(
 			'relative w-full text-left py-3 px-4 rounded-lg transition-all duration-200 flex justify-between items-center group',
@@ -95,6 +99,9 @@ export default function TeamBoard({
 								: 'text-gray-800 dark:text-gray-200'
 						)}
 					/>
+					<span className="font-medium text-gray-800 dark:text-gray-200">
+						{letter}.
+					</span>
 					<span
 						className={clsx('font-medium text-gray-800 dark:text-gray-200')}
 					>
