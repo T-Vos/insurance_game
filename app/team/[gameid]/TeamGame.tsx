@@ -39,7 +39,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	}, [gameid]);
 
 	useEffect(() => {
-		console.log('check team');
 		if (!game || !teamId || !game.rounds) {
 			setIsBlocked(false);
 			return;
@@ -55,13 +54,15 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		let blockedStatus = false;
 		for (let i = currentTeam.choices.length - 1; i >= 0; i--) {
 			const teamChoice = currentTeam.choices[i];
-			console.log(teamChoice);
+			if (!teamChoice.saved) {
+				setIsBlocked(false);
+				continue;
+			}
 
 			// Find the full choice object from the game data
 			const roundWithChoice = game.rounds.find(
 				(r) => r.round_id === teamChoice.round_id
 			);
-			console.log(roundWithChoice);
 
 			if (!roundWithChoice || !roundWithChoice.choices) {
 				setIsBlocked(false);
@@ -71,8 +72,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			const choiceDetails = roundWithChoice.choices.find(
 				(c) => c.id === teamChoice.choice_id
 			);
-
-			console.log(choiceDetails);
 
 			if (choiceDetails?.duration && choiceDetails.duration > 0) {
 				const roundsSinceChoice =
@@ -91,7 +90,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		teamId: Team['id'],
 		roundId: Round['round_id']
 	) => {
-		console.log('SAVING TO' + `/api/game/${gameid}/save-choice`);
 		const res = await fetch(`/api/game/${gameid}/save-choice`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -156,6 +154,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 						</div>
 					)}
 				</div>
+				{isBlocked ? 'geblocked' : 'niet geblocked'}
 			</div>
 		</div>
 	);
