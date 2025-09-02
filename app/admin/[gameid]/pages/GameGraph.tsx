@@ -1,14 +1,6 @@
 import { calculateScores } from '@/lib/calculateScores';
-import { Game, Scores } from '@/lib/types';
+import { Game, Scores, ScoreType, scoreTypes } from '@/lib/types';
 import clsx from 'clsx';
-
-const scoreTypes = [
-	'expected_profit_score',
-	'liquidity_score',
-	'solvency_score',
-	'IT_score',
-	'capacity_score',
-] as const;
 
 type GameScoresTableProps = {
 	game?: Game | null;
@@ -20,33 +12,39 @@ const GameGraphs = ({ game }: GameScoresTableProps) => {
 	if (!rounds) return <div>Geen rondes gevonden</div>;
 	if (!teams) return <div>Geen teams gevonden</div>;
 
-	// Calculate scores per team per round
+	// scores per team per round, keyed by teamId
 	const scoresPerTeamPerRound: Record<
 		string,
-		{ [scoreType in (typeof scoreTypes)[number]]: number[] }
+		{ [K in (typeof scoreTypes)[number]['name']]: number[] }
 	> = {};
 
 	teams.forEach((team) => {
-		scoresPerTeamPerRound[team.id] = {
-			expected_profit_score: [],
-			liquidity_score: [],
-			solvency_score: [],
-			IT_score: [],
-			capacity_score: [],
-		};
+		// initialize empty arrays for each score type
+		scoresPerTeamPerRound[team.id] = scoreTypes.reduce((acc, { name }) => {
+			acc[name] = [];
+			return acc;
+		}, {} as { [K in (typeof scoreTypes)[number]['name']]: number[] });
 
 		rounds.forEach((_, roundIndex) => {
 			const teamScores = calculateScores(game, roundIndex).find(
 				(t) => t.id === team.id
 			)!;
 
-			scoreTypes.forEach((scoreType) => {
-				scoresPerTeamPerRound[team.id][scoreType].push(
-					teamScores[scoreType as keyof Scores] as number
+			scoreTypes.forEach(({ name }) => {
+				scoresPerTeamPerRound[team.id][name].push(
+					teamScores[name as keyof Scores] as number
 				);
 			});
 		});
 	});
+
+	const determineCritical = (score: number, scoreType: ScoreType): string => {
+		const gameover_condition: number = game[`gameover_${scoreType}`] || 0;
+		if (score <= gameover_condition) return 'font-bold text-yellow-400';
+		const critical_condition: number = game[`critical_${scoreType}`] || 0;
+		if (score <= critical_condition) return 'font-bold text-red-500';
+		return '';
+	};
 
 	return (
 		<div className="p-6">
@@ -71,20 +69,19 @@ const GameGraphs = ({ game }: GameScoresTableProps) => {
 								</tr>
 							</thead>
 							<tbody>
-								{scoreTypes.map((scoreType) => (
-									<tr key={scoreType}>
-										<td className="border px-4 py-2 font-medium">
-											{scoreType.replace(/_/g, ' ').toUpperCase()}
+								{scoreTypes.map(({ name, icon: Icon }) => (
+									<tr key={name}>
+										<td className="border flex flex-row gap-4 items-center px-4 py-2 font-medium">
+											<Icon className="w-4 h-4" />
+											{name}
 										</td>
-										{scoresPerTeamPerRound[team.id][scoreType].map(
-											(score, idx) => (
-												<td key={idx} className="border px-4 py-2 text-center">
-													<span className={clsx(score <= 0 ? 'font-bold' : '')}>
-														{score}
-													</span>
-												</td>
-											)
-										)}
+										{scoresPerTeamPerRound[team.id][name].map((score, idx) => (
+											<td key={idx} className="border px-4 py-2 text-center">
+												<span className={clsx(determineCritical(score, name))}>
+													{score}
+												</span>
+											</td>
+										))}
 									</tr>
 								))}
 							</tbody>

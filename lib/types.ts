@@ -13,6 +13,7 @@ export const scoreTypes = [
 	{ name: 'IT_score', icon: LucideComputer },
 	{ name: 'capacity_score', icon: LucideUsersRound },
 ] as const;
+export type ScoreType = (typeof scoreTypes)[number]['name'];
 
 /**
  * Represents the different pages or views in the application.
