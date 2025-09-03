@@ -38,16 +38,17 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [currentUserRole, setCurrentUserRole] = useState<roleType | null>(null);
 
 	useEffect(() => {
-		if (!gameid || !teamId) return;
+		if (!gameid) return;
 		const session = getTeamSession();
 		if (!session) {
 			alert('You are not logged in as a team. Please join the game first.');
 			return;
 		}
-		console.log(session);
-		if (!session?.memberId || !session?.teamId) return;
 		setTeamId(session.teamId);
-		setCurrentUserRole(session.role || 'CEO');
+	}, [gameid]);
+
+	useEffect(() => {
+		if (!teamId) return;
 
 		const gameRef = doc(db, 'insurance_game', gameid);
 		const unsubscribeGame = onSnapshot(gameRef, (snapshot) => {
@@ -65,7 +66,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			unsubscribeGame();
 			unsubscribeTeam();
 		};
-	}, [gameid]);
+	}, [gameid, teamId]);
 
 	useEffect(() => {
 		if (!game) return;
@@ -211,15 +212,11 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		}
 	};
 
-	if (
-		!teamId ||
-		!game ||
-		!currentTeam ||
-		!currentRound ||
-		!currentRoundChoices
-	) {
-		return <div>Loading...</div>;
-	}
+	if (!teamId) return <div>Loading...</div>;
+	if (!game) return <div>if(!game)</div>;
+	if (!currentTeam) return <div>if(!currentTeam )</div>;
+	if (!currentRound) return <div>if(!currentRound )</div>;
+	if (!currentRoundChoices) return <div>if(!currentRoundChoices)</div>;
 
 	return (
 		<div className="flex items-center justify-center flex-col min-h-screen px-4">
