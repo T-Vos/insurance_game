@@ -4,6 +4,7 @@ import {
 	LucidePiggyBank,
 	LucideComputer,
 	LucideUsersRound,
+	LucideBanknote,
 } from 'lucide-react';
 
 export const scoreTypes = [
@@ -16,8 +17,10 @@ export const scoreTypes = [
 export type ScoreType = (typeof scoreTypes)[number]['name'];
 
 export const roleTypes = [
-	{ name: 'CEO', icon: LucideHandCoins },
-	{ name: 'CFO', icon: LucideDroplet },
+	{ name: 'CEO', icon: null },
+	{ name: 'CFO', icon: LucideBanknote },
+	{ name: 'HR', icon: LucideUsersRound },
+	{ name: 'CAO', icon: LucideComputer },
 ] as const;
 export type roleType = (typeof roleTypes)[number]['name'];
 
@@ -29,6 +32,37 @@ export enum PageState {
 	RULES_CONFIG = 'RULES_CONFIG',
 	TEAMS_CONFIG = 'TEAMS_CONFIG',
 	CHART = 'CHART',
+}
+
+/**
+ * Represents the main game state stored in a single Firestore document.
+ */
+export interface Game {
+	id: string;
+	key: string;
+	name: string;
+	currentRoundIndex: number;
+	currentRoundId: Round['round_id'] | null;
+	gameStartedAt: number | null;
+	gameFinishedAt: number | null;
+	createdAt: number;
+	admin_user_ids: string[];
+	status: 'lobby' | 'active' | 'finished';
+	start_expected_profit_score?: number;
+	start_liquidity_score?: number;
+	start_solvency_score?: number;
+	start_IT_score?: number;
+	start_capacity_score?: number;
+	critical_expected_profit_score?: number;
+	critical_liquidity_score?: number;
+	critical_solvency_score?: number;
+	critical_IT_score?: number;
+	critical_capacity_score?: number;
+	gameover_expected_profit_score?: number;
+	gameover_liquidity_score?: number;
+	gameover_solvency_score?: number;
+	gameover_IT_score?: number;
+	gameover_capacity_score?: number;
 }
 
 export interface Scores {
@@ -44,21 +78,21 @@ export interface Scores {
  */
 export interface Choice extends Scores {
 	id: string;
+	round_id: Round['round_id'];
+	roundIndex: number;
+	title: string;
 	description: string;
 	duration?: number | null;
 	reveals: RevealMessage[];
 	interactionEffects?: InteractionEffect[];
 	choice_index?: number | null;
-	blockeding_circumstances?: blockedingCircumstance[]; // Circumstances that block the choice
+	blocking_choices: Choice['id'][];
 	delayedEffect?: delayedEffect[];
+	acceptenceText?: string;
 }
 
 export interface delayedEffect extends Scores {
 	effective_round: Round['round_id'];
-}
-
-export interface blockedingCircumstance {
-	id: string;
 }
 
 /**
@@ -66,17 +100,32 @@ export interface blockedingCircumstance {
  */
 export interface Round {
 	round_id: string | number;
-	round_duration: number; // Duration in seconds
+	round_duration: number;
 	round_started_at: number | null | string;
 	round_finished_at: number | null | string;
 	round_index: number;
 	round_name: string;
-	choices?: Choice[] | null;
+	choices_ids: string[];
 	round_schock_expected_profit_score?: number;
 	round_schock_liquidity_score?: number;
 	round_schock_solvency_score?: number;
 	round_schock_IT_score?: number;
 	round_schock_capacity_score?: number;
+}
+
+export interface Team extends Scores {
+	id: string;
+	name: string;
+	team_code?: string;
+	choices?: TeamChoice[];
+	members?: TeamMembers[];
+}
+
+export interface TeamMembers {
+	id: string;
+	role: roleType;
+	role_code?: string;
+	name: string;
 }
 
 /**
@@ -96,53 +145,18 @@ export interface TeamChoice {
 	choice_id: Choice['id'];
 	roundIndex: Round['round_index'];
 	saved: boolean;
-}
-
-export interface Team extends Scores {
-	editingName?: string | undefined;
-	isEditing?: boolean;
-	id: string;
-	teamName: string;
-	choices: TeamChoice[]; // Each entry tracks the choice made in a round
-}
-
-/**
- * Represents the main game state stored in a single Firestore document.
- */
-export interface Game {
-	id: string;
-	key: string;
-	name: string;
-	rounds?: Round[] | null;
-	teams: Team[];
-	currentRoundIndex: number;
-	currentRoundId: Round['round_id'] | null;
-	gameStartedAt: number | null;
-	gameFinishedAt: number | null;
-	createdAt: number;
-	admin_user_ids: string[];
-	start_expected_profit_score?: number;
-	start_liquidity_score?: number;
-	start_solvency_score?: number;
-	start_IT_score?: number;
-	start_capacity_score?: number;
-	critical_expected_profit_score?: number;
-	critical_liquidity_score?: number;
-	critical_solvency_score?: number;
-	critical_IT_score?: number;
-	critical_capacity_score?: number;
-	gameover_expected_profit_score?: number;
-	gameover_liquidity_score?: number;
-	gameover_solvency_score?: number;
-	gameover_IT_score?: number;
-	gameover_capacity_score?: number;
+	accepted?: boolean;
 }
 
 /**
  * Represents a message that is revealed later in the game.
  */
 export interface RevealMessage {
+	id: string;
 	text: string;
 	revealedInRounds: number;
-	revealdForRole?: null | roleType;
+	revealdForRoles?: roleType[];
+	message_sender: string;
+	message_sender_image: string;
+	time?: string;
 }
