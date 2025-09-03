@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@lucide/lab": "^0.1.2",
     "chart.js": "^4.5.0",
     "clsx": "^2.1.1",
     "firebase": "^12.1.0",
