@@ -19,6 +19,7 @@ import {
 	Team,
 	RevealMessage,
 	Choice,
+	roleType,
 } from '@/lib/types';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 import { cardstyle } from '@/app/admin/[gameid]/components/styling';
@@ -34,15 +35,19 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [isBlocked, setIsBlocked] = useState<boolean>(false);
 	const [choicesMadeDetails, setChoicesMadeDetails] = useState<Choice[]>([]);
 	const { handleSelectChoice } = useSelectChoice(game);
+	const [currentUserRole, setCurrentUserRole] = useState<roleType | null>(null);
 
 	useEffect(() => {
-		if (!gameid) return;
+		if (!gameid || !teamId) return;
 		const session = getTeamSession();
 		if (!session) {
 			alert('You are not logged in as a team. Please join the game first.');
 			return;
 		}
-		setTeamId(session);
+		console.log(session);
+		if (!session?.memberId || !session?.teamId) return;
+		setTeamId(session.teamId);
+		setCurrentUserRole(session.role || 'CEO');
 
 		const gameRef = doc(db, 'insurance_game', gameid);
 		const unsubscribeGame = onSnapshot(gameRef, (snapshot) => {
@@ -50,7 +55,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			else setGame(null);
 		});
 
-		const teamRef = doc(db, 'insurance_game', gameid, 'teams', session);
+		const teamRef = doc(db, 'insurance_game', gameid, 'teams', teamId);
 		const unsubscribeTeam = onSnapshot(teamRef, (snapshot) => {
 			if (snapshot.exists()) setCurrentTeam(snapshot.data() as Team);
 			else setCurrentTeam(null);
@@ -106,6 +111,10 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		}
 
 		const fetchChoiceDetails = async () => {
+			if (!currentTeam.choices) {
+				setChoicesMadeDetails([]);
+				return;
+			}
 			const fetchPromises = currentTeam.choices.map(async (teamChoice) => {
 				const choiceRef = doc(
 					db,
@@ -131,7 +140,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			setRevealedMessages([]);
 			return;
 		}
-
 		const messages: RevealMessage[] = [];
 		for (const chosenItem of currentTeam.choices) {
 			const originalChoice = choicesMadeDetails.find(
@@ -144,6 +152,11 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 					(reveal) =>
 						chosenItem.roundIndex + reveal.revealedInRounds ===
 						game.currentRoundIndex
+				)
+				.filter(
+					(reveal) =>
+						!reveal.revealdForRoles ||
+						reveal.revealdForRoles.some((x) => x == currentUserRole)
 				)
 				.map((revealMessage) => ({
 					...revealMessage,
@@ -207,15 +220,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	) {
 		return <div>Loading...</div>;
 	}
-
-	// const isChoiceSaved =
-	// 	currentTeam.choices.find(
-	// 		(c: TeamChoice) => c.round_id === currentRound.round_id
-	// 	)?.saved ?? false;
-
-	// const roundStarted =
-	// 	currentRound.round_started_at !== null &&
-	// 	currentRound.round_started_at !== '';
 
 	return (
 		<div className="flex items-center justify-center flex-col min-h-screen px-4">

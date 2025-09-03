@@ -9,7 +9,6 @@ import { Team, TeamMembers } from '@/lib/types';
 import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
-	console.log('Runtime:', process.env.NEXT_RUNTIME);
 	try {
 		const { gameCode, teamCode, userName, role } = await req.json();
 		console.log(gameCode, teamCode, userName, role);
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
 		const newMember: TeamMembers = {
 			id: crypto.randomUUID(),
 			role,
-			role_code: role.toUpperCase().substring(0, 3), // Optional: Generate role code
+			role_code: role.toUpperCase().substring(0, 3),
 			name: userName,
 		};
 
@@ -73,7 +72,7 @@ export async function POST(req: NextRequest) {
 			members: admin.firestore.FieldValue.arrayUnion(newMember),
 		});
 
-		return NextResponse.json({ teamId, gameId });
+		return NextResponse.json({ teamId, gameId, memberId: newMember.id });
 	} catch (err) {
 		console.error('Error in join API:', err);
 		return NextResponse.json(

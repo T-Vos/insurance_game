@@ -64,9 +64,13 @@ export default function TeamJoinForm() {
 			return;
 		}
 
-		console.log(data);
+		const sessionData = {
+			teamId: data.teamId,
+			memberId: data.memberId,
+			role: role,
+		};
 
-		document.cookie = `teamSession=${data.teamId}; path=/`;
+		document.cookie = `teamSession=${JSON.stringify(sessionData)}; path=/`;
 		router.push(`/team/${data.gameId}`);
 		setJoining(false);
 	};
