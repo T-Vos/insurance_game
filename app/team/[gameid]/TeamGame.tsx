@@ -26,62 +26,88 @@ import { cardstyle } from '@/app/admin/[gameid]/components/styling';
 import MessageBubble from '@/components/messageBubble';
 
 export default function TeamGame({ gameid: gameid }: { gameid: string }) {
+	const [teamId, setTeamId] = useState<string | null>(null);
+	const [memberId, setMemberId] = useState<string | null>(null); // NEW: State for memberId
 	const [game, setGame] = useState<Game | null>(null);
+	const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
+	const [currentUserRole, setCurrentUserRole] = useState<roleType | null>(null);
 	const [currentRound, setCurrentRound] = useState<Round | null>(null);
 	const [currentRoundChoices, setCurrentRoundChoices] = useState<Choice[]>([]);
-	const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
-	const [revealedMessages, setRevealedMessages] = useState<RevealMessage[]>([]);
-	const [teamId, setTeamId] = useState<string | null>(null);
-	const [isBlocked, setIsBlocked] = useState<boolean>(false);
 	const [choicesMadeDetails, setChoicesMadeDetails] = useState<Choice[]>([]);
-	const { handleSelectChoice } = useSelectChoice(game);
-	const [currentUserRole, setCurrentUserRole] = useState<roleType | null>(null);
+	const [revealedMessages, setRevealedMessages] = useState<RevealMessage[]>([]);
+	const [isBlocked, setIsBlocked] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (!gameid) return;
+		const getTeamSession = () => {
+			const cookies = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('teamSession='));
+			if (!cookies) return null;
+			try {
+				return JSON.parse(cookies.split('=')[1]);
+			} catch (e) {
+				return null;
+			}
+		};
 		const session = getTeamSession();
-		if (!session) {
+		if (!session?.teamId || !session?.memberId) {
 			alert('You are not logged in as a team. Please join the game first.');
 			return;
 		}
 		setTeamId(session.teamId);
-	}, [gameid]);
+		setMemberId(session.memberId);
+	}, []);
 
 	useEffect(() => {
-		if (!teamId) return;
+		if (!gameid || !teamId) return;
 
-		const gameRef = doc(db, 'insurance_game', gameid);
-		const unsubscribeGame = onSnapshot(gameRef, (snapshot) => {
-			if (snapshot.exists()) setGame(snapshot.data() as Game);
-			else setGame(null);
-		});
+		// Game listener
+		const unsubscribeGame = onSnapshot(
+			doc(db, 'insurance_game', gameid),
+			(snapshot) => {
+				if (snapshot.exists()) setGame(snapshot.data() as Game);
+				else setGame(null);
+			}
+		);
 
-		const teamRef = doc(db, 'insurance_game', gameid, 'teams', teamId);
-		const unsubscribeTeam = onSnapshot(teamRef, (snapshot) => {
-			if (snapshot.exists()) setCurrentTeam(snapshot.data() as Team);
-			else setCurrentTeam(null);
-		});
+		// Team listener
+		const unsubscribeTeam = onSnapshot(
+			doc(db, 'insurance_game', gameid, 'teams', teamId),
+			(snapshot) => {
+				if (snapshot.exists()) setCurrentTeam(snapshot.data() as Team);
+				else setCurrentTeam(null);
+			}
+		);
 
 		return () => {
 			unsubscribeGame();
 			unsubscribeTeam();
 		};
 	}, [gameid, teamId]);
-
 	useEffect(() => {
-		if (!game) return;
-		const currentRoundId = `round_${game.currentRoundIndex}`;
+		if (!currentTeam || !memberId || !currentTeam.members) return;
+		const currentUser = currentTeam.members.find(
+			(member) => member.id === memberId
+		);
+		setCurrentUserRole(currentUser?.role || null);
+	}, [currentTeam, memberId]);
+	useEffect(() => {
+		if (!game || !game.currentRoundId) return;
+		const currentRoundId = game.currentRoundId;
+
 		const roundRef = doc(
 			db,
 			'insurance_game',
 			game.id,
 			'rounds',
-			currentRoundId
+			currentRoundId?.toString()
 		);
 		const unsubscribeRound = onSnapshot(roundRef, (snapshot) => {
 			if (snapshot.exists()) {
 				const roundData = snapshot.data() as Round;
 				setCurrentRound(roundData);
+
+				// This is the correct way to get choices for a round with a single query
 				const choicesRef = collection(db, 'insurance_game', game.id, 'choices');
 				const choicesQuery = query(
 					choicesRef,
@@ -110,43 +136,33 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			setChoicesMadeDetails([]);
 			return;
 		}
-
 		const fetchChoiceDetails = async () => {
-			if (!currentTeam.choices) {
-				setChoicesMadeDetails([]);
-				return;
-			}
-			const fetchPromises = currentTeam.choices.map(async (teamChoice) => {
-				const choiceRef = doc(
-					db,
-					'insurance_game',
-					gameid,
-					'choices',
-					teamChoice.choice_id
-				);
-				const choiceDoc = await getDoc(choiceRef);
-				return choiceDoc.exists() ? (choiceDoc.data() as Choice) : null;
-			});
-
-			const fetchedChoices = await Promise.all(fetchPromises);
-
-			setChoicesMadeDetails(fetchedChoices.filter(Boolean) as Choice[]);
+			const choiceIds = currentTeam?.choices?.map((c) => c.choice_id) ?? [];
+			const choiceDocs = await getDocs(
+				query(
+					collection(db, `insurance_game/${gameid}/choices`),
+					where('id', 'in', choiceIds)
+				)
+			);
+			const fetchedChoices = choiceDocs.docs.map((doc) => doc.data() as Choice);
+			setChoicesMadeDetails(fetchedChoices);
 		};
-
 		fetchChoiceDetails();
 	}, [currentTeam, gameid]);
 
 	useEffect(() => {
-		if (!currentTeam || !game || !choicesMadeDetails || !currentTeam.choices) {
+		const messages: RevealMessage[] = [];
+		if (!game || !currentTeam || !choicesMadeDetails || !currentUserRole) {
 			setRevealedMessages([]);
 			return;
 		}
-		const messages: RevealMessage[] = [];
-		for (const chosenItem of currentTeam.choices) {
+
+		for (const chosenItem of currentTeam.choices ?? []) {
 			const originalChoice = choicesMadeDetails.find(
 				(c) => c.id === chosenItem.choice_id
 			);
 			if (!originalChoice?.reveals) continue;
+
 			const time = new Date();
 			const newMessages = originalChoice.reveals
 				.filter(
@@ -157,44 +173,17 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 				.filter(
 					(reveal) =>
 						!reveal.revealdForRoles ||
-						reveal.revealdForRoles.some((x) => x == currentUserRole)
+						reveal.revealdForRoles.some((x) => x === currentUserRole)
 				)
 				.map((revealMessage) => ({
 					...revealMessage,
 					time: `${time.getHours()} : ${time.getMinutes()}`,
 				}));
+
 			messages.push(...newMessages);
 		}
 		setRevealedMessages(messages);
-	}, [game, currentTeam, choicesMadeDetails]);
-
-	useEffect(() => {
-		if (!game || !currentTeam || !choicesMadeDetails || !currentTeam.choices) {
-			setIsBlocked(false);
-			return;
-		}
-
-		const lastTeamChoice = currentTeam.choices[currentTeam.choices.length - 1];
-		if (!lastTeamChoice) {
-			setIsBlocked(false);
-			return;
-		}
-
-		const choiceDetails = choicesMadeDetails.find(
-			(c) => c.id === lastTeamChoice.choice_id
-		);
-		if (choiceDetails?.duration && choiceDetails.duration > 0) {
-			const roundsSinceChoice =
-				game.currentRoundIndex - lastTeamChoice.roundIndex;
-			if (roundsSinceChoice < choiceDetails.duration) {
-				setIsBlocked(true);
-			} else {
-				setIsBlocked(false);
-			}
-		} else {
-			setIsBlocked(false);
-		}
-	}, [game, currentTeam, choicesMadeDetails]);
+	}, [game, currentTeam, choicesMadeDetails, currentUserRole]);
 
 	const handleSaveChoice = async (
 		teamId: Team['id'],
@@ -212,11 +201,11 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		}
 	};
 
-	if (!teamId) return <div>Loading...</div>;
-	if (!game) return <div>if(!game)</div>;
-	if (!currentTeam) return <div>if(!currentTeam )</div>;
-	if (!currentRound) return <div>if(!currentRound )</div>;
-	if (!currentRoundChoices) return <div>if(!currentRoundChoices)</div>;
+	if (!teamId) return <div>Loading.</div>;
+	if (!game) return <div>Loading..</div>;
+	if (!currentTeam) return <div>Loading...</div>;
+	if (!currentRound) return <div>Loading....</div>;
+	if (!currentRoundChoices) return <div>Loading.......</div>;
 
 	return (
 		<div className="flex items-center justify-center flex-col min-h-screen px-4">

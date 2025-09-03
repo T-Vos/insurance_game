@@ -5,7 +5,12 @@ import {
 	LucideComputer,
 	LucideUsersRound,
 	LucideBanknote,
+	LucideHome,
+	LucideChartArea,
+	LucideSettings,
+	LucideUsers,
 } from 'lucide-react';
+import { hatTop } from '@lucide/lab';
 
 export const scoreTypes = [
 	{ name: 'expected_profit_score', icon: LucideHandCoins },
@@ -17,7 +22,7 @@ export const scoreTypes = [
 export type ScoreType = (typeof scoreTypes)[number]['name'];
 
 export const roleTypes = [
-	{ name: 'CEO', icon: null },
+	{ name: 'CEO', icon: hatTop },
 	{ name: 'CFO', icon: LucideBanknote },
 	{ name: 'HR', icon: LucideUsersRound },
 	{ name: 'CAO', icon: LucideComputer },
@@ -34,6 +39,17 @@ export enum PageState {
 	CHART = 'CHART',
 }
 
+export const menuItems = [
+	{ name: 'Game Rounds', state: PageState.ROUNDS, icon: LucideHome },
+	{
+		name: 'Game Config',
+		state: PageState.RULES_CONFIG,
+		icon: LucideSettings,
+	},
+	{ name: 'Team Config', state: PageState.TEAMS_CONFIG, icon: LucideUsers },
+	{ name: 'Score graphs', state: PageState.CHART, icon: LucideChartArea },
+];
+
 /**
  * Represents the main game state stored in a single Firestore document.
  */
@@ -45,6 +61,7 @@ export interface Game {
 	currentRoundId: Round['round_id'] | null;
 	gameStartedAt: number | null;
 	gameFinishedAt: number | null;
+	totalRounds?: number;
 	createdAt: number;
 	admin_user_ids: string[];
 	status: 'lobby' | 'active' | 'finished';
@@ -115,7 +132,7 @@ export interface Round {
 
 export interface Team extends Scores {
 	id: string;
-	name: string;
+	teamName: string;
 	team_code?: string;
 	choices?: TeamChoice[];
 	members?: TeamMembers[];

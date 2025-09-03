@@ -4,23 +4,27 @@ import { cardstyle } from '../components/styling';
 
 type GameRoundsProps = {
 	teams: Team[];
-	roundChoices: Round[];
+	allRounds: Round[];
 	currentRoundIndex: number;
 	handleSelectChoice: (
 		teamId: Team['id'],
 		roundId: Round['round_id'],
 		choice: Choice
 	) => void;
+	choices?: Choice[];
 };
 
 const GameRounds = ({
 	teams,
-	roundChoices,
+	allRounds,
 	currentRoundIndex,
 	handleSelectChoice,
+	choices,
 }: GameRoundsProps) => {
-	const currentRound = roundChoices[currentRoundIndex];
-
+	const currentRound = allRounds[currentRoundIndex];
+	const currentRoundChoices = choices?.filter(
+		(x) => x.round_id == currentRound.round_id
+	);
 	return (
 		<div className="space-y-6 overflow-hidden">
 			<div className="text-center">
@@ -36,7 +40,12 @@ const GameRounds = ({
 				>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						{teams.map((team: Team) =>
-							TeamRoundCard(team, currentRound, handleSelectChoice)
+							TeamRoundCard(
+								team,
+								currentRound,
+								handleSelectChoice,
+								currentRoundChoices
+							)
 						)}
 					</div>
 				</div>
@@ -54,7 +63,8 @@ function TeamRoundCard(
 		teamId: Team['id'],
 		roundId: Round['round_id'],
 		choice: Choice
-	) => void
+	) => void,
+	currentRoundChoices?: Choice[]
 ) {
 	return (
 		<div key={team.id} className={cardstyle}>
@@ -99,6 +109,7 @@ function TeamRoundCard(
 					handleSelectChoice={(teamId, roundId, choice) => {
 						handleSelectChoice(teamId, roundId, choice);
 					}}
+					currentRoundchoices={currentRoundChoices ?? []}
 				/>
 			</div>
 		</div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import GameControl from './gameControl';
+import GameAdmin from './gameAdmin';
 
 export default async function Page({
 	params,
@@ -8,5 +8,5 @@ export default async function Page({
 }) {
 	const { gameid } = await params;
 	if (!gameid) return <div>Invalid game code</div>;
-	return <GameControl key={'GameControl'} gameId={gameid} />;
+	return <GameAdmin key={'GameControl'} gameId={gameid} />;
 }

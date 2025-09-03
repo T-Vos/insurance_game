@@ -7,5 +7,11 @@ export default async function Page({
 }) {
 	const { gameid } = await params;
 
-	return <TeamGamePage gameid={gameid} />;
+	return (
+		<main>
+			<div className="py-3">
+				<TeamGamePage gameid={gameid} />
+			</div>
+		</main>
+	);
 }
