@@ -4,23 +4,20 @@ import { ChoiceEditor } from './ChoicesEditor';
 
 type ChoicesListProps = {
 	editingChoices: Choice[] | null;
-	handleUpdateChoice: (
-		choiceIndex: Choice['choice_index'],
-		newChoiceData: Partial<Choice>
-	) => void;
-	handleRemoveChoice: (choiceId: string) => void;
-	handleAddChoice: () => void;
-	handleSaveChoice: () => void;
-	roundChoices: Round[];
+	allChoices: Choice[];
+	allRounds: Round[];
+	onAddChoice: () => void;
+	onRemoveChoice: (choiceId: string) => void;
+	onSaveChoice: (updatedChoice: Choice) => void;
 };
 
 export const ChoicesList = ({
 	editingChoices,
-	handleUpdateChoice,
-	handleRemoveChoice,
-	handleAddChoice,
-	handleSaveChoice,
-	roundChoices,
+	allChoices,
+	allRounds,
+	onAddChoice,
+	onRemoveChoice,
+	onSaveChoice,
 }: ChoicesListProps) => {
 	return (
 		<div className="mt-8">
@@ -29,7 +26,7 @@ export const ChoicesList = ({
 					Keuzes voor deze ronde
 				</h3>
 				<button
-					onClick={handleAddChoice}
+					onClick={onAddChoice}
 					className="flex cursor-pointer items-center space-x-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
 				>
 					<LucidePlus size={18} />
@@ -38,15 +35,14 @@ export const ChoicesList = ({
 			</div>
 
 			{editingChoices && editingChoices.length > 0 ? (
-				editingChoices.map((choice, choiceIndex) => (
+				editingChoices.map((choice) => (
 					<ChoiceEditor
 						key={choice.id}
 						choice={choice}
-						choiceIndex={choiceIndex}
-						handleUpdateChoice={handleUpdateChoice}
-						handleRemoveChoice={handleRemoveChoice}
-						roundChoices={roundChoices}
-						handleSaveChoice={handleSaveChoice}
+						allChoices={allChoices}
+						allRounds={allRounds}
+						onSave={onSaveChoice}
+						onRemove={onRemoveChoice}
 					/>
 				))
 			) : (

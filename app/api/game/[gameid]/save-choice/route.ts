@@ -1,55 +1,59 @@
-export const runtime = 'nodejs';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
-import { Team, TeamChoice } from '@/lib/types';
+import { TeamChoice } from '@/lib/types';
+
+export const runtime = 'nodejs';
+
+const TEAMS_COLLECTION_NAME = 'teams';
 
 export async function POST(req: NextRequest) {
 	try {
-		console.log('SAVE CHOICE');
 		const { gameId, teamId, roundId } = await req.json();
+
 		if (!gameId || !teamId || !roundId) {
-			return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+			return NextResponse.json(
+				{ error: 'Missing fields: gameId, teamId, or roundId' },
+				{ status: 400 }
+			);
 		}
 
-		const gameRef = adminDb.collection('insurance_game').doc(gameId);
-		const gameDoc = await gameRef.get();
+		const teamRef = adminDb
+			.collection('insurance_game')
+			.doc(gameId)
+			.collection(TEAMS_COLLECTION_NAME)
+			.doc(teamId);
 
-		if (!gameDoc.exists) {
-			return NextResponse.json({ error: 'Game not found' }, { status: 404 });
-		}
+		// Use a transaction for an atomic read-update-write operation
+		await adminDb.runTransaction(async (transaction) => {
+			const teamDoc = await transaction.get(teamRef);
 
-		const gameData = gameDoc.data();
-		if (!gameData?.teams) {
-			return NextResponse.json({ error: 'No teams in game' }, { status: 400 });
-		}
-
-		const updatedTeams = gameData.teams.map((team: Team) => {
-			if (team.id === teamId) {
-				const updatedChoices = team.choices.map((c: TeamChoice) =>
-					c.round_id === roundId ? { ...c, saved: true } : c
-				);
-				return { ...team, choices: updatedChoices };
+			if (!teamDoc.exists) {
+				throw new Error('Team not found');
 			}
-			return team;
-		});
-		console.log(
-			'Attempting to update game:',
-			gameId,
-			'for team:',
-			teamId,
-			'and round:',
-			roundId
-		);
-		console.log('Updated teams data:', JSON.stringify(updatedTeams));
-		await gameRef.update({ teams: updatedTeams });
-		console.log('Update successful');
 
-		return NextResponse.json({ success: true });
+			const teamData = teamDoc.data();
+			if (!teamData || !Array.isArray(teamData.choices)) {
+				throw new Error('Team data or choices array is malformed');
+			}
+
+			const updatedChoices = teamData.choices.map((c: TeamChoice) => {
+				if (c.round_id === roundId) {
+					return { ...c, saved: true };
+				}
+				return c;
+			});
+
+			transaction.update(teamRef, { choices: updatedChoices });
+		});
+
+		return NextResponse.json({
+			success: true,
+			message: `Choice for round ${roundId} saved successfully for team ${teamId}.`,
+		});
 	} catch (err) {
 		console.error('Error saving choice:', err);
 		return NextResponse.json(
-			{ error: 'Internal server error' },
+			{ error: `Internal server error: ${err}` },
 			{ status: 500 }
 		);
 	}

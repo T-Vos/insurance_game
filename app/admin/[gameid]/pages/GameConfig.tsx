@@ -16,43 +16,38 @@ import { generateGameKey } from '@/lib/generate_game_key';
 import ScoreBar from '../components/ScoreBar';
 
 type GameConfigProps = {
-	roundChoices: Round[];
+	allRounds: Round[];
+	allChoices: Choice[];
 	currentRoundIndex: Game['currentRoundIndex'];
 	handleUpdateRound: (updatedRound: Round) => void;
 	handleAddRound: () => void;
 	handleUpdateGameConfig: (key: keyof Game, value: string | number) => void;
 	handleRemoveRound: (RoundId: Round['round_id']) => void;
 	gameData: Game | null;
+	onAddChoice: (roundId: Round['round_id']) => void;
+	onRemoveChoice: (choiceId: string) => void;
+	onSaveChoice: (updatedChoice: Choice) => void;
 };
 
 const GameConfig = ({
-	roundChoices,
+	allRounds,
+	allChoices,
 	currentRoundIndex,
 	handleUpdateRound,
 	handleAddRound,
 	handleUpdateGameConfig,
 	handleRemoveRound,
 	gameData,
+	onAddChoice,
+	onRemoveChoice,
+	onSaveChoice,
 }: GameConfigProps) => {
-	const currentRound = roundChoices[currentRoundIndex];
-	const [editingChoices, setEditingChoices] = useState<Choice[]>([]);
+	const currentRound = allRounds[currentRoundIndex];
 
-	useEffect(() => {
-		if (
-			currentRound &&
-			JSON.stringify(currentRound.choices) !== JSON.stringify(editingChoices)
-		) {
-			setEditingChoices(currentRound.choices || []);
-		}
-	}, [currentRound]);
-
-	const saveChoices = () => {
-		console.log('SAVE CHOICE');
-		handleUpdateRound({
-			...currentRound,
-			choices: editingChoices,
-		});
-	};
+	// Filter the choices relevant to the current round
+	const choicesForCurrentRound = allChoices.filter(
+		(choice) => choice.round_id === currentRound?.round_id
+	);
 
 	if (!currentRound) {
 		return (
@@ -63,43 +58,6 @@ const GameConfig = ({
 			/>
 		);
 	}
-
-	const handleUpdateChoice = (
-		choiceIndex: Choice['choice_index'],
-		newChoiceData: Partial<Choice>
-	) => {
-		setEditingChoices((prevChoices) =>
-			prevChoices.map((choice, index) =>
-				index === choiceIndex ? { ...choice, ...newChoiceData } : choice
-			)
-		);
-	};
-
-	const handleAddChoice = () => {
-		const newChoiceId = generateGameKey(14);
-		const newChoice: Choice = {
-			id: newChoiceId,
-			choice_index: editingChoices.length || 0 + 1,
-			description: 'New choice',
-			duration: 1,
-			reveals: [],
-			interactionEffects: [],
-			capacity_score: 0,
-			expected_profit_score: 0,
-			IT_score: 0,
-			liquidity_score: 0,
-			solvency_score: 0,
-			blockeding_circumstances: [],
-			delayedEffect: [],
-		};
-		setEditingChoices((prevChoices) => [...prevChoices, newChoice]);
-	};
-
-	const handleRemoveChoice = (choiceId: string) => {
-		setEditingChoices((prevChoices) =>
-			prevChoices.filter((choice) => choice.id !== choiceId)
-		);
-	};
 
 	return (
 		<div className="flex flex-col gap-3">
@@ -120,13 +78,12 @@ const GameConfig = ({
 				/>
 				<div className="border-t border-gray-400 dark:border-gray-600 my-8"></div>
 				<ChoicesList
-					editingChoices={editingChoices}
-					roundChoices={roundChoices}
-					handleAddChoice={handleAddChoice}
-					handleRemoveChoice={handleRemoveChoice}
-					handleUpdateChoice={handleUpdateChoice}
-					handleSaveChoice={saveChoices}
-					key={'ChoicesList'}
+					editingChoices={choicesForCurrentRound}
+					allRounds={allRounds}
+					allChoices={allChoices}
+					onAddChoice={() => onAddChoice(currentRound.round_id)}
+					onRemoveChoice={onRemoveChoice}
+					onSaveChoice={onSaveChoice}
 				/>
 			</div>
 		</div>
@@ -134,6 +91,10 @@ const GameConfig = ({
 };
 
 export default GameConfig;
+
+// The GameConfigHeader and RoundConfig components remain unchanged.
+// The code for those components is not repeated here for brevity.
+// You can keep them as they were in your original file.
 
 type GameConfigHeaderProps = {
 	gameData: Game | null;
@@ -253,7 +214,7 @@ const GameConfigHeader = ({
 			`start_${scoreKey}`,
 			typeof editingStartingScores[scoreKey] === 'number'
 				? editingStartingScores[scoreKey]
-				: parseFloat(editingStartingScores[scoreKey]) || 0
+				: parseFloat(String(editingStartingScores[scoreKey])) || 0
 		);
 	};
 	const saveCriticalScoreChange = (scoreKey: keyof Scores) => {
@@ -261,7 +222,7 @@ const GameConfigHeader = ({
 			`critical_${scoreKey}`,
 			typeof editingCriticalScores[scoreKey] === 'number'
 				? editingCriticalScores[scoreKey]
-				: parseFloat(editingCriticalScores[scoreKey]) || 0
+				: parseFloat(String(editingCriticalScores[scoreKey])) || 0
 		);
 	};
 	const saveGameOverScoreChange = (scoreKey: keyof Scores) => {
@@ -269,7 +230,7 @@ const GameConfigHeader = ({
 			`gameover_${scoreKey}`,
 			typeof editingGameOverScores[scoreKey] === 'number'
 				? editingGameOverScores[scoreKey]
-				: parseFloat(editingGameOverScores[scoreKey]) || 0
+				: parseFloat(String(editingGameOverScores[scoreKey])) || 0
 		);
 	};
 
@@ -407,7 +368,7 @@ const RoundConfig = ({
 		const _value =
 			typeof editingShocks[shockKey] === 'number'
 				? editingShocks[shockKey]
-				: parseFloat(editingShocks[shockKey]) || 0;
+				: parseFloat(String(editingShocks[shockKey])) || 0;
 		handleUpdateRound({
 			...roundData,
 			[fullShockKey]: _value,
@@ -431,7 +392,10 @@ const RoundConfig = ({
 							}
 						}}
 						autoFocus
-						className={clsx(title, 'bg-gray-700 rounded px-2 py-1 w-full')}
+						className={clsx(
+							title_changeable,
+							'bg-gray-700 rounded px-2 py-1 w-full'
+						)}
 					/>
 				) : (
 					<h2

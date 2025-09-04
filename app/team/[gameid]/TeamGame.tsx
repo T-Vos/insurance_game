@@ -24,7 +24,6 @@ import {
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 import { cardstyle } from '@/app/admin/[gameid]/components/styling';
 import MessageBubble from '@/components/messageBubble';
-
 export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [teamId, setTeamId] = useState<string | null>(null);
 	const [memberId, setMemberId] = useState<string | null>(null); // NEW: State for memberId
@@ -200,6 +199,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			alert(data.error || 'Failed to save choice');
 		}
 	};
+	const { handleSelectChoice } = useSelectChoice(game);
 
 	if (!teamId) return <div>Loading.</div>;
 	if (!game) return <div>Loading..</div>;

@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { menuItems, PageState } from '@/lib/types';
 import Link from 'next/link';
 import GameConfig from './pages/GameConfig';
-import GameGraphs from './pages/GameGraph';
+// import GameGraphs from './pages/GameGraph.tsx.obso';
 import TeamsConfig from './pages/teamsConfig';
 import PlayControls from './components/PlayControls';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
@@ -20,8 +20,7 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 		useState<number>(0);
 	const { userEmail, loading } = useAdminAuth();
 	const [pageState, setPageState] = useState(PageState.ROUNDS);
-	const { gameData, allRounds, currentRound, allTeams, allChoices } =
-		useGameData(gameId);
+	const { gameData, allRounds, allTeams, allChoices } = useGameData(gameId);
 	const { handleSelectChoice } = useSelectChoice(gameData);
 	const {
 		handleStartGame,
@@ -36,7 +35,10 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 		handleRemoveRound,
 		handleAddTeam,
 		handleUpdateTeam,
-	} = useGameControls(gameData, gameId);
+		onAddChoice,
+		onRemoveChoice,
+		onSaveChoice,
+	} = useGameControls(gameId);
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center min-h-screen dark:bg-gray-900 dark:text-gray-200">
@@ -66,7 +68,11 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 					<GameConfig
 						key={'gameConfig'}
 						handleUpdateGameConfig={handleUpdateGameConfig}
-						roundChoices={allRounds}
+						allRounds={allRounds}
+						allChoices={allChoices}
+						onAddChoice={onAddChoice}
+						onRemoveChoice={onRemoveChoice}
+						onSaveChoice={onSaveChoice}
 						currentRoundIndex={localCurrentRoundIndex}
 						handleUpdateRound={handleUpdateRound}
 						handleAddRound={handleAddRound}
@@ -82,8 +88,8 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 						handleUpdateTeam={handleUpdateTeam}
 					/>
 				);
-			case PageState.CHART:
-				return <GameGraphs game={gameData} />;
+			// case PageState.CHART:
+			// 	return <GameGraphs game={gameData} />;
 			default:
 				return null;
 		}
@@ -150,9 +156,9 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 					handleStartGame={() =>
 						handleStartGame(allRounds.length, allRounds[0].round_id)
 					}
-					handleNextRound={() => handleNextRound(allRounds)}
-					handlePreviousRound={() => handlePreviousRound(allRounds)}
-					handleStopGame={() => handleStopGame(allRounds)}
+					handleNextRound={() => handleNextRound()}
+					handlePreviousRound={() => handlePreviousRound()}
+					handleStopGame={() => handleStopGame()}
 					isGameRunning={isGameRunning}
 					isLastRound={isLastRound}
 				/>

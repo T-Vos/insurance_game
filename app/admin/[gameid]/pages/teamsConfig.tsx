@@ -21,7 +21,6 @@ const TeamsConfig = ({
 		const newTeam: Team = {
 			id: uuidv4(),
 			teamName: newTeamName.trim(),
-			isEditing: false,
 			choices: [],
 			capacity_score: 0,
 			expected_profit_score: 0,
@@ -69,7 +68,7 @@ const TeamsConfig = ({
 								key={team.id}
 								className="bg-gray-800 rounded-2xl p-6 shadow-xl border-t-4 border-gray-700"
 							>
-								{team.isEditing ? (
+								{/* {team.isEditing ? (
 									<input
 										type="text"
 										value={team.editingName ?? team.teamName}
@@ -107,7 +106,7 @@ const TeamsConfig = ({
 									>
 										{team.teamName}
 									</h3>
-								)}
+								)} */}
 								{/* <div className="mt-1 flex justify-between text-sm font-medium">
 									<p className="text-gray-400">
 										Score:{' '}

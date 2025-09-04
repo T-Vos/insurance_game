@@ -8,61 +8,49 @@ import {
 } from '@/lib/types';
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import ScoreBar from './ScoreBar';
+import ScoreBar from './ScoreBar'; // Assuming ScoreBar exists and is fine
 
+// The corrected props, using flat arrays instead of the old nested structure
 type ChoiceEditorProps = {
 	choice: Choice;
-	choiceIndex: Choice['choice_index'];
-	handleUpdateChoice: (
-		choiceIndex: Choice['choice_index'],
-		newChoiceData: Partial<Choice>
-	) => void;
-	handleRemoveChoice: (choiceId: string) => void;
-	roundChoices: Round[];
-	handleSaveChoice: () => void;
+	allChoices: Choice[]; // Use a flat list of all choices for interactions
+	allRounds: Round[]; // Use a flat list of all rounds for delayed effects
+	onSave: (updatedChoice: Choice) => void;
+	onRemove: (choiceId: string) => void;
 };
 
 export const ChoiceEditor = ({
 	choice,
-	choiceIndex,
-	handleUpdateChoice,
-	handleRemoveChoice,
-	roundChoices,
-	handleSaveChoice,
+	allChoices,
+	allRounds,
+	onSave,
+	onRemove,
 }: ChoiceEditorProps) => {
 	const [isOpened, setIsOpened] = useState(false);
 	const toggleCollapse = () => setIsOpened(!isOpened);
 
-	const [editingScores, setEditingScores] = useState<Scores>({
-		expected_profit_score: choice?.expected_profit_score || 0,
-		liquidity_score: choice?.liquidity_score || 0,
-		solvency_score: choice?.solvency_score || 0,
-		IT_score: choice?.IT_score || 0,
-		capacity_score: choice?.capacity_score || 0,
-	});
+	// Use local state to manage all edits within the component
+	const [localChoice, setLocalChoice] = useState<Choice>(choice);
 
-	const [editingDuration, setEditingDuration] = useState<number | string>(
-		choice?.duration || 0
-	);
-
+	// Sync local state with the prop when the choice changes
 	useEffect(() => {
-		if (!editingScores || Object.keys(editingScores).length === 0) {
-			setEditingScores({
-				expected_profit_score: choice?.expected_profit_score || 0,
-				liquidity_score: choice?.liquidity_score || 0,
-				solvency_score: choice?.solvency_score || 0,
-				IT_score: choice?.IT_score || 0,
-				capacity_score: choice?.capacity_score || 0,
-			});
-		}
+		setLocalChoice(choice);
 	}, [choice]);
 
+	const handleUpdateLocalChoice = (field: keyof Choice, value: unknown) => {
+		setLocalChoice((prev) => ({
+			...prev,
+			[field]: value,
+		}));
+	};
+
+	// All the `handleUpdate*` functions now operate on the local state
 	const handleUpdateReveal = (
 		revealIndex: number,
 		field: keyof RevealMessage,
 		value: string | number
 	) => {
-		const updatedReveals = [...(choice.reveals || [])];
+		const updatedReveals = [...(localChoice.reveals || [])];
 		const parsedValue =
 			field === 'revealedInRounds' ? parseInt(value as string, 10) : value;
 
@@ -70,20 +58,28 @@ export const ChoiceEditor = ({
 			...updatedReveals[revealIndex],
 			[field]: parsedValue,
 		};
-		handleUpdateChoice(choiceIndex, { reveals: updatedReveals });
+		handleUpdateLocalChoice('reveals', updatedReveals);
 	};
 
 	const handleAddReveal = () => {
-		const newReveal: RevealMessage = { text: '', revealedInRounds: 1 };
-		const updatedReveals = [...(choice.reveals || []), newReveal];
-		handleUpdateChoice(choiceIndex, { reveals: updatedReveals });
+		const randomFirstNames = ['HR', 'NOS', 'NRC', 'Random Name', 'Foo Bar'];
+		const randomNumber = Math.ceil(Math.random() * 3);
+		const newReveal: RevealMessage = {
+			id: crypto.randomUUID(),
+			text: '',
+			revealedInRounds: 1,
+			message_sender: randomFirstNames[randomNumber],
+			message_sender_image: '/portrait.jpg',
+		};
+		const updatedReveals = [...(localChoice.reveals || []), newReveal];
+		handleUpdateLocalChoice('reveals', updatedReveals);
 	};
 
 	const handleRemoveReveal = (revealIndex: number) => {
-		const updatedReveals = (choice.reveals || []).filter(
+		const updatedReveals = (localChoice.reveals || []).filter(
 			(_, index) => index !== revealIndex
 		);
-		handleUpdateChoice(choiceIndex, { reveals: updatedReveals });
+		handleUpdateLocalChoice('reveals', updatedReveals);
 	};
 
 	const handleUpdateInteraction = (
@@ -91,94 +87,66 @@ export const ChoiceEditor = ({
 		field: keyof InteractionEffect,
 		value: string | number
 	) => {
-		const updatedInteractions = [...(choice.interactionEffects || [])];
+		const updatedInteractions = [...(localChoice.interactionEffects || [])];
 		const parsedValue =
-			field === 'targetChoiceId' || field === 'bonusScore'
-				? parseInt(value as string, 10)
-				: value;
+			field === 'bonusScore' ? parseInt(value as string, 10) : value;
 
 		updatedInteractions[interactionIndex] = {
 			...updatedInteractions[interactionIndex],
 			[field]: parsedValue,
 		};
-		handleUpdateChoice(choiceIndex, {
-			interactionEffects: updatedInteractions,
-		});
+		handleUpdateLocalChoice('interactionEffects', updatedInteractions);
 	};
 
 	const handleAddInteraction = () => {
 		const newInteraction: InteractionEffect = {
-			targetChoiceId:
-				roundChoices[0] &&
-				Array.isArray(roundChoices[0].choices) &&
-				roundChoices[0].choices[0]
-					? roundChoices[0].choices[0].id
-					: '',
-			roundId: roundChoices[0]?.round_id || '',
+			targetChoiceId: allChoices[0]?.id || '',
 			bonusScore: 0,
+			roundId: allRounds[0]?.round_id || '',
 		};
 		const updatedInteractions = [
-			...(choice.interactionEffects || []),
+			...(localChoice.interactionEffects || []),
 			newInteraction,
 		];
-		handleUpdateChoice(choiceIndex, {
-			interactionEffects: updatedInteractions,
-		});
+		handleUpdateLocalChoice('interactionEffects', updatedInteractions);
 	};
 
 	const handleRemoveInteraction = (interactionIndex: number) => {
-		const updatedInteractions = (choice.interactionEffects || []).filter(
+		const updatedInteractions = (localChoice.interactionEffects || []).filter(
 			(_, index) => index !== interactionIndex
 		);
-		handleUpdateChoice(choiceIndex, {
-			interactionEffects: updatedInteractions,
-		});
+		handleUpdateLocalChoice('interactionEffects', updatedInteractions);
 	};
+
 	const handleScoreChange = (
 		scoreKey: keyof Scores,
 		value: string | number
 	) => {
-		setEditingScores((prevScores) => ({
-			...prevScores,
-			[scoreKey]: value,
-		}));
-	};
-	const saveScoreChange = (scoreKey: keyof Scores) => {
 		const _score =
-			typeof editingScores[scoreKey] === 'number'
-				? editingScores[scoreKey]
-				: parseFloat(editingScores[scoreKey]) || 0;
-		handleUpdateChoice(choiceIndex, { [scoreKey]: _score });
-		handleSaveChoice();
+			typeof value === 'number' ? value : parseFloat(value as string) || 0;
+		setLocalChoice((prev) => ({
+			...prev,
+			[scoreKey]: _score,
+		}));
 	};
 
 	const handleDurationChange = (value: string | number) => {
-		setEditingDuration(value);
-	};
-
-	const saveDurationChange = () => {
 		const _duration =
-			typeof editingDuration === 'number'
-				? editingDuration
-				: parseFloat(editingDuration) || 0;
-
-		handleUpdateChoice(choiceIndex, {
-			['duration']: _duration,
-		});
-		handleSaveChoice();
+			typeof value === 'number' ? value : parseFloat(value as string) || 0;
+		handleUpdateLocalChoice('duration', _duration);
 	};
 
 	const handleAddDelayedEffect = () => {
 		const newEffect: delayedEffect = {
-			effective_round: roundChoices[0]?.round_id || '',
+			effective_round: allRounds[0]?.round_id || '', // Correctly use the allRounds prop
 			expected_profit_score: 0,
 			liquidity_score: 0,
 			solvency_score: 0,
 			IT_score: 0,
 			capacity_score: 0,
 		};
-		const updatedEffects = [...(choice.delayedEffect || []), newEffect];
-		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
+		const updatedEffects = [...(localChoice.delayedEffect || []), newEffect];
+		handleUpdateLocalChoice('delayedEffect', updatedEffects);
 	};
 
 	const handleUpdateDelayedEffect = (
@@ -186,11 +154,11 @@ export const ChoiceEditor = ({
 		field: keyof delayedEffect,
 		value: string | number
 	) => {
-		console.log('update');
-		const updatedEffects = [...(choice.delayedEffect || [])];
+		const updatedEffects = [...(localChoice.delayedEffect || [])];
 		let parsedValue = value;
 		if (field != 'effective_round') {
-			parsedValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+			parsedValue =
+				typeof value === 'number' ? value : parseFloat(value as string) || 0;
 		}
 
 		updatedEffects[effectIndex] = {
@@ -198,17 +166,22 @@ export const ChoiceEditor = ({
 			[field]: parsedValue,
 		};
 
-		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
+		handleUpdateLocalChoice('delayedEffect', updatedEffects);
 	};
 
 	const handleRemoveDelayedEffect = (effectIndex: number) => {
-		const updatedEffects = (choice.delayedEffect || []).filter(
+		const updatedEffects = (localChoice.delayedEffect || []).filter(
 			(_, index) => index !== effectIndex
 		);
-		handleUpdateChoice(choiceIndex, { delayedEffect: updatedEffects });
-		handleSaveChoice();
+		handleUpdateLocalChoice('delayedEffect', updatedEffects);
 	};
 
+	const handleSaveAndClose = () => {
+		onSave(localChoice);
+		setIsOpened(false);
+	};
+
+	// The main component renders the sub-components
 	return (
 		<div className="bg-gray-900 rounded-xl p-6 shadow-2xl mb-6 border-l-4 border-teal-500">
 			<div className="flex gap-4 items-center mb-4">
@@ -227,18 +200,16 @@ export const ChoiceEditor = ({
 				<div className="grow">
 					<input
 						type="text"
-						value={choice.description}
+						value={localChoice.description}
 						onChange={(e) =>
-							handleUpdateChoice(choiceIndex, {
-								description: e.target.value,
-							})
+							handleUpdateLocalChoice('description', e.target.value)
 						}
-						onBlur={handleSaveChoice}
+						onBlur={() => onSave(localChoice)}
 						className="w-full bg-gray-700 text-white rounded px-3 py-2"
 					/>
 				</div>
 				<button
-					onClick={() => handleRemoveChoice(choice.id)}
+					onClick={() => onRemove(localChoice.id)}
 					className="text-red-400 cursor-pointer hover:text-red-300 transition duration-200"
 				>
 					<LucideTrash size={20} />
@@ -252,39 +223,45 @@ export const ChoiceEditor = ({
 			>
 				<div className="pt-4">
 					<ScoreBar
-						editingScores={editingScores}
+						editingScores={{
+							expected_profit_score: localChoice.expected_profit_score,
+							liquidity_score: localChoice.liquidity_score,
+							solvency_score: localChoice.solvency_score,
+							IT_score: localChoice.IT_score,
+							capacity_score: localChoice.capacity_score,
+						}}
 						handleScoreChange={handleScoreChange}
-						saveScoreChange={saveScoreChange}
+						saveScoreChange={() => onSave(localChoice)}
 					/>
 
 					<RevealMessages
-						reveals={choice.reveals}
+						reveals={localChoice.reveals}
 						handleUpdateReveal={handleUpdateReveal}
 						handleRemoveReveal={handleRemoveReveal}
 						handleAddReveal={handleAddReveal}
-						handleSaveReveal={handleSaveChoice}
+						handleSaveReveal={() => onSave(localChoice)}
 					/>
 
 					<InteractionEffects
-						interactionEffects={choice.interactionEffects}
-						roundChoices={roundChoices}
+						interactionEffects={localChoice.interactionEffects}
+						allChoices={allChoices} // Pass the correct prop
 						handleUpdateInteraction={handleUpdateInteraction}
 						handleRemoveInteraction={handleRemoveInteraction}
 						handleAddInteraction={handleAddInteraction}
-						handleSaveInteraction={handleSaveChoice}
+						handleSaveInteraction={() => onSave(localChoice)}
 					/>
 					<DurationEffect
-						editingDuration={editingDuration}
+						editingDuration={localChoice.duration}
 						handleDurationChange={handleDurationChange}
-						saveDurationChange={handleSaveChoice}
+						saveDurationChange={() => onSave(localChoice)}
 					/>
 					<DelayedEffects
-						delayedEffects={choice.delayedEffect}
-						roundChoices={roundChoices}
+						delayedEffects={localChoice.delayedEffect}
+						allRounds={allRounds} // Pass the correct prop
 						handleUpdateDelayedEffect={handleUpdateDelayedEffect}
 						handleRemoveDelayedEffect={handleRemoveDelayedEffect}
 						handleAddDelayedEffect={handleAddDelayedEffect}
-						handleSaveEffect={handleSaveChoice}
+						handleSaveEffect={() => onSave(localChoice)}
 					/>
 				</div>
 			</div>
@@ -294,7 +271,7 @@ export const ChoiceEditor = ({
 
 type DelayedEffectsProps = {
 	delayedEffects?: delayedEffect[];
-	roundChoices: Round[];
+	allRounds: Round[]; // Use flat array
 	handleUpdateDelayedEffect: (
 		effectIndex: number,
 		field: keyof delayedEffect,
@@ -307,7 +284,7 @@ type DelayedEffectsProps = {
 
 const DelayedEffects = ({
 	delayedEffects,
-	roundChoices,
+	allRounds,
 	handleUpdateDelayedEffect,
 	handleRemoveDelayedEffect,
 	handleAddDelayedEffect,
@@ -346,11 +323,15 @@ const DelayedEffects = ({
 								<option value="" disabled>
 									Select a round
 								</option>
-								{roundChoices.map((round) => (
-									<option key={round.round_id} value={round.round_id}>
-										{round.round_name}
-									</option>
-								))}
+								{allRounds.map(
+									(
+										round // Use allRounds here
+									) => (
+										<option key={round.round_id} value={round.round_id}>
+											{round.round_name}
+										</option>
+									)
+								)}
 							</select>
 						</div>
 						<button
@@ -361,7 +342,6 @@ const DelayedEffects = ({
 						</button>
 					</div>
 
-					{/* Score inputs for the delayed effect */}
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{scoreKeys.map((scoreKey) => (
 							<div key={scoreKey}>
@@ -370,7 +350,7 @@ const DelayedEffects = ({
 								</label>
 								<input
 									type="number"
-									value={effect[scoreKey]}
+									value={effect[scoreKey] || 0}
 									onChange={(e) =>
 										handleUpdateDelayedEffect(
 											effectIndex,
@@ -433,7 +413,7 @@ const RevealMessages = ({
 					/>
 					<input
 						type="number"
-						value={reveal.revealedInRounds}
+						value={reveal.revealedInRounds || ''}
 						placeholder="Rounds"
 						onChange={(e) =>
 							handleUpdateReveal(
@@ -466,7 +446,7 @@ const RevealMessages = ({
 
 type InteractionEffectsProps = {
 	interactionEffects?: InteractionEffect[];
-	roundChoices: Round[];
+	allChoices: Choice[]; // Use flat array
 	handleUpdateInteraction: (
 		interactionIndex: number,
 		field: keyof InteractionEffect,
@@ -479,7 +459,7 @@ type InteractionEffectsProps = {
 
 const InteractionEffects = ({
 	interactionEffects,
-	roundChoices,
+	allChoices, // Use the new prop
 	handleUpdateInteraction,
 	handleRemoveInteraction,
 	handleAddInteraction,
@@ -497,28 +477,6 @@ const InteractionEffects = ({
 				>
 					<div className="grow">
 						<label className="block text-gray-400 text-sm font-bold mb-1">
-							Target Round
-						</label>
-						<select
-							value={interaction.roundId}
-							onChange={(e) =>
-								handleUpdateInteraction(
-									interactionIndex,
-									'roundId',
-									e.target.value
-								)
-							}
-							className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
-						>
-							{roundChoices.map((round) => (
-								<option key={round.round_id} value={round.round_id}>
-									{round.round_name}
-								</option>
-							))}
-						</select>
-					</div>
-					<div className="grow">
-						<label className="block text-gray-400 text-sm font-bold mb-1">
 							Target Choice
 						</label>
 						<select
@@ -530,19 +488,21 @@ const InteractionEffects = ({
 									e.target.value
 								)
 							}
+							onBlur={handleSaveInteraction}
 							className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
 						>
 							<option value="" disabled>
 								Select a choice
 							</option>
-							{(
-								roundChoices.find((r) => r.round_id === interaction.roundId)
-									?.choices ?? []
-							).map((targetChoice) => (
-								<option key={targetChoice.id} value={targetChoice.id}>
-									{targetChoice.description}
-								</option>
-							))}
+							{allChoices.map(
+								(
+									targetChoice // Use allChoices here
+								) => (
+									<option key={targetChoice.id} value={targetChoice.id}>
+										{targetChoice.description}
+									</option>
+								)
+							)}
 						</select>
 					</div>
 					<div>
@@ -551,7 +511,7 @@ const InteractionEffects = ({
 						</label>
 						<input
 							type="number"
-							value={interaction.bonusScore}
+							value={interaction.bonusScore || 0}
 							placeholder="Bonus Score"
 							onChange={(e) =>
 								handleUpdateInteraction(
@@ -560,6 +520,7 @@ const InteractionEffects = ({
 									e.target.value
 								)
 							}
+							onBlur={handleSaveInteraction}
 							className="w-28 bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
 						/>
 					</div>

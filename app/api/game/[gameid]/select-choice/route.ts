@@ -38,22 +38,21 @@ export async function POST(req: NextRequest) {
 		const updatedTeams = gameData.teams.map((team: Team) => {
 			if (team.id === teamId) {
 				// Find if a choice for this round already exists
-				const existingChoiceIndex = team.choices.findIndex(
+				const existingChoiceIndex = team.choices?.findIndex(
 					(c: TeamChoice) => c.round_id === roundId
 				);
 
 				let updatedChoices;
-				if (existingChoiceIndex > -1) {
+				if (!existingChoiceIndex || existingChoiceIndex > -1) {
 					// Update existing choice
-					updatedChoices = team.choices.map((c: TeamChoice) =>
+					updatedChoices = team.choices?.map((c: TeamChoice) =>
 						c.round_id === roundId
 							? { ...c, choice_id: choiceId, saved: false, roundIndex }
 							: c
 					);
 				} else {
-					// Add new choice
 					updatedChoices = [
-						...team.choices,
+						...(team.choices ?? []),
 						{
 							round_id: roundId,
 							choice_id: choiceId,

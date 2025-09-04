@@ -6,6 +6,7 @@ export function getTeamSession() {
 	try {
 		return JSON.parse(cookies.split('=')[1]);
 	} catch (e) {
+		console.error(e);
 		return null;
 	}
 }

@@ -30,7 +30,7 @@ export default function TeamBoard({
 }: TeamBoardProps) {
 	if (!team) return <div>Loading team data...</div>;
 	if (!currentRoundchoices) return <div>Geen keuzes beschikbaar</div>;
-	const selectedChoice = team.choices.find(
+	const selectedChoice = team.choices?.find(
 		(c: TeamChoice) => c.round_id === currentRound.round_id
 	);
 

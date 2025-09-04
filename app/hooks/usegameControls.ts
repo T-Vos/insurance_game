@@ -1,75 +1,144 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { db } from '@/lib/firebase/config';
-import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { Game, Round, Team } from '@/lib/types';
+import {
+	doc,
+	setDoc,
+	updateDoc,
+	deleteDoc,
+	addDoc,
+	collection,
+	onSnapshot,
+	query,
+} from 'firebase/firestore';
+import { Choice, Game, Round, Team } from '@/lib/types';
 
-const useGameControls = (gameData: Game | null, game_id: string) => {
+const TEAMS_COLLECTION_NAME = 'teams';
+const ROUNDS_COLLECTION_NAME = 'rounds';
+const CHOICES_COLLECTION_NAME = 'choices';
+
+const getCollectionRefs = (gameId: string) => {
+	if (!db) return null;
+	const gameDocPath = `insurance_game/${gameId}`;
+	const gameDocRef = doc(db, gameDocPath);
+	return {
+		gameDocRef,
+		teamsCollection: collection(gameDocRef, TEAMS_COLLECTION_NAME),
+		roundsCollection: collection(gameDocRef, ROUNDS_COLLECTION_NAME),
+		choicesCollection: collection(gameDocRef, CHOICES_COLLECTION_NAME),
+	};
+};
+
+const useGameControls = (gameId: string) => {
 	const [loading, setLoading] = useState(false);
-	const isGameRunning = !!gameData?.gameStartedAt && !gameData?.gameFinishedAt;
+	const [gameData, setGameData] = useState<Game | null>(null);
+	const [allRounds, setAllRounds] = useState<Round[]>([]);
+	const [allChoices, setAllChoices] = useState<Choice[]>([]);
+	const [allTeams, setAllTeams] = useState<Team[]>([]);
 
+	const collectionRefs = getCollectionRefs(gameId);
+
+	useEffect(() => {
+		if (!collectionRefs) return;
+		const { gameDocRef, roundsCollection, choicesCollection, teamsCollection } =
+			collectionRefs;
+
+		const unsubscribeGame = onSnapshot(gameDocRef, (docSnap) => {
+			if (docSnap.exists()) {
+				setGameData(docSnap.data() as Game);
+			}
+		});
+
+		const unsubscribeRounds = onSnapshot(
+			query(roundsCollection),
+			(snapshot) => {
+				const rounds = snapshot.docs.map((doc) => ({
+					...doc.data(),
+				})) as Round[];
+				setAllRounds(rounds.sort((a, b) => a.round_index - b.round_index));
+			}
+		);
+
+		const unsubscribeChoices = onSnapshot(
+			query(choicesCollection),
+			(snapshot) => {
+				const choices = snapshot.docs.map((doc) => ({
+					...doc.data(),
+					id: doc.id,
+				})) as Choice[];
+				setAllChoices(choices);
+			}
+		);
+
+		const unsubscribeTeams = onSnapshot(query(teamsCollection), (snapshot) => {
+			const teams = snapshot.docs.map((doc) => ({
+				...doc.data(),
+				id: doc.id,
+			})) as Team[];
+			setAllTeams(teams);
+		});
+
+		return () => {
+			unsubscribeGame();
+			unsubscribeRounds();
+			unsubscribeChoices();
+			unsubscribeTeams();
+		};
+	}, [collectionRefs]);
+
+	const isGameRunning = !!gameData?.gameStartedAt && !gameData?.gameFinishedAt;
 	const isLastRound = gameData
 		? gameData.currentRoundIndex >= (gameData.totalRounds ?? 0) - 1
 		: false;
 
-	const handleStartGame = async (
-		totalRounds: number,
-		firstRoundId: Round['round_id']
-	) => {
-		if (!db || !gameData || isGameRunning) return;
+	const handleStartGame = useCallback(
+		async (totalRounds: number, firstRoundId: Round['round_id']) => {
+			if (!collectionRefs || isGameRunning) return;
+			setLoading(true);
+
+			const { gameDocRef, roundsCollection } = collectionRefs;
+
+			try {
+				await updateDoc(gameDocRef, {
+					gameStartedAt: Date.now(),
+					gameFinishedAt: null,
+					currentRoundIndex: 0,
+					currentRoundId: firstRoundId,
+					totalRounds: totalRounds,
+				});
+
+				const firstRoundRef = doc(roundsCollection, String(firstRoundId));
+				await updateDoc(firstRoundRef, { round_started_at: Date.now() });
+			} catch (error) {
+				console.error('Failed to start game:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs, isGameRunning]
+	);
+
+	const handleStopGame = useCallback(async () => {
+		if (!collectionRefs || !gameData || !isGameRunning) return;
 		setLoading(true);
 
-		const gameDocRef = doc(db, `insurance_game/${game_id}`);
-
-		try {
-			await updateDoc(gameDocRef, {
-				gameStartedAt: Date.now(),
-				gameFinishedAt: null,
-				currentRoundIndex: 0,
-				currentRoundId: firstRoundId,
-				totalRounds: totalRounds,
-			});
-
-			const firstRoundRef = doc(
-				db,
-				`insurance_game/${game_id}/rounds/${firstRoundId}`
-			);
-			await updateDoc(firstRoundRef, { round_started_at: Date.now() });
-		} catch (error) {
-			console.error('Failed to start game:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleStopGame = async (allRounds: Round[]) => {
-		if (!db || !gameData || !isGameRunning) return;
-		setLoading(true);
-
-		const gameDocRef = doc(db, `insurance_game/${game_id}`);
+		const { gameDocRef, roundsCollection } = collectionRefs;
 		const currentRoundRef = doc(
-			db,
-			`insurance_game/${game_id}/rounds/${
-				allRounds[gameData.currentRoundIndex]
-			}`
+			roundsCollection,
+			String(allRounds[gameData.currentRoundIndex].round_id)
 		);
 
 		try {
-			// Update the main game document
-			await updateDoc(gameDocRef, {
-				gameFinishedAt: Date.now(),
-			});
-
-			// Update the current round document to set its finish time
+			await updateDoc(gameDocRef, { gameFinishedAt: Date.now() });
 			await updateDoc(currentRoundRef, { round_finished_at: Date.now() });
 		} catch (error) {
 			console.error('Failed to stop game:', error);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [collectionRefs, gameData, isGameRunning, allRounds]);
 
-	const handleNextRound = async (allRounds: Round[]) => {
-		if (!db || !gameData || !isGameRunning || isLastRound) {
+	const handleNextRound = useCallback(async () => {
+		if (!collectionRefs || !gameData || !isGameRunning || isLastRound) {
 			console.log('Cannot advance to next round. Pre-conditions not met.');
 			return;
 		}
@@ -77,15 +146,16 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 
 		const currentRoundIndex = gameData.currentRoundIndex;
 		const nextRoundIndex = currentRoundIndex + 1;
+		const { gameDocRef, roundsCollection } = collectionRefs;
+
 		const currentRoundRef = doc(
-			db,
-			`insurance_game/${game_id}/rounds/${allRounds[currentRoundIndex].round_id}`
+			roundsCollection,
+			String(allRounds[currentRoundIndex].round_id)
 		);
 		const nextRoundRef = doc(
-			db,
-			`insurance_game/${game_id}/rounds/${allRounds[nextRoundIndex].round_id}`
+			roundsCollection,
+			String(allRounds[nextRoundIndex].round_id)
 		);
-		const gameDocRef = doc(db, `insurance_game/${game_id}`);
 
 		try {
 			await updateDoc(currentRoundRef, { round_finished_at: Date.now() });
@@ -99,24 +169,29 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [collectionRefs, gameData, isGameRunning, isLastRound, allRounds]);
 
-	const handlePreviousRound = async (allRounds: Round[]) => {
-		if (!db || !gameData || !isGameRunning || gameData.currentRoundIndex === 0)
+	const handlePreviousRound = useCallback(async () => {
+		if (
+			!collectionRefs ||
+			!gameData ||
+			!isGameRunning ||
+			gameData.currentRoundIndex === 0
+		)
 			return;
 		setLoading(true);
 
 		const currentRoundIndex = gameData.currentRoundIndex;
 		const prevRoundIndex = currentRoundIndex - 1;
-		const gameDocRef = doc(db, `insurance_game/${game_id}`);
+		const { gameDocRef, roundsCollection } = collectionRefs;
 
 		const currentRoundRef = doc(
-			db,
-			`insurance_game/${game_id}/rounds/${allRounds[currentRoundIndex].round_id}`
+			roundsCollection,
+			String(allRounds[currentRoundIndex].round_id)
 		);
 		const prevRoundRef = doc(
-			db,
-			`insurance_game/${game_id}/rounds/${allRounds[prevRoundIndex].round_id}`
+			roundsCollection,
+			String(allRounds[prevRoundIndex].round_id)
 		);
 
 		try {
@@ -124,12 +199,10 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 				round_started_at: null,
 				round_finished_at: null,
 			});
-
 			await updateDoc(prevRoundRef, {
 				round_started_at: Date.now(),
 				round_finished_at: null,
 			});
-
 			await updateDoc(gameDocRef, {
 				currentRoundIndex: prevRoundIndex,
 				currentRoundId: allRounds[prevRoundIndex].round_id,
@@ -139,115 +212,196 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [collectionRefs, gameData, isGameRunning, allRounds]);
 
-	const handleAddRound = async () => {
-		if (!db || !gameData) return;
+	const handleAddRound = useCallback(async () => {
+		if (!collectionRefs || !gameData) return;
 		setLoading(true);
 
-		const newRoundIndex = gameData.totalRounds ?? 0;
-		const newRoundRef = doc(
-			db,
-			`insurance_game/${game_id}/rounds/round_${newRoundIndex}`
-		);
-		const gameDocRef = doc(db, `insurance_game/${game_id}`);
+		const { gameDocRef, roundsCollection } = collectionRefs;
+		const newRoundIndex = allRounds.length;
+		const newRoundId = `round_${newRoundIndex}`;
 
 		const newRound: Round = {
-			round_id: `round_${newRoundIndex}`,
+			round_id: newRoundId,
 			round_duration: 3600,
 			round_started_at: null,
 			round_finished_at: null,
 			round_index: newRoundIndex,
 			round_name: `Round ${newRoundIndex + 1}`,
+			choices_ids: [],
 		};
 
 		try {
-			// Create the new round document
+			const newRoundRef = doc(roundsCollection, newRoundId);
 			await setDoc(newRoundRef, newRound);
-
-			// Update the main game document with the new total round count
 			await updateDoc(gameDocRef, { totalRounds: newRoundIndex + 1 });
 		} catch (error) {
 			console.error('Failed to add new round:', error);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [collectionRefs, gameData, allRounds]);
 
-	const handleRemoveRound = async (roundId: Round['round_id']) => {
-		if (!db || !gameData) return;
-		setLoading(true);
-		try {
-			const roundRef = doc(db, `insurance_game/${game_id}/rounds/${roundId}`);
-			await deleteDoc(roundRef);
-			// You may need to update the totalRounds count on the main document
-		} catch (error) {
-			console.error('Failed to remove round:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	const handleRemoveRound = useCallback(
+		async (roundId: Round['round_id']) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { roundsCollection } = collectionRefs;
+				const roundRef = doc(roundsCollection, String(roundId));
+				await deleteDoc(roundRef);
+			} catch (error) {
+				console.error('Failed to remove round:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
 
-	const handleUpdateRound = async (updatedRound: Round) => {
-		if (!db || !gameData) return;
-		setLoading(true);
-		try {
-			const roundRef = doc(
-				db,
-				`insurance_game/${game_id}/rounds/${updatedRound.round_id}`
-			);
-			await updateDoc(roundRef, updatedRound);
-		} catch (error) {
-			console.error('Failed to update round:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	const handleUpdateRound = useCallback(
+		async (updatedRound: Round) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { roundsCollection } = collectionRefs;
+				const roundRef = doc(roundsCollection, String(updatedRound.round_id));
+				await updateDoc(roundRef, updatedRound as never); // Type assertion for updateDoc
+			} catch (error) {
+				console.error('Failed to update round:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
 
-	const handleAddTeam = async (team: Team) => {
-		if (!db || !gameData) return;
-		setLoading(true);
-		try {
-			const teamRef = doc(db, `insurance_game/${game_id}/teams/${team.id}`);
-			await setDoc(teamRef, team);
-		} catch (error) {
-			console.error('Failed to add new team:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	const handleAddTeam = useCallback(
+		async (team: Team) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { teamsCollection } = collectionRefs;
+				await addDoc(teamsCollection, team);
+			} catch (error) {
+				console.error('Failed to add new team:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
 
-	const handleUpdateTeam = async (id: Team['id'], updates: Partial<Team>) => {
-		if (!db || !gameData) return;
-		setLoading(true);
-		try {
-			const teamRef = doc(db, `insurance_game/${game_id}/teams/${id}`);
-			await updateDoc(teamRef, updates);
-		} catch (error) {
-			console.error('Failed to update team:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	const handleUpdateTeam = useCallback(
+		async (id: string, updates: Partial<Team>) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { teamsCollection } = collectionRefs;
+				const teamRef = doc(teamsCollection, id);
+				await updateDoc(teamRef, updates as never); // Type assertion for updateDoc
+			} catch (error) {
+				console.error('Failed to update team:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
 
-	const handleUpdateGameConfig = async (
-		key: keyof Game,
-		value: string | number
-	) => {
-		if (!db || !gameData) return;
-		setLoading(true);
-		const gameDocRef = doc(db, `insurance_game/${game_id}`);
-		try {
-			await updateDoc(gameDocRef, { [key]: value });
-		} catch (error) {
-			console.error('Failed to update game:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	const handleUpdateGameConfig = useCallback(
+		async (key: keyof Game, value: unknown) => {
+			if (!collectionRefs || !gameData) return;
+			setLoading(true);
+			const { gameDocRef } = collectionRefs;
+			try {
+				await updateDoc(gameDocRef, { [key]: value });
+			} catch (error) {
+				console.error('Failed to update game:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs, gameData]
+	);
+
+	const onAddChoice = useCallback(
+		async (roundId: Round['round_id']) => {
+			if (!collectionRefs || !gameData) return;
+			setLoading(true);
+			try {
+				const { choicesCollection } = collectionRefs;
+				const newChoice: Choice = {
+					id: crypto.randomUUID(),
+					round_id: roundId,
+					choice_index: allChoices.filter((c) => c.round_id === roundId).length,
+					description: 'New choice',
+					duration: 1,
+					reveals: [],
+					interactionEffects: [],
+					capacity_score: 0,
+					expected_profit_score: 0,
+					IT_score: 0,
+					liquidity_score: 0,
+					solvency_score: 0,
+					blocking_choices: [],
+					title: '',
+					roundIndex: allRounds.filter((c) => c.round_id == roundId)[0]
+						.round_index,
+					delayedEffect: [],
+				};
+				await addDoc(choicesCollection, newChoice);
+			} catch (error) {
+				console.error('Error adding choice:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs, gameData, allChoices]
+	);
+
+	const onRemoveChoice = useCallback(
+		async (choiceId: string) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { choicesCollection } = collectionRefs;
+				const choiceDocRef = doc(choicesCollection, choiceId);
+				await deleteDoc(choiceDocRef);
+			} catch (error) {
+				console.error('Error removing choice:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
+
+	const onSaveChoice = useCallback(
+		async (updatedChoice: Choice) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { choicesCollection } = collectionRefs;
+				const choiceDocRef = doc(choicesCollection, updatedChoice.id);
+				const { id, ...dataToUpdate } = updatedChoice;
+				await updateDoc(choiceDocRef, dataToUpdate as never);
+			} catch (error) {
+				console.error('Error saving choice:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
 
 	return {
 		loading,
+		gameData,
+		allRounds,
+		allChoices,
+		allTeams,
 		handleNextRound,
 		handlePreviousRound,
 		handleStartGame,
@@ -260,6 +414,9 @@ const useGameControls = (gameData: Game | null, game_id: string) => {
 		handleUpdateGameConfig,
 		isGameRunning,
 		isLastRound,
+		onAddChoice,
+		onRemoveChoice,
+		onSaveChoice,
 	};
 };
 
