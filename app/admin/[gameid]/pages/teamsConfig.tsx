@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Team } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
 
 interface TeamsConfigProps {
 	teams: Team[];
-	handleAddTeam: (team: Team) => void;
+	handleAddTeam: (teamName: string) => void;
 	handleUpdateTeam: (id: Team['id'], updates: Partial<Team>) => void;
 }
 
@@ -14,26 +13,26 @@ const TeamsConfig = ({
 	handleUpdateTeam,
 }: TeamsConfigProps) => {
 	const [newTeamName, setNewTeamName] = useState<string>('');
+	const [editingTeamId, setEditingTeamId] = useState<Team['id'] | null>(null);
+	const [editingName, setEditingName] = useState<string>('');
 
 	const onAddTeam = () => {
 		if (!newTeamName.trim()) return;
-
-		const newTeam: Team = {
-			id: uuidv4(),
-			teamName: newTeamName.trim(),
-			choices: [],
-			capacity_score: 0,
-			expected_profit_score: 0,
-			IT_score: 0,
-			liquidity_score: 0,
-			solvency_score: 0,
-		};
-		handleAddTeam(newTeam);
+		handleAddTeam(newTeamName);
 		setNewTeamName('');
+	};
+
+	const finishEditing = (teamId: Team['id']) => {
+		if (editingName.trim()) {
+			handleUpdateTeam(teamId, { teamName: editingName.trim() });
+		}
+		setEditingTeamId(null);
+		setEditingName('');
 	};
 
 	return (
 		<>
+			{/* Add team section */}
 			<div className="bg-gray-800 rounded-xl p-6 shadow-2xl mb-8">
 				<h2 className="text-2xl font-semibold mb-4 text-teal-300">
 					Add New Team
@@ -55,6 +54,7 @@ const TeamsConfig = ({
 				</div>
 			</div>
 
+			{/* Teams list */}
 			<div className="bg-gray-800 rounded-xl p-6 shadow-2xl mb-8">
 				<h2 className="text-2xl font-semibold mb-4 text-teal-300">Teams</h2>
 				{teams.length === 0 ? (
@@ -68,28 +68,18 @@ const TeamsConfig = ({
 								key={team.id}
 								className="bg-gray-800 rounded-2xl p-6 shadow-xl border-t-4 border-gray-700"
 							>
-								{/* {team.isEditing ? (
+								{editingTeamId === team.id ? (
 									<input
 										type="text"
-										value={team.editingName ?? team.teamName}
+										value={editingName}
 										autoFocus
-										onChange={(e) =>
-											handleUpdateTeam(team.id, { editingName: e.target.value })
-										}
-										onBlur={() =>
-											handleUpdateTeam(team.id, {
-												teamName: team.editingName ?? team.teamName,
-												isEditing: false,
-												editingName: undefined,
-											})
-										}
+										onChange={(e) => setEditingName(e.target.value)}
+										onBlur={() => finishEditing(team.id)}
 										onKeyDown={(e) => {
-											if (e.key === 'Enter') {
-												handleUpdateTeam(team.id, {
-													teamName: team.editingName ?? team.teamName,
-													isEditing: false,
-													editingName: undefined,
-												});
+											if (e.key === 'Enter') finishEditing(team.id);
+											if (e.key === 'Escape') {
+												setEditingTeamId(null);
+												setEditingName('');
 											}
 										}}
 										className="text-2xl font-semibold text-teal-300 bg-gray-700 rounded px-2 py-1 w-full"
@@ -97,30 +87,14 @@ const TeamsConfig = ({
 								) : (
 									<h3
 										className="text-2xl font-semibold text-teal-300 cursor-pointer"
-										onClick={() =>
-											handleUpdateTeam(team.id, {
-												isEditing: true,
-												editingName: team.teamName,
-											})
-										}
+										onClick={() => {
+											setEditingTeamId(team.id);
+											setEditingName(team.teamName);
+										}}
 									>
 										{team.teamName}
 									</h3>
-								)} */}
-								{/* <div className="mt-1 flex justify-between text-sm font-medium">
-									<p className="text-gray-400">
-										Score:{' '}
-										<span className="font-bold text-teal-500">
-											{team.score}
-										</span>
-									</p>
-									<p className="text-gray-400">
-										Capacity:{' '}
-										<span className="font-bold text-orange-500">
-											{team.capacity}
-										</span>
-									</p>
-								</div> */}
+								)}
 							</div>
 						))}
 					</div>

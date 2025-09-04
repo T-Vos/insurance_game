@@ -278,12 +278,23 @@ const useGameControls = (gameId: string) => {
 	);
 
 	const handleAddTeam = useCallback(
-		async (team: Team) => {
+		async (teamName: string) => {
 			if (!collectionRefs) return;
 			setLoading(true);
 			try {
 				const { teamsCollection } = collectionRefs;
-				await addDoc(teamsCollection, team);
+				const newTeam: Team = {
+					id: teamsCollection.id,
+					teamName: teamName.trim(),
+					choices: [],
+					capacity_score: 0,
+					expected_profit_score: 0,
+					IT_score: 0,
+					liquidity_score: 0,
+					solvency_score: 0,
+					team_code: crypto.randomUUID().slice(0, 6).toUpperCase(),
+				};
+				await addDoc(teamsCollection, newTeam);
 			} catch (error) {
 				console.error('Failed to add new team:', error);
 			} finally {

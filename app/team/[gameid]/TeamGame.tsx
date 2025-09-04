@@ -212,6 +212,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			<div className="w-full max-w-md space-y-6 mb-3">
 				<div className={cardstyle}>
 					<h3 className="font-semibold mt-3">{currentRound.round_name}</h3>
+					<h5 className="font-light">Jouw rol: {currentUserRole}</h5>
 				</div>
 
 				{revealedMessages.map((msg, index) => (

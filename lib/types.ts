@@ -9,6 +9,8 @@ import {
 	LucideChartArea,
 	LucideSettings,
 	LucideUsers,
+	LucideAxe,
+	LucideCog,
 } from 'lucide-react';
 import { hatTop } from '@lucide/lab';
 
@@ -24,7 +26,8 @@ export type ScoreType = (typeof scoreTypes)[number]['name'];
 export const roleTypes = [
 	{ name: 'CEO', icon: hatTop },
 	{ name: 'CFO', icon: LucideBanknote },
-	{ name: 'HR', icon: LucideUsersRound },
+	{ name: 'COO', icon: LucideCog },
+	{ name: 'CRO', icon: LucideAxe },
 	{ name: 'CTO', icon: LucideComputer },
 ] as const;
 export type roleType = (typeof roleTypes)[number]['name'];
@@ -75,6 +78,11 @@ export interface Game {
 	critical_solvency_score?: number;
 	critical_IT_score?: number;
 	critical_capacity_score?: number;
+	critical_expected_profit_text?: string;
+	critical_liquidity_text?: string;
+	critical_solvency_text?: string;
+	critical_IT_text?: string;
+	critical_capacity_text?: string;
 	gameover_expected_profit_score?: number;
 	gameover_liquidity_score?: number;
 	gameover_solvency_score?: number;

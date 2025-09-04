@@ -126,6 +126,14 @@ const GameConfigHeader = ({
 		capacity_score: gameData?.critical_capacity_score || 0,
 	});
 
+	const [editingCriticalText, setEditingCriticalText] = useState({
+		expected_profit_score: gameData?.critical_expected_profit_text || '',
+		liquidity_text: gameData?.critical_liquidity_text || '',
+		solvency_text: gameData?.critical_solvency_text || '',
+		IT_text: gameData?.critical_IT_text || '',
+		capacity_text: gameData?.critical_capacity_text || '',
+	});
+
 	const [editingGameOverScores, setEditingGameOverScores] = useState<Scores>({
 		expected_profit_score: gameData?.gameover_expected_profit_score || 0,
 		liquidity_score: gameData?.gameover_liquidity_score || 0,
