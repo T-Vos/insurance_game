@@ -23,7 +23,7 @@ import {
 } from '@/lib/types';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 import { cardstyle } from '@/app/admin/[gameid]/components/styling';
-import MessageBubble from '@/components/messageBubble';
+import MessageBubble, { UIRevealMessage } from '@/components/messageBubble';
 export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [teamId, setTeamId] = useState<string | null>(null);
 	const [memberId, setMemberId] = useState<string | null>(null); // NEW: State for memberId
@@ -33,7 +33,9 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [currentRound, setCurrentRound] = useState<Round | null>(null);
 	const [currentRoundChoices, setCurrentRoundChoices] = useState<Choice[]>([]);
 	const [choicesMadeDetails, setChoicesMadeDetails] = useState<Choice[]>([]);
-	const [revealedMessages, setRevealedMessages] = useState<RevealMessage[]>([]);
+	const [revealedMessages, setRevealedMessages] = useState<UIRevealMessage[]>(
+		[]
+	);
 	const [isBlocked, setIsBlocked] = useState<boolean>(false);
 
 	useEffect(() => {
@@ -150,8 +152,14 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	}, [currentTeam, gameid]);
 
 	useEffect(() => {
-		const messages: RevealMessage[] = [];
-		if (!game || !currentTeam || !choicesMadeDetails || !currentUserRole) {
+		const messages: UIRevealMessage[] = [];
+		if (
+			!game ||
+			!currentRound ||
+			!currentTeam ||
+			!choicesMadeDetails ||
+			!currentUserRole
+		) {
 			setRevealedMessages([]);
 			return;
 		}
@@ -181,8 +189,27 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 
 			messages.push(...newMessages);
 		}
+
+		if (currentRound.round_show_scores) {
+			const time = new Date();
+			messages.push({
+				text: `📊 <em>De half jaar cijfers zijn bekend</em>: <br/>
+				Winst: ${currentTeam.expected_profit_score} </br>, 
+				Liquiditeit: ${currentTeam.liquidity_score}, 
+				Solvabiliteit: ${currentTeam.solvency_score}, 
+				IT: ${currentTeam.IT_score}, 
+				Capaciteit: ${currentTeam.capacity_score}`,
+				sent: currentUserRole === 'CFO',
+				message_sender_image: '/portrait.jpg',
+				revealedInRounds: 0,
+				id: 'Score',
+				message_sender: 'Finance',
+				time: `${time.getHours()} : ${time.getMinutes()}`,
+			});
+		}
+
 		setRevealedMessages(messages);
-	}, [game, currentTeam, choicesMadeDetails, currentUserRole]);
+	}, [game, currentTeam, choicesMadeDetails, currentUserRole, currentRound]);
 
 	const handleSaveChoice = async (
 		teamId: Team['id'],
@@ -222,11 +249,10 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 					<MessageBubble
 						key={index}
 						name={msg.message_sender}
-						time={msg.time}
+						time={msg.time ?? ''}
 						text={msg.text}
-						image={'/portrait.jpg'}
-						// image={msg.message_sender_image?.toString() ?? './portrait.jpg'}
-						sent={false}
+						image={msg.message_sender_image ?? './portrait.jpg'}
+						sent={msg.sent ?? false}
 					/>
 				))}
 

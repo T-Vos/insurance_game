@@ -1,5 +1,7 @@
+import { RevealMessage } from '@/lib/types';
 import clsx from 'clsx';
 import Image from 'next/image';
+export type UIRevealMessage = RevealMessage & { sent?: boolean; time?: string };
 
 type MessageBubbleProps = {
 	name?: string;
@@ -62,7 +64,10 @@ export default function MessageBubble({
 					</span>
 				</div>
 
-				<p className="text-sm font-normal py-2.5">{text}</p>
+				<p
+					className="text-sm font-normal py-2.5"
+					dangerouslySetInnerHTML={{ __html: String(text ?? '') }}
+				></p>
 
 				{delivered && sent && (
 					<span className="text-xs font-normal text-blue-100">Delivered</span>

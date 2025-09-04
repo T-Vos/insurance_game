@@ -214,6 +214,5 @@ export interface RevealMessage {
 	revealedInRounds: number;
 	revealdForRoles?: roleType[];
 	message_sender: string;
-	message_sender_image: string;
-	time?: string;
+	message_sender_image?: string;
 }
