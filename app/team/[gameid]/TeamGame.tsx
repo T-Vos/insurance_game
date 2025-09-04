@@ -212,7 +212,10 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			<div className="w-full max-w-md space-y-6 mb-3">
 				<div className={cardstyle}>
 					<h3 className="font-semibold mt-3">{currentRound.round_name}</h3>
-					<h5 className="font-light">Jouw rol: {currentUserRole}</h5>
+					<div className="w-full flex flex-row justify-between mt-3">
+						<h5 className="font-light">Jouw rol: {currentUserRole}</h5>
+						<h5 className="font-light">Team: {currentTeam.teamName}</h5>
+					</div>
 				</div>
 
 				{revealedMessages.map((msg, index) => (

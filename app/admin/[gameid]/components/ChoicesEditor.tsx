@@ -196,7 +196,7 @@ export const ChoiceEditor = ({
 				>
 					<div
 						className={`transition-transform duration-300 ${
-							isOpened ? 'rotate-180' : ''
+							isOpened ? '' : 'rotate-180'
 						}`}
 					>
 						<ChevronDown size={20} />

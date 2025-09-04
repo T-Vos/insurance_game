@@ -57,9 +57,9 @@ export type ScoreType = (typeof scoreTypes)[number]['name'];
 export const roleTypes = [
 	{ name: 'CEO', icon: hatTop },
 	{ name: 'CFO', icon: LucideBanknote },
-	{ name: 'COO', icon: LucideCog },
 	{ name: 'CRO', icon: LucideAxe },
-	{ name: 'CTO', icon: LucideComputer },
+	{ name: 'CTO/COO', icon: LucideComputer },
+	{ name: 'HR', icon: LucideUsers },
 ] as const;
 export type roleType = (typeof roleTypes)[number]['name'];
 
@@ -161,6 +161,7 @@ export interface Round {
 	round_finished_at: number | null | string;
 	round_index: number;
 	round_name: string;
+	round_show_scores?: boolean;
 	choices_ids: string[];
 	round_schock_expected_profit_score?: number;
 	round_schock_liquidity_score?: number;

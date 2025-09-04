@@ -15,6 +15,8 @@ import {
 } from '@/lib/types';
 import clsx from 'clsx';
 import {
+	ChevronDown,
+	LucideChartNoAxesColumnIncreasing,
 	LucideCircleAlert,
 	LucideIcon,
 	LucidePenTool,
@@ -28,6 +30,7 @@ import { cardstyle, title_changeable } from '../components/styling';
 import { ChoicesList } from '../components/ChoicesList';
 import { generateGameKey } from '@/lib/generate_game_key';
 import ScoreBar from '../components/ScoreBar';
+import Tooltip from '@/components/Tooltip';
 
 type GameConfigProps = {
 	allRounds: Round[];
@@ -124,6 +127,9 @@ const GameConfigHeader = ({
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(gameData?.name || '');
 
+	const [isOpened, setIsOpened] = useState(false);
+	const toggleCollapse = () => setIsOpened(!isOpened);
+
 	type ConditionType = 'start' | 'critical' | 'gameover';
 
 	type ScoresByCondition = {
@@ -172,54 +178,43 @@ const GameConfigHeader = ({
 		}
 	);
 
-	// useEffect(() => {
-	// 	if (
-	// 		!editingStartingScores ||
-	// 		Object.keys(editingStartingScores).length === 0
-	// 	) {
-	// 		setEditingName(gameData?.name || '');
-	// 		setEditingStartingScores({
-	// 			expected_profit_score: gameData?.start_expected_profit_score || 0,
-	// 			liquidity_score: gameData?.start_liquidity_score || 0,
-	// 			solvency_score: gameData?.start_solvency_score || 0,
-	// 			IT_score: gameData?.start_IT_score || 0,
-	// 			capacity_score: gameData?.start_capacity_score || 0,
-	// 		});
-	// 	}
-	// 	if (
-	// 		!editingCriticalScores ||
-	// 		Object.keys(editingCriticalScores).length === 0
-	// 	) {
-	// 		setEditingCriticalScores({
-	// 			expected_profit_score: gameData?.critical_expected_profit_score || 0,
-	// 			liquidity_score: gameData?.critical_liquidity_score || 0,
-	// 			solvency_score: gameData?.critical_solvency_score || 0,
-	// 			IT_score: gameData?.critical_IT_score || 0,
-	// 			capacity_score: gameData?.critical_capacity_score || 0,
-	// 		});
-	// 	}
-	// 	if (
-	// 		!editingGameOverScores ||
-	// 		Object.keys(editingGameOverScores).length === 0
-	// 	) {
-	// 		setEditingGameOverScores({
-	// 			expected_profit_score: gameData?.gameover_expected_profit_score || 0,
-	// 			liquidity_score: gameData?.gameover_liquidity_score || 0,
-	// 			solvency_score: gameData?.gameover_solvency_score || 0,
-	// 			IT_score: gameData?.gameover_IT_score || 0,
-	// 			capacity_score: gameData?.gameover_capacity_score || 0,
-	// 		});
-	// 	}
-	// 	if (!editingCriticalText || Object.keys(editingCriticalText).length === 0) {
-	// 		setEditingCriticalText({
-	// 			expected_profit_score: gameData?.critical_expected_profit_text || '',
-	// 			liquidity_text: gameData?.critical_liquidity_text || '',
-	// 			solvency_text: gameData?.critical_solvency_text || '',
-	// 			IT_text: gameData?.critical_IT_text || '',
-	// 			capacity_text: gameData?.critical_capacity_text || '',
-	// 		});
-	// 	}
-	// }, [gameData]);
+	useEffect(() => {
+		if (!gameData) return;
+
+		setEditingScores({
+			start: {
+				expected_profit_score: gameData.start_expected_profit_score || 0,
+				liquidity_score: gameData.start_liquidity_score || 0,
+				solvency_score: gameData.start_solvency_score || 0,
+				IT_score: gameData.start_IT_score || 0,
+				capacity_score: gameData.start_capacity_score || 0,
+			},
+			critical: {
+				expected_profit_score: gameData.critical_expected_profit_score || 0,
+				liquidity_score: gameData.critical_liquidity_score || 0,
+				solvency_score: gameData.critical_solvency_score || 0,
+				IT_score: gameData.critical_IT_score || 0,
+				capacity_score: gameData.critical_capacity_score || 0,
+			},
+			gameover: {
+				expected_profit_score: gameData.gameover_expected_profit_score || 0,
+				liquidity_score: gameData.gameover_liquidity_score || 0,
+				solvency_score: gameData.gameover_solvency_score || 0,
+				IT_score: gameData.gameover_IT_score || 0,
+				capacity_score: gameData.gameover_capacity_score || 0,
+			},
+		});
+
+		setEditingCriticalText({
+			critical_expected_profit_score_text:
+				gameData.critical_expected_profit_score_text || '',
+			critical_liquidity_score_text:
+				gameData.critical_liquidity_score_text || '',
+			critical_solvency_score_text: gameData.critical_solvency_score_text || '',
+			critical_IT_score_text: gameData.critical_IT_score_text || '',
+			critical_capacity_score_text: gameData.critical_capacity_score_text || '',
+		});
+	}, [gameData]);
 
 	const finishEditingName = () => {
 		setIsEditingName(false);
@@ -270,6 +265,18 @@ const GameConfigHeader = ({
 	return (
 		<div className={cardstyle}>
 			<div className="flex flex-col justify-between sm:flex-row gap-4 items-center">
+				<button
+					onClick={toggleCollapse}
+					className="text-gray-400 cursor-pointer shrink hover:text-gray-200 transition"
+				>
+					<div
+						className={`transition-transform duration-300 ${
+							isOpened ? '' : 'rotate-180'
+						}`}
+					>
+						<ChevronDown size={20} />
+					</div>
+				</button>
 				{isEditingName ? (
 					<input
 						type="text"
@@ -293,7 +300,7 @@ const GameConfigHeader = ({
 					<h2
 						className={clsx(
 							title_changeable,
-							'cursor-pointer flex items-center gap-2'
+							'cursor-pointer flex-grow flex items-center gap-2'
 						)}
 						onClick={() => setIsEditingName(true)}
 						title="Click to edit game name"
@@ -310,41 +317,21 @@ const GameConfigHeader = ({
 					<span>Add New Round</span>
 				</button>
 			</div>
-			<div className="border-t border-gray-600 my-8"></div>
-			<ScoreTable
-				editingCriticalText={editingCriticalText}
-				editingScores={editingScores}
-				handleCriticalTextChange={handleCriticalTextChange}
-				saveCriticalTextChange={saveCriticalTextChange}
-				handleScoreChange={handleScoreChange}
-				saveScoreChange={saveScoreChange}
-			/>
-			{/* <h3 className="text-xl font-bold text-gray-300 mb-4">Start Conditions</h3>
-			<ScoreBar
-				handleScoreChange={handleScoreChange}
-				saveScoreChange={saveScoreChange}
-				editingScores={editingStartingScores}
-			/>
-			<div className="my-8">
-				<h3 className="text-xl flex flex-row justify-start items-center font-bold text-gray-300 mb-4">
-					<LucideCircleAlert className="mr-3" /> Critical conditions
-				</h3>
-				<ScoreBar
-					handleScoreChange={handleCriticalScoreChange}
-					saveScoreChange={saveCriticalScoreChange}
-					editingScores={editingCriticalScores}
+			<div
+				className={`overflow-hidden transition-all duration-300 ${
+					isOpened ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
+				}`}
+			>
+				<div className="border-t border-gray-600 my-8"></div>
+				<ScoreTable
+					editingCriticalText={editingCriticalText}
+					editingScores={editingScores}
+					handleCriticalTextChange={handleCriticalTextChange}
+					saveCriticalTextChange={saveCriticalTextChange}
+					handleScoreChange={handleScoreChange}
+					saveScoreChange={saveScoreChange}
 				/>
 			</div>
-			<div className="my-8">
-				<h3 className="text-xl font-bold flex flex-row justify-start items-center text-gray-300 mb-4">
-					<LucideSkull className="mr-3" /> Game over Conditions
-				</h3>
-				<ScoreBar
-					handleScoreChange={handleGameOverScoreChange}
-					saveScoreChange={saveGameOverScoreChange}
-					editingScores={editingGameOverScores}
-				/>
-			</div> */}
 		</div>
 	);
 };
@@ -470,7 +457,6 @@ type RoundConfigProps = {
 
 const RoundConfig = ({
 	roundData,
-	roundIndex,
 	handleUpdateRound,
 	handleRemoveRound,
 }: RoundConfigProps) => {
@@ -547,14 +533,14 @@ const RoundConfig = ({
 						autoFocus
 						className={clsx(
 							title_changeable,
-							'bg-gray-700 rounded px-2 py-1 w-full'
+							'bg-gray-700 grow rounded px-2 py-1 w-full'
 						)}
 					/>
 				) : (
 					<h2
 						className={clsx(
 							title_changeable,
-							'cursor-pointer flex items-center gap-2'
+							'cursor-pointer grow flex items-center gap-2'
 						)}
 						onClick={() => setIsEditingName(true)}
 						title="Click to edit round name"
@@ -563,13 +549,40 @@ const RoundConfig = ({
 						<LucidePenTool size={18} className="text-gray-400" />
 					</h2>
 				)}
-				<button
-					onClick={() => handleRemoveRound(roundData.round_id)}
-					className="flex items-center cursor-pointer space-x-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+				<Tooltip
+					content={
+						roundData.round_show_scores
+							? 'Laat de tussenstand niet meer zien'
+							: 'Laat de tussenstand zien deze ronde'
+					}
 				>
-					<LucideTrash size={18} />
-					<span>Ronde verwijderen</span>
-				</button>
+					<button
+						onClick={() => console.log('show')}
+						className={clsx(
+							'flex shrink cursor-pointer space-x-2  text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95',
+							roundData.round_show_scores
+								? 'bg-yellow-500 hover:bg-yellow-200'
+								: 'bg-yellow-200 hover:bg-yellow-500'
+						)}
+					>
+						<LucideChartNoAxesColumnIncreasing
+							className={clsx(
+								roundData.round_show_scores
+									? 'text-gray-100 hover:text-gray-500'
+									: 'text-gray-500 hover:text-gray-100'
+							)}
+							size={18}
+						/>
+					</button>
+				</Tooltip>
+				<Tooltip content="Verwijder ronde">
+					<button
+						onClick={() => handleRemoveRound(roundData.round_id)}
+						className="flex shrink cursor-pointer space-x-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+					>
+						<LucideTrash size={18} />
+					</button>
+				</Tooltip>
 			</div>
 			<div className="border-t border-gray-600 my-4"></div>
 			<h4 className="text-lg font-semibold text-gray-400 mb-4">Round Shocks</h4>
