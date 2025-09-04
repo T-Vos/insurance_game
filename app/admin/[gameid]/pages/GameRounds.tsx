@@ -35,7 +35,7 @@ const GameRounds = ({
 
 			<div className="relative h-fit">
 				<div
-					key={currentRound.round_id}
+					key={`RoundButton_${currentRound.round_id}`}
 					className={`transition-transform duration-500 ease-in-out`}
 				>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,7 +67,7 @@ function TeamRoundCard(
 	currentRoundChoices?: Choice[]
 ) {
 	return (
-		<div key={team.id} className={cardstyle}>
+		<div key={`Team_card_${team.id}`} className={cardstyle}>
 			<h3 className="text-2xl font-semibold text-teal-300">{team.teamName}</h3>
 			<div className="mt-1 flex justify-between text-sm font-medium">
 				<p className="text-gray-400">
@@ -99,10 +99,9 @@ function TeamRoundCard(
 					</span>
 				</p>
 			</div>
-
 			<div className="mt-4">
 				<TeamBoard
-					key={team.id}
+					key={`TeamBoard_${team.id}`}
 					currentRound={currentRound}
 					team={team}
 					isAdminView={true}

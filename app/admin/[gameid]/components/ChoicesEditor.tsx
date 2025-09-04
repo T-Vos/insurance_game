@@ -5,6 +5,8 @@ import {
 	InteractionEffect,
 	Scores,
 	delayedEffect,
+	roleType,
+	roleTypes,
 } from '@/lib/types';
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -44,7 +46,6 @@ export const ChoiceEditor = ({
 		}));
 	};
 
-	// All the `handleUpdate*` functions now operate on the local state
 	const handleUpdateReveal = (
 		revealIndex: number,
 		field: keyof RevealMessage,
@@ -79,7 +80,13 @@ export const ChoiceEditor = ({
 		const updatedReveals = (localChoice.reveals || []).filter(
 			(_, index) => index !== revealIndex
 		);
-		handleUpdateLocalChoice('reveals', updatedReveals);
+		const newChoice = {
+			...localChoice,
+			reveals: updatedReveals,
+		};
+
+		setLocalChoice(newChoice);
+		onSave(newChoice);
 	};
 
 	const handleUpdateInteraction = (
@@ -138,7 +145,7 @@ export const ChoiceEditor = ({
 
 	const handleAddDelayedEffect = () => {
 		const newEffect: delayedEffect = {
-			effective_round: allRounds[0]?.round_id || '', // Correctly use the allRounds prop
+			effective_round: allRounds[0]?.round_id || '',
 			expected_profit_score: 0,
 			liquidity_score: 0,
 			solvency_score: 0,
@@ -302,7 +309,10 @@ const DelayedEffects = ({
 		<div className="mt-6">
 			<h4 className="text-lg font-bold text-gray-300 mb-2">Delayed Effects</h4>
 			{(delayedEffects || []).map((effect, effectIndex) => (
-				<div key={effectIndex} className="bg-gray-800 p-4 rounded-lg mb-2">
+				<div
+					key={`Delay_effect_${effectIndex}`}
+					className="bg-gray-800 p-4 rounded-lg mb-2"
+				>
 					<div className="flex items-center justify-between mb-4">
 						<div className="grow mr-4">
 							<label className="block text-gray-400 text-sm font-bold mb-1">
@@ -327,7 +337,10 @@ const DelayedEffects = ({
 									(
 										round // Use allRounds here
 									) => (
-										<option key={round.round_id} value={round.round_id}>
+										<option
+											key={`Alle_rondes_select_delay_effects_${round.round_id}`}
+											value={round.round_id}
+										>
 											{round.round_name}
 										</option>
 									)
@@ -344,7 +357,7 @@ const DelayedEffects = ({
 
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{scoreKeys.map((scoreKey) => (
-							<div key={scoreKey}>
+							<div key={`Scores_choices_${scoreKey}`}>
 								<label className="block text-gray-400 text-sm font-bold mb-1">
 									{scoreKey.replace(/_/g, ' ').replace('score', '')}
 								</label>
@@ -382,7 +395,7 @@ type RevealMessagesProps = {
 	handleUpdateReveal: (
 		revealIndex: number,
 		field: keyof RevealMessage,
-		value: string | number
+		value: string | number | roleType[]
 	) => void;
 	handleRemoveReveal: (revealIndex: number) => void;
 	handleAddReveal: () => void;
@@ -398,39 +411,101 @@ const RevealMessages = ({
 }: RevealMessagesProps) => {
 	return (
 		<div className="mt-6">
-			<h4 className="text-lg font-bold text-gray-300 mb-2">Reveal Messages</h4>
+			<h4 className="text-lg font-bold  text-gray-300 mb-2">Reveal Messages</h4>
 			{(reveals || []).map((reveal, revealIndex) => (
-				<div key={revealIndex} className="flex items-center space-x-2 mb-2">
-					<textarea
-						value={reveal.text}
-						rows={5}
-						placeholder="Reveal message text"
-						onChange={(e) =>
-							handleUpdateReveal(revealIndex, 'text', e.target.value)
-						}
-						onBlur={handleSaveReveal}
-						className="flex-grow dark:bg-gray-700 text-white rounded px-3 py-2"
-					/>
-					<input
-						type="number"
-						value={reveal.revealedInRounds || ''}
-						placeholder="Rounds"
-						onChange={(e) =>
-							handleUpdateReveal(
-								revealIndex,
-								'revealedInRounds',
-								e.target.value
-							)
-						}
-						onBlur={handleSaveReveal}
-						className="w-20 bg-gray-700 text-white rounded px-3 py-2"
-					/>
-					<button
-						onClick={() => handleRemoveReveal(revealIndex)}
-						className="text-red-400 hover:text-red-300 transition duration-200"
-					>
-						<LucideTrash size={18} />
-					</button>
+				<div
+					key={`reveal_message_editor${reveal.id}`}
+					className="flex flex-col space-y-3 mb-4 bg-gray-800 p-4 rounded-lg"
+				>
+					<div className="flex-grow">
+						<label className="block text-gray-400 text-sm font-bold mb-2">
+							Bericht tekst
+						</label>
+						<textarea
+							value={reveal.text}
+							rows={5}
+							placeholder="Reveal message text"
+							onChange={(e) =>
+								handleUpdateReveal(revealIndex, 'text', e.target.value)
+							}
+							onBlur={handleSaveReveal}
+							className="bg-gray-700 w-full text-white rounded px-3 py-2"
+						/>
+					</div>
+
+					<div className="flex-grow">
+						<label className="block text-gray-400 text-sm font-bold mb-2">
+							Laten zien rondes later
+						</label>
+						<div className="flex items-center space-x-2">
+							<input
+								type="number"
+								value={reveal.revealedInRounds || ''}
+								placeholder="Rounds"
+								onChange={(e) =>
+									handleUpdateReveal(
+										revealIndex,
+										'revealedInRounds',
+										e.target.value
+									)
+								}
+								onBlur={handleSaveReveal}
+								className="w-full bg-gray-700 text-white rounded px-3 py-2"
+							/>
+
+							{/* Remove button */}
+							<button
+								onClick={() => handleRemoveReveal(revealIndex)}
+								className="text-red-400 hover:text-red-300 transition duration-200"
+							>
+								<LucideTrash size={18} />
+							</button>
+						</div>
+					</div>
+
+					<div>
+						<label className="block text-gray-400 text-sm font-bold mb-2">
+							Zichtbaar voor rollen
+							<span className="text-gray-500 ml-2 text-xs">
+								(leeg = iedereen)
+							</span>
+						</label>
+						<div className="flex flex-wrap gap-3">
+							{roleTypes.map((role) => {
+								const isSelected =
+									reveal.revealdForRoles?.includes(role.name) ?? false;
+								return (
+									<label
+										key={`Rollen_selectie_${role.name}`}
+										className="flex items-center space-x-2 cursor-pointer"
+									>
+										<input
+											type="checkbox"
+											checked={isSelected}
+											onChange={(e) => {
+												let updatedRoles = reveal.revealdForRoles || [];
+												if (e.target.checked) {
+													updatedRoles = [...updatedRoles, role.name];
+												} else {
+													updatedRoles = updatedRoles.filter(
+														(r) => r !== role.name
+													);
+												}
+												handleUpdateReveal(
+													revealIndex,
+													'revealdForRoles',
+													updatedRoles
+												);
+											}}
+											onBlur={handleSaveReveal}
+											className="form-checkbox h-4 w-4 text-teal-400"
+										/>
+										<span className="text-gray-300"> {role.name}</span>
+									</label>
+								);
+							})}
+						</div>
+					</div>
 				</div>
 			))}
 			<button
@@ -472,7 +547,7 @@ const InteractionEffects = ({
 			</h4>
 			{(interactionEffects || []).map((interaction, interactionIndex) => (
 				<div
-					key={interactionIndex}
+					key={`reveal_${interactionIndex}`}
 					className="flex flex-wrap items-center space-x-2 mb-2"
 				>
 					<div className="grow">
@@ -494,15 +569,14 @@ const InteractionEffects = ({
 							<option value="" disabled>
 								Select a choice
 							</option>
-							{allChoices.map(
-								(
-									targetChoice // Use allChoices here
-								) => (
-									<option key={targetChoice.id} value={targetChoice.id}>
-										{targetChoice.description}
-									</option>
-								)
-							)}
+							{allChoices.map((targetChoice) => (
+								<option
+									key={`ManageChoices_${targetChoice.id}`}
+									value={targetChoice.id}
+								>
+									{targetChoice.description}
+								</option>
+							))}
 						</select>
 					</div>
 					<div>
