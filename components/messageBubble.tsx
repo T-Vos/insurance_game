@@ -2,10 +2,10 @@ import clsx from 'clsx';
 import Image from 'next/image';
 
 type MessageBubbleProps = {
-	name: string;
-	time: string;
-	text: string;
-	image: string;
+	name?: string;
+	time?: string;
+	text?: string;
+	image?: string;
 	delivered?: boolean;
 	sent?: boolean; // true → right side (blue bubble), false → left side (gray bubble)
 };
@@ -25,7 +25,7 @@ export default function MessageBubble({
 				sent ? 'justify-end !items-end' : 'justify-start'
 			)}
 		>
-			{!sent && (
+			{!sent && image && (
 				<Image
 					className="w-8 h-8 rounded-full object-cover"
 					alt={`${name} profile`}
@@ -69,7 +69,7 @@ export default function MessageBubble({
 				)}
 			</div>
 
-			{sent && (
+			{sent && image && (
 				<Image
 					className="w-8 h-8 rounded-full object-cover"
 					alt={`${name} profile`}

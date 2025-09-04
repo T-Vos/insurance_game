@@ -10,7 +10,7 @@ import {
 	LucideChevronLeft,
 	LucideChartArea,
 } from 'lucide-react';
-import { PageState, Game, Team, Round } from '@/lib/types';
+import { PageState, Game, Team, Round, Choice } from '@/lib/types';
 import GameRounds from './pages/GameRounds';
 import GameConfig from './pages/GameConfig';
 import RevealedInfo from './pages/RevealedInfo';
@@ -28,19 +28,8 @@ import RoundsProgress from './pages/roundProgress';
 import clsx from 'clsx';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 import { useRouter } from 'next/navigation';
-import useGameControls from '@/app/hooks/gameControls';
+import useGameControls from '@/app/hooks/usegameControls';
 import GameGraphs from './pages/GameGraph';
-
-const menuItems = [
-	{ name: 'Game Rounds', state: PageState.ROUNDS, icon: LucideHome },
-	{
-		name: 'Game Config',
-		state: PageState.RULES_CONFIG,
-		icon: LucideSettings,
-	},
-	{ name: 'Team Config', state: PageState.TEAMS_CONFIG, icon: LucideUsers },
-	{ name: 'Score graphs', state: PageState.CHART, icon: LucideChartArea },
-];
 
 const GameControl = ({ gameId }: { gameId: string }) => {
 	const [auth, setAuth] = useState<Auth | null>(null);
@@ -53,10 +42,12 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 	const [isGameRunning, setIsGameRunning] = useState(false);
 	const [pageState, setPageState] = useState<PageState>(PageState.ROUNDS);
 
-	const teams = gameData?.teams || [];
-	const roundChoices = gameData?.rounds || [];
+	const [teams, setTeams] = useState<Team[]>([]);
+	const [rounds, setRounds] = useState<Round[]>([]);
+	const [choices, setChoices] = useState<Choice[]>([]);
+
 	const currentRoundIndex = gameData?.currentRoundIndex || 0;
-	const isLastRound = currentRoundIndex >= roundChoices.length - 1;
+	const isLastRound = currentRoundIndex >= rounds.length - 1;
 
 	const gameDocPath = `insurance_game/${gameId}`;
 	const router = useRouter();
@@ -83,34 +74,15 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 	useEffect(() => {
 		if (!db) return;
 
-		const gameDocRef = doc(db, gameDocPath);
+		const _gameDocRef = doc(db, gameDocPath);
+		const unsubscribeGame = onSnapshot(_gameDocRef, (snapshot) => {
+			if (snapshot.exists()) setGameData(snapshot.data() as Game);
+			else setGameData(null);
+		});
 
-		const unsubscribe = onSnapshot(
-			gameDocRef,
-			async (snapshot) => {
-				if (snapshot.exists()) {
-					const data = snapshot.data() as Game;
-
-					setGameData(data);
-
-					const currentRound = (data.rounds ?? [])[data.currentRoundIndex];
-					const roundRunning =
-						!!currentRound?.round_started_at &&
-						!currentRound?.round_finished_at;
-
-					setIsGameRunning(roundRunning);
-
-					// setLocalCurrentRoundIndex(data.currentRoundIndex || 0);
-				}
-				setLoading(false);
-			},
-			(error) => {
-				console.error('Failed to fetch game data:', error);
-				setLoading(false);
-			}
-		);
-
-		return () => unsubscribe();
+		return () => {
+			unsubscribeGame();
+		};
 	}, [db, gameDocPath]);
 
 	useEffect(() => {
@@ -212,41 +184,6 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 			setLoading(false);
 		}
 	};
-
-	// const handleNextRound = async () => {
-	// 	if (!db || !gameData || !isGameRunning || isLastRound) return;
-	// 	setLoading(true);
-	// 	const gameDocRef = doc(db, gameDocPath);
-	// 	const updatedRounds = [...gameData.rounds];
-
-	// 	updatedRounds[currentRoundIndex].round_finished_at = Date.now();
-
-	// 	const nextRoundIndex = currentRoundIndex + 1;
-	// 	setLocalCurrentRoundIndex(nextRoundIndex);
-	// 	if (nextRoundIndex < updatedRounds.length) {
-	// 		updatedRounds[nextRoundIndex].round_started_at = Date.now();
-	// 	}
-
-	// 	const newRoundId =
-	// 		updatedRounds[nextRoundIndex]?.round_id || gameData.currentRoundId;
-	// 	const updatedTeams = calculateScores(teams, updatedRounds, nextRoundIndex);
-
-	// 	const updatedGameData = {
-	// 		...gameData,
-	// 		currentRoundIndex: nextRoundIndex,
-	// 		currentRoundId: newRoundId,
-	// 		rounds: updatedRounds,
-	// 		teams: updatedTeams,
-	// 	};
-
-	// 	try {
-	// 		await setDoc(gameDocRef, updatedGameData);
-	// 	} catch (error) {
-	// 		console.error('Failed to advance to next round:', error);
-	// 	} finally {
-	// 		setLoading(false);
-	// 	}
-	// };
 
 	const handleStopGame = async () => {
 		if (!db || !gameData || !isGameRunning || !gameData.rounds) return;
@@ -405,7 +342,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 					<>
 						<GameRounds
 							teams={teams}
-							roundChoices={roundChoices}
+							allRounds={rounds}
 							currentRoundIndex={localCurrentRoundIndex}
 							handleSelectChoice={(teamId, roundId, choice) =>
 								handleSelectChoice(gameId, teamId, roundId, choice)
@@ -416,7 +353,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							<RevealedInfo
 								teams={teams}
 								currentRoundIndex={localCurrentRoundIndex}
-								roundChoices={roundChoices}
+								roundChoices={rounds}
 							/>
 						</div>
 					</>
@@ -426,7 +363,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 					<GameConfig
 						key={'gameConfig'}
 						handleUpdateGameConfig={handleUpdateGameConfig}
-						roundChoices={roundChoices}
+						roundChoices={rounds}
 						currentRoundIndex={localCurrentRoundIndex}
 						handleUpdateRound={handleUpdateRound}
 						handleAddRound={handleAddRound}
@@ -495,7 +432,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 							Rounds
 						</h3>
 						<div className="flex flex-col space-y-2">
-							{roundChoices.map((round, index) => (
+							{rounds.map((round, index) => (
 								<button
 									key={`SideBarRound_${round.round_id}`}
 									onClick={() => setLocalCurrentRoundIndex(index)}
@@ -568,10 +505,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 
 			{/* Main Content */}
 			<main className="flex-1 p-6">
-				<RoundsProgress
-					rounds={roundChoices}
-					currentRoundIndex={currentRoundIndex}
-				/>
+				<RoundsProgress rounds={rounds} currentRoundIndex={currentRoundIndex} />
 				<div className="mb-6">{renderPage()}</div>
 
 				{showResetModal && (
@@ -582,11 +516,7 @@ const GameControl = ({ gameId }: { gameId: string }) => {
 					/>
 				)}
 
-				<Footer
-					GAME_ID={gameId}
-					userId={userEmail || 'unknown'}
-					setShowResetModal={setShowResetModal}
-				/>
+				<Footer GAME_ID={gameId} userId={userEmail || 'unknown'} />
 			</main>
 		</div>
 	);

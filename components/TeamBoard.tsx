@@ -9,6 +9,7 @@ const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 interface TeamBoardProps {
 	team: Team;
 	currentRound: Round;
+	currentRoundchoices: Choice[];
 	isAdminView?: boolean;
 	disabled?: boolean;
 	handleSelectChoice: (
@@ -20,14 +21,15 @@ interface TeamBoardProps {
 }
 export default function TeamBoard({
 	team,
+	currentRoundchoices,
 	currentRound,
 	isAdminView = false,
 	disabled = false,
 	handleSelectChoice,
 	handleSaveChoice,
 }: TeamBoardProps) {
-	if (!team || !currentRound) return <div>Loading team data...</div>;
-	if (!currentRound.choices) return <div>Geen keuzes beschikbaar</div>;
+	if (!team) return <div>Loading team data...</div>;
+	if (!currentRoundchoices) return <div>Geen keuzes beschikbaar</div>;
 	const selectedChoice = team.choices.find(
 		(c: TeamChoice) => c.round_id === currentRound.round_id
 	);
@@ -41,7 +43,7 @@ export default function TeamBoard({
 	return (
 		<div className="">
 			<div className="mt-4 space-y-3">
-				{currentRound.choices.map((choice: Choice, index: number) => {
+				{currentRoundchoices.map((choice: Choice, index: number) => {
 					const isSelected = selectedChoice?.choice_id === choice.id;
 					const isSaved = isSelected && selectedChoice.saved;
 					const letter = letters[index];
@@ -75,7 +77,7 @@ export default function TeamBoard({
 	): React.JSX.Element {
 		const buttonClasses = clsx(
 			'relative w-full text-left py-3 px-4 rounded-lg transition-all duration-200 flex justify-between items-center group',
-			'enabled:hover:bg-gray-100 enabled:cursor-pointer',
+			'enabled:hover:bg-gray-100 disabled:hover:none enabled:cursor-pointer',
 			'dark:text-gray-200 dark:hover:bg-gray-600 dark:bg-gray-700 enabled:dark:hover:bg-gray-600',
 			isSelected && 'shadow-md',
 			isSaved && 'border-2 border-yellow-400',
@@ -96,32 +98,30 @@ export default function TeamBoard({
 				<div className="flex items-center space-x-3">
 					<CheckIcon
 						className={clsx(
-							'h-5 w-5',
+							'h-5 w-5 flex-shrink-0 min-w-2',
 							isSelected
 								? 'text-gray-800 dark:text-gray-200'
 								: 'text-gray-800 dark:text-gray-200'
 						)}
 					/>
-					<span className="font-medium text-gray-800 dark:text-gray-200">
+					<span className="font-medium min-w-2 flex-shrink-0 text-gray-800 dark:text-gray-200">
 						{letter}.
 					</span>
 					<span
-						className={clsx('font-medium text-gray-800 dark:text-gray-200')}
+						className={clsx(
+							'font-medium flex-1 text-gray-800 dark:text-gray-200'
+						)}
 					>
 						{choice.description}
 					</span>
 				</div>
-				{/* <div className="flex-shrink-0 text-right"> */}
-				{/* <p className="text-sm font-bold opacity-80">
-            {choice.score >= 0 ? '+' : ''}
-            {choice.score}
-        </p> */}
-				{/* {choice.duration > 1 && (
-            <p className="text-xs text-orange-400 font-semibold mt-1">
-                {choice.duration} rounds
-            </p>
-        )} */}
-				{/* </div> */}
+				<div className="flex-shrink-0 text-right">
+					{choice.duration && choice.duration >= 2 && (
+						<p className="text-xs text-orange-400 font-semibold mt-1">
+							+ {choice.duration - 1} ronde{choice.duration - 1 <= 1 ? '' : 's'}
+						</p>
+					)}
+				</div>
 			</button>
 		);
 	}
