@@ -55,9 +55,9 @@ const GameGraphs = ({ game, choices, rounds, teams }: GameScoresTableProps) => {
 
 	const determineCritical = (score: number, scoreType: ScoreType): string => {
 		const gameover_condition: number = game[`gameover_${scoreType}`] || 0;
-		if (score <= gameover_condition) return 'font-bold text-yellow-400';
+		if (score <= gameover_condition) return 'font-bold text-red-400';
 		const critical_condition: number = game[`critical_${scoreType}`] || 0;
-		if (score <= critical_condition) return 'font-bold text-red-500';
+		if (score <= critical_condition) return 'font-bold text-yellow-500';
 		return '';
 	};
 
