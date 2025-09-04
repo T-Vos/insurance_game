@@ -31,10 +31,8 @@ export const ChoiceEditor = ({
 	const [isOpened, setIsOpened] = useState(false);
 	const toggleCollapse = () => setIsOpened(!isOpened);
 
-	// Use local state to manage all edits within the component
 	const [localChoice, setLocalChoice] = useState<Choice>(choice);
 
-	// Sync local state with the prop when the choice changes
 	useEffect(() => {
 		setLocalChoice(choice);
 	}, [choice]);
@@ -49,7 +47,7 @@ export const ChoiceEditor = ({
 	const handleUpdateReveal = (
 		revealIndex: number,
 		field: keyof RevealMessage,
-		value: string | number
+		value: string | number | roleType[]
 	) => {
 		const updatedReveals = [...(localChoice.reveals || [])];
 		const parsedValue =
