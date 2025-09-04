@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { menuItems, PageState } from '@/lib/types';
 import Link from 'next/link';
 import GameConfig from './pages/GameConfig';
-// import GameGraphs from './pages/GameGraph.tsx.obso';
+import GameGraphs from './pages/GameGraph';
 import TeamsConfig from './pages/teamsConfig';
 import PlayControls from './components/PlayControls';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
@@ -88,8 +88,15 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 						handleUpdateTeam={handleUpdateTeam}
 					/>
 				);
-			// case PageState.CHART:
-			// 	return <GameGraphs game={gameData} />;
+			case PageState.CHART:
+				return (
+					<GameGraphs
+						game={gameData}
+						teams={allTeams}
+						choices={allChoices}
+						rounds={allRounds}
+					/>
+				);
 			default:
 				return null;
 		}

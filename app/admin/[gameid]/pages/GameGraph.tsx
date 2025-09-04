@@ -1,14 +1,25 @@
 import { calculateScores } from '@/lib/calculateScores';
-import { Game, Scores, ScoreType, scoreTypes } from '@/lib/types';
+import {
+	Choice,
+	Game,
+	Round,
+	Scores,
+	ScoreType,
+	scoreTypes,
+	Team,
+} from '@/lib/types';
 import clsx from 'clsx';
 
 type GameScoresTableProps = {
 	game?: Game | null;
+	choices?: Choice[];
+	rounds?: Round[];
+	teams?: Team[];
 };
 
-const GameGraphs = ({ game }: GameScoresTableProps) => {
+const GameGraphs = ({ game, choices, rounds, teams }: GameScoresTableProps) => {
 	if (!game) return <div>Geen spel gevonden</div>;
-	const { rounds, teams } = game;
+	if (!choices) return <div>Geen keuzes gevonden</div>;
 	if (!rounds) return <div>Geen rondes gevonden</div>;
 	if (!teams) return <div>Geen teams gevonden</div>;
 
@@ -26,9 +37,13 @@ const GameGraphs = ({ game }: GameScoresTableProps) => {
 		}, {} as { [K in (typeof scoreTypes)[number]['name']]: number[] });
 
 		rounds.forEach((_, roundIndex) => {
-			const teamScores = calculateScores(game, roundIndex).find(
-				(t) => t.id === team.id
-			)!;
+			const teamScores = calculateScores(
+				game,
+				teams,
+				rounds,
+				choices,
+				roundIndex
+			).find((t) => t.id === team.id)!;
 
 			scoreTypes.forEach(({ name }) => {
 				scoresPerTeamPerRound[team.id][name].push(

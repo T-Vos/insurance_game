@@ -25,7 +25,7 @@ export const roleTypes = [
 	{ name: 'CEO', icon: hatTop },
 	{ name: 'CFO', icon: LucideBanknote },
 	{ name: 'HR', icon: LucideUsersRound },
-	{ name: 'CAO', icon: LucideComputer },
+	{ name: 'CTO', icon: LucideComputer },
 ] as const;
 export type roleType = (typeof roleTypes)[number]['name'];
 

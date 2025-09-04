@@ -1,16 +1,23 @@
-import { Game, Team, Scores, Choice } from './types';
+import { Game, Team, Scores, Choice, Round } from './types';
 
 /**
  * Calculates the cumulative scores for all teams up to a specific round index.
  *
- * @param {Game} gameData The full game data object containing teams, rounds, and initial scores.
+ * @param {Game} gameData The full game data object containing rounds and initial scores.
+ * @param {Team[]} teams The array of all team data.
+ * @param {Round[]} allRounds The array of all round data.
+ * @param {Choice[]} allChoices The array of all choice data.
  * @param {number} roundIndex The index of the round up to which scores should be calculated.
  * @returns {Team[]} A new array of teams with their updated scores.
  */
-export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
+export const calculateScores = (
+	gameData: Game,
+	teams: Team[],
+	allRounds: Round[],
+	allChoices: Choice[],
+	roundIndex: number
+): Team[] => {
 	const {
-		teams,
-		rounds,
 		start_expected_profit_score,
 		start_liquidity_score,
 		start_solvency_score,
@@ -18,18 +25,14 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 		start_capacity_score,
 	} = gameData;
 
-	// Helper function to find a choice's data from a given round
-	const findChoice = (
-		targetRoundId: string | number,
-		choiceId: string
-	): Choice | undefined => {
-		if (!rounds) return;
-		const round = rounds.find((r) => r.round_id === targetRoundId);
-		if (!round?.choices) return;
-		return round?.choices.find((c) => c.id === choiceId);
+	// Helper function to find a choice's data from a given choiceId
+	const findChoice = (choiceId: string): Choice | undefined => {
+		return allChoices.find((c) => c.id === choiceId);
 	};
 
-	if (!rounds) return gameData.teams;
+	if (!allRounds || !allChoices) {
+		return teams;
+	}
 
 	return teams.map((team) => {
 		// Initialize scores with the game's starting conditions
@@ -43,7 +46,7 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 
 		// Iterate through all rounds up to the current round index
 		for (let i = 0; i <= roundIndex; i++) {
-			const currentRound = rounds[i];
+			const currentRound = allRounds[i];
 
 			if (!currentRound) continue; // Should not happen but good practice
 
@@ -59,13 +62,10 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 				currentRound.round_schock_capacity_score || 0;
 
 			// Find the choice this team made in the current round
-			const teamChoiceInRound = team.choices.find((c) => c.roundIndex === i);
+			const teamChoiceInRound = team.choices?.find((c) => c.roundIndex === i);
 
 			if (teamChoiceInRound) {
-				const choiceData = findChoice(
-					teamChoiceInRound.round_id,
-					teamChoiceInRound.choice_id
-				);
+				const choiceData = findChoice(teamChoiceInRound.choice_id);
 
 				if (choiceData) {
 					// Check if the choice's immediate effect is still active
@@ -82,18 +82,15 @@ export const calculateScores = (gameData: Game, roundIndex: number): Team[] => {
 						finalScores.liquidity_score += choiceData.liquidity_score || 0;
 						finalScores.solvency_score += choiceData.solvency_score || 0;
 						finalScores.IT_score += choiceData.IT_score || 0;
-						finalScores.capacity_score -= choiceData.capacity_score || 0;
+						finalScores.capacity_score -= choiceData.capacity_score || 0; // Assuming capacity is also a cost
 					}
 				}
 			}
 
 			// --- NEW LOGIC FOR DELAYED EFFECTS ---
 			// Iterate through all of the team's past choices to check for delayed effects
-			team.choices.forEach((pastChoice) => {
-				const choiceData = findChoice(
-					pastChoice.round_id,
-					pastChoice.choice_id
-				);
+			team.choices?.forEach((pastChoice) => {
+				const choiceData = findChoice(pastChoice.choice_id);
 
 				if (choiceData?.delayedEffect) {
 					// Check if any delayed effect in this choice is effective in the current round
