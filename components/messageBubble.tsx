@@ -6,10 +6,10 @@ export type UIRevealMessage = RevealMessage & { sent?: boolean; time?: string };
 type MessageBubbleProps = {
 	name?: string;
 	time?: string;
-	text?: string;
+	text?: RevealMessage['text'];
 	image?: string;
 	delivered?: boolean;
-	sent?: boolean; // true → right side (blue bubble), false → left side (gray bubble)
+	sent?: boolean;
 };
 
 export default function MessageBubble({
@@ -64,10 +64,13 @@ export default function MessageBubble({
 					</span>
 				</div>
 
-				<p
-					className="text-sm font-normal py-2.5"
-					dangerouslySetInnerHTML={{ __html: String(text ?? '') }}
-				></p>
+				<p className="text-sm font-normal py-2.5">
+					{typeof text === 'string' ? (
+						<span dangerouslySetInnerHTML={{ __html: text }} />
+					) : (
+						text
+					)}
+				</p>
 
 				{delivered && sent && (
 					<span className="text-xs font-normal text-blue-100">Delivered</span>

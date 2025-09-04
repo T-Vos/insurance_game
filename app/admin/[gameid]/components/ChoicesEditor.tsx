@@ -420,7 +420,7 @@ const RevealMessages = ({
 							Bericht tekst
 						</label>
 						<textarea
-							value={reveal.text}
+							value={String(reveal.text)}
 							rows={5}
 							placeholder="Reveal message text"
 							onChange={(e) =>

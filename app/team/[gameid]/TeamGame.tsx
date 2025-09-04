@@ -1,4 +1,5 @@
 'use client';
+import { calculateScores } from '@/lib/calculateScores';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase/config';
 import {
@@ -20,6 +21,7 @@ import {
 	RevealMessage,
 	Choice,
 	roleType,
+	Scores,
 } from '@/lib/types';
 import { useSelectChoice } from '@/app/hooks/useSelectChoice';
 import { cardstyle } from '@/app/admin/[gameid]/components/styling';
@@ -36,8 +38,18 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [revealedMessages, setRevealedMessages] = useState<UIRevealMessage[]>(
 		[]
 	);
-	const [isBlocked, setIsBlocked] = useState<boolean>(false);
+	const [recalculatedTeam, setRecalculatedTeam] = useState<Team | null>(null);
+	const [allRounds, setAllRounds] = useState<Round[]>([]);
+	const [allChoices, setAllChoices] = useState<Choice[]>([]);
 
+	const [isBlocked, setIsBlocked] = useState<boolean>(false);
+	const scoreTypes: (keyof Scores)[] = [
+		'expected_profit_score',
+		'liquidity_score',
+		'solvency_score',
+		'IT_score',
+		'capacity_score',
+	];
 	useEffect(() => {
 		const getTeamSession = () => {
 			const cookies = document.cookie
@@ -85,6 +97,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			unsubscribeTeam();
 		};
 	}, [gameid, teamId]);
+
 	useEffect(() => {
 		if (!currentTeam || !memberId || !currentTeam.members) return;
 		const currentUser = currentTeam.members.find(
@@ -92,6 +105,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		);
 		setCurrentUserRole(currentUser?.role || null);
 	}, [currentTeam, memberId]);
+
 	useEffect(() => {
 		if (!game || !game.currentRoundId) return;
 		const currentRoundId = game.currentRoundId;
@@ -174,7 +188,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			const newMessages = originalChoice.reveals
 				.filter(
 					(reveal) =>
-						chosenItem.roundIndex + reveal.revealedInRounds ===
+						chosenItem.roundIndex + (reveal.revealedInRounds || 0) ===
 						game.currentRoundIndex
 				)
 				.filter(
@@ -190,15 +204,74 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 			messages.push(...newMessages);
 		}
 
+		for (const scoreKey of scoreTypes) {
+			if (!recalculatedTeam) break;
+			const criticalValue = game[`critical_${scoreKey}` as keyof Game] as
+				| number
+				| undefined;
+
+			const currentValue = recalculatedTeam[scoreKey];
+			const criticalText = game[`critical_${scoreKey}_text` as keyof Game] as
+				| string
+				| undefined;
+
+			console.log(scoreKey, criticalValue, currentValue);
+			if (criticalValue && currentValue <= criticalValue) {
+				const time = new Date();
+				messages.push({
+					text: criticalText ?? `Critical ${scoreKey.replace('_score', '')}`,
+					sent: false,
+					message_sender_image: '/portrait.jpg',
+					revealedInRounds: 0,
+					id: 'Score warning',
+					message_sender: 'Finance',
+					time: `${time.getHours()} : ${time.getMinutes()}`,
+				});
+			}
+		}
+
 		if (currentRound.round_show_scores) {
 			const time = new Date();
 			messages.push({
-				text: `📊 <em>De half jaar cijfers zijn bekend</em>: <br/>
-				Winst: ${currentTeam.expected_profit_score} </br>, 
-				Liquiditeit: ${currentTeam.liquidity_score}, 
-				Solvabiliteit: ${currentTeam.solvency_score}, 
-				IT: ${currentTeam.IT_score}, 
-				Capaciteit: ${currentTeam.capacity_score}`,
+				text: (
+					<div className="p-3 bg-gray-50 rounded-xl shadow-sm text-sm">
+						<h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+							📊 De halfjaar cijfers zijn bekend
+						</h4>
+						<ul className="space-y-1 text-gray-700">
+							<li className="flex justify-between">
+								<span>Winst</span>
+								<span className="font-medium text-blue-600">
+									{recalculatedTeam?.expected_profit_score ?? ''}
+								</span>
+							</li>
+							<li className="flex justify-between">
+								<span>Liquiditeit</span>
+								<span className="font-medium text-blue-600">
+									{recalculatedTeam?.liquidity_score}
+								</span>
+							</li>
+							<li className="flex justify-between">
+								<span>Solvabiliteit</span>
+								<span className="font-medium text-blue-600">
+									{recalculatedTeam?.solvency_score}
+								</span>
+							</li>
+							<li className="flex justify-between">
+								<span>IT</span>
+								<span className="font-medium text-blue-600">
+									{recalculatedTeam?.IT_score}
+								</span>
+							</li>
+							<li className="flex justify-between">
+								<span>Capaciteit</span>
+								<span className="font-medium text-blue-600">
+									{recalculatedTeam?.capacity_score}
+								</span>
+							</li>
+						</ul>
+					</div>
+				),
 				sent: currentUserRole === 'CFO',
 				message_sender_image: '/portrait.jpg',
 				revealedInRounds: 0,
@@ -210,6 +283,50 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 
 		setRevealedMessages(messages);
 	}, [game, currentTeam, choicesMadeDetails, currentUserRole, currentRound]);
+
+	useEffect(() => {
+		if (!gameid) return;
+
+		// Listen to all rounds
+		const roundsRef = collection(db, 'insurance_game', gameid, 'rounds');
+		const unsubscribeRounds = onSnapshot(roundsRef, (snapshot) => {
+			setAllRounds(snapshot.docs.map((doc) => doc.data() as Round));
+		});
+
+		// Listen to all choices
+		const choicesRef = collection(db, 'insurance_game', gameid, 'choices');
+		const unsubscribeChoices = onSnapshot(choicesRef, (snapshot) => {
+			setAllChoices(snapshot.docs.map((doc) => doc.data() as Choice));
+		});
+
+		return () => {
+			unsubscribeRounds();
+			unsubscribeChoices();
+		};
+	}, [gameid]);
+
+	useEffect(() => {
+		if (
+			!game ||
+			!currentTeam ||
+			allRounds.length === 0 ||
+			allChoices.length === 0
+		) {
+			setRecalculatedTeam(null);
+			return;
+		}
+
+		const teams = [currentTeam]; // we only care about this one here
+		const newTeams = calculateScores(
+			game,
+			teams,
+			allRounds,
+			allChoices,
+			game.currentRoundIndex
+		);
+
+		setRecalculatedTeam(newTeams[0]);
+	}, [game, currentTeam, allRounds, allChoices]);
 
 	const handleSaveChoice = async (
 		teamId: Team['id'],
@@ -243,6 +360,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 						<h5 className="font-light">Jouw rol: {currentUserRole}</h5>
 						<h5 className="font-light">Team: {currentTeam.teamName}</h5>
 					</div>
+					{recalculatedTeam?.expected_profit_score ?? '...'}
 				</div>
 
 				{revealedMessages.map((msg, index) => (
@@ -251,7 +369,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 						name={msg.message_sender}
 						time={msg.time ?? ''}
 						text={msg.text}
-						image={msg.message_sender_image ?? './portrait.jpg'}
+						image={msg.message_sender_image ?? '/portrait.jpg'}
 						sent={msg.sent ?? false}
 					/>
 				))}

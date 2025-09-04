@@ -210,8 +210,8 @@ export interface TeamChoice {
  */
 export interface RevealMessage {
 	id: string;
-	text: string;
-	revealedInRounds: number;
+	text: string | React.ReactNode;
+	revealedInRounds?: number;
 	revealdForRoles?: roleType[];
 	message_sender: string;
 	message_sender_image?: string;
