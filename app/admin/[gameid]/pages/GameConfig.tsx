@@ -16,6 +16,7 @@ import {
 import clsx from 'clsx';
 import {
 	LucideCircleAlert,
+	LucideIcon,
 	LucidePenTool,
 	LucidePlus,
 	LucideProps,
@@ -365,10 +366,10 @@ interface ScoreTableProps {
 	) => void;
 	editingCriticalText: Record<`critical_${ScoreType}_text`, string>;
 	handleCriticalTextChange: (
-		textKey: `${ScoreType}_text`,
+		textKey: `critical_${ScoreType}_text`,
 		value: string
 	) => void;
-	saveCriticalTextChange: (textKey: `${ScoreType}_text`) => void;
+	saveCriticalTextChange: (textKey: `critical_${ScoreType}_text`) => void;
 }
 
 export function ScoreTable({
@@ -382,11 +383,11 @@ export function ScoreTable({
 	const conditions: {
 		key: 'start' | 'critical' | 'gameover';
 		label: string;
-		icon?;
+		Icon?: LucideIcon;
 	}[] = [
 		{ key: 'start', label: 'Start' },
-		{ key: 'critical', label: 'Critical', icon: LucideCircleAlert },
-		{ key: 'gameover', label: 'Game Over', icon: LucideSkull },
+		{ key: 'critical', label: 'Critical', Icon: LucideCircleAlert },
+		{ key: 'gameover', label: 'Game Over', Icon: LucideSkull },
 	];
 
 	return (
@@ -395,9 +396,9 @@ export function ScoreTable({
 				<thead>
 					<tr className="bg-gray-800 text-left">
 						<th className="p-3">Score Type</th>
-						{conditions.map(({ key, label, icon }) => (
+						{conditions.map(({ key, label, Icon }) => (
 							<th key={key} className="p-3">
-								{/* {icon && <icon className="mr-1" size={16} />} */}
+								{Icon && <Icon className="mr-1" size={16} />}
 								{label}
 							</th>
 						))}
