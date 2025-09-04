@@ -394,12 +394,14 @@ export function ScoreTable({
 		<div className="overflow-x-auto">
 			<table className="w-full text-sm text-gray-300 border-collapse">
 				<thead>
-					<tr className="bg-gray-800 text-left">
+					<tr className="dark:bg-gray-800 text-left">
 						<th className="p-3">Score Type</th>
 						{conditions.map(({ key, label, Icon }) => (
 							<th key={key} className="p-3">
-								{Icon && <Icon className="mr-1" size={16} />}
-								{label}
+								<div className="flex flex-row items-center gap-2 flex-1">
+									{Icon && <Icon className="mr-1" size={16} />}
+									{label}
+								</div>
 							</th>
 						))}
 						<th className="p-3">Critical Message</th>
