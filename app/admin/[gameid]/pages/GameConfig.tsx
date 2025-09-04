@@ -462,6 +462,9 @@ const RoundConfig = ({
 }: RoundConfigProps) => {
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(roundData.round_name);
+	const [editingShowScore, setShowScore] = useState(
+		roundData.round_show_scores || false
+	);
 
 	const [editingShocks, setEditingShocks] = useState({
 		expected_profit_score: roundData.round_schock_expected_profit_score || 0,
@@ -480,9 +483,11 @@ const RoundConfig = ({
 			IT_score: roundData.round_schock_IT_score || 0,
 			capacity_score: roundData.round_schock_capacity_score || 0,
 		});
+		setShowScore(roundData.round_show_scores || false);
 	}, [roundData]);
 
 	const finishEditingName = () => {
+		console.log('Finish');
 		setIsEditingName(false);
 		if (editingName.trim() !== roundData.round_name) {
 			handleUpdateRound({
@@ -490,6 +495,15 @@ const RoundConfig = ({
 				round_name: editingName.trim(),
 			});
 		}
+	};
+
+	const handleShowScore = () => {
+		const newShow = !editingShowScore;
+		setShowScore(!editingShowScore);
+		handleUpdateRound({
+			...roundData,
+			round_show_scores: newShow,
+		});
 	};
 
 	const handleShockChange = (
@@ -557,7 +571,7 @@ const RoundConfig = ({
 					}
 				>
 					<button
-						onClick={() => console.log('show')}
+						onClick={handleShowScore}
 						className={clsx(
 							'flex shrink cursor-pointer space-x-2  text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95',
 							roundData.round_show_scores
