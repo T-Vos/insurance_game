@@ -15,12 +15,43 @@ import {
 import { hatTop } from '@lucide/lab';
 
 export const scoreTypes = [
-	{ name: 'expected_profit_score', icon: LucideHandCoins },
-	{ name: 'liquidity_score', icon: LucideDroplet },
-	{ name: 'solvency_score', icon: LucidePiggyBank },
-	{ name: 'IT_score', icon: LucideComputer },
-	{ name: 'capacity_score', icon: LucideUsersRound },
+	{
+		name: 'expected_profit_score',
+		label: 'Profit',
+		title: 'Expected Profit',
+		icon: LucideHandCoins,
+		color: 'yellow-400',
+	},
+	{
+		name: 'liquidity_score',
+		label: 'Liquidity',
+		title: 'Liquidity',
+		icon: LucideDroplet,
+		color: 'blue-400',
+	},
+	{
+		name: 'solvency_score',
+		label: 'Solvency (%)',
+		title: 'Solvency',
+		icon: LucidePiggyBank,
+		color: 'green-400',
+	},
+	{
+		name: 'IT_score',
+		label: 'IT (%)',
+		title: 'IT Score',
+		icon: LucideComputer,
+		color: 'purple-400',
+	},
+	{
+		name: 'capacity_score',
+		label: 'Capacity (%)',
+		title: 'Capacity',
+		icon: LucideUsersRound,
+		color: 'pink-400',
+	},
 ] as const;
+
 export type ScoreType = (typeof scoreTypes)[number]['name'];
 
 export const roleTypes = [
@@ -78,11 +109,11 @@ export interface Game {
 	critical_solvency_score?: number;
 	critical_IT_score?: number;
 	critical_capacity_score?: number;
-	critical_expected_profit_text?: string;
-	critical_liquidity_text?: string;
-	critical_solvency_text?: string;
-	critical_IT_text?: string;
-	critical_capacity_text?: string;
+	critical_expected_profit_score_text?: string;
+	critical_liquidity_score_text?: string;
+	critical_solvency_score_text?: string;
+	critical_IT_score_text?: string;
+	critical_capacity_score_text?: string;
 	gameover_expected_profit_score?: number;
 	gameover_liquidity_score?: number;
 	gameover_solvency_score?: number;

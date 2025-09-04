@@ -1,11 +1,24 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Round, Game, Scores, Choice } from '@/lib/types';
+import {
+	useState,
+	useEffect,
+	ForwardRefExoticComponent,
+	RefAttributes,
+} from 'react';
+import {
+	Round,
+	Game,
+	Scores,
+	Choice,
+	ScoreType,
+	scoreTypes,
+} from '@/lib/types';
 import clsx from 'clsx';
 import {
 	LucideCircleAlert,
 	LucidePenTool,
 	LucidePlus,
+	LucideProps,
 	LucideSkull,
 	LucideTrash,
 } from 'lucide-react';
@@ -110,77 +123,102 @@ const GameConfigHeader = ({
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [editingName, setEditingName] = useState(gameData?.name || '');
 
-	const [editingStartingScores, setEditingStartingScores] = useState<Scores>({
-		expected_profit_score: gameData?.start_expected_profit_score || 0,
-		liquidity_score: gameData?.start_liquidity_score || 0,
-		solvency_score: gameData?.start_solvency_score || 0,
-		IT_score: gameData?.start_IT_score || 0,
-		capacity_score: gameData?.start_capacity_score || 0,
+	type ConditionType = 'start' | 'critical' | 'gameover';
+
+	type ScoresByCondition = {
+		[key in ConditionType]: Scores;
+	};
+
+	type CriticalTexts = {
+		[key in ScoreType as `critical_${key}_text`]: string;
+	};
+
+	const [editingScores, setEditingScores] = useState<ScoresByCondition>({
+		start: {
+			expected_profit_score: gameData?.start_expected_profit_score || 0,
+			liquidity_score: gameData?.start_liquidity_score || 0,
+			solvency_score: gameData?.start_solvency_score || 0,
+			IT_score: gameData?.start_IT_score || 0,
+			capacity_score: gameData?.start_capacity_score || 0,
+		},
+		critical: {
+			expected_profit_score: gameData?.critical_expected_profit_score || 0,
+			liquidity_score: gameData?.critical_liquidity_score || 0,
+			solvency_score: gameData?.critical_solvency_score || 0,
+			IT_score: gameData?.critical_IT_score || 0,
+			capacity_score: gameData?.critical_capacity_score || 0,
+		},
+		gameover: {
+			expected_profit_score: gameData?.gameover_expected_profit_score || 0,
+			liquidity_score: gameData?.gameover_liquidity_score || 0,
+			solvency_score: gameData?.gameover_solvency_score || 0,
+			IT_score: gameData?.gameover_IT_score || 0,
+			capacity_score: gameData?.gameover_capacity_score || 0,
+		},
 	});
 
-	const [editingCriticalScores, setEditingCriticalScores] = useState<Scores>({
-		expected_profit_score: gameData?.critical_expected_profit_score || 0,
-		liquidity_score: gameData?.critical_liquidity_score || 0,
-		solvency_score: gameData?.critical_solvency_score || 0,
-		IT_score: gameData?.critical_IT_score || 0,
-		capacity_score: gameData?.critical_capacity_score || 0,
-	});
-
-	const [editingCriticalText, setEditingCriticalText] = useState({
-		expected_profit_score: gameData?.critical_expected_profit_text || '',
-		liquidity_text: gameData?.critical_liquidity_text || '',
-		solvency_text: gameData?.critical_solvency_text || '',
-		IT_text: gameData?.critical_IT_text || '',
-		capacity_text: gameData?.critical_capacity_text || '',
-	});
-
-	const [editingGameOverScores, setEditingGameOverScores] = useState<Scores>({
-		expected_profit_score: gameData?.gameover_expected_profit_score || 0,
-		liquidity_score: gameData?.gameover_liquidity_score || 0,
-		solvency_score: gameData?.gameover_solvency_score || 0,
-		IT_score: gameData?.gameover_IT_score || 0,
-		capacity_score: gameData?.gameover_capacity_score || 0,
-	});
-
-	useEffect(() => {
-		if (
-			!editingStartingScores ||
-			Object.keys(editingStartingScores).length === 0
-		) {
-			setEditingName(gameData?.name || '');
-			setEditingStartingScores({
-				expected_profit_score: gameData?.start_expected_profit_score || 0,
-				liquidity_score: gameData?.start_liquidity_score || 0,
-				solvency_score: gameData?.start_solvency_score || 0,
-				IT_score: gameData?.start_IT_score || 0,
-				capacity_score: gameData?.start_capacity_score || 0,
-			});
+	const [editingCriticalText, setEditingCriticalText] = useState<CriticalTexts>(
+		{
+			critical_expected_profit_score_text:
+				gameData?.critical_expected_profit_score_text || '',
+			critical_liquidity_score_text:
+				gameData?.critical_liquidity_score_text || '',
+			critical_solvency_score_text:
+				gameData?.critical_solvency_score_text || '',
+			critical_IT_score_text: gameData?.critical_IT_score_text || '',
+			critical_capacity_score_text:
+				gameData?.critical_capacity_score_text || '',
 		}
-		if (
-			!editingCriticalScores ||
-			Object.keys(editingCriticalScores).length === 0
-		) {
-			setEditingCriticalScores({
-				expected_profit_score: gameData?.critical_expected_profit_score || 0,
-				liquidity_score: gameData?.critical_liquidity_score || 0,
-				solvency_score: gameData?.critical_solvency_score || 0,
-				IT_score: gameData?.critical_IT_score || 0,
-				capacity_score: gameData?.critical_capacity_score || 0,
-			});
-		}
-		if (
-			!editingGameOverScores ||
-			Object.keys(editingGameOverScores).length === 0
-		) {
-			setEditingGameOverScores({
-				expected_profit_score: gameData?.gameover_expected_profit_score || 0,
-				liquidity_score: gameData?.gameover_liquidity_score || 0,
-				solvency_score: gameData?.gameover_solvency_score || 0,
-				IT_score: gameData?.gameover_IT_score || 0,
-				capacity_score: gameData?.gameover_capacity_score || 0,
-			});
-		}
-	}, [gameData]);
+	);
+
+	// useEffect(() => {
+	// 	if (
+	// 		!editingStartingScores ||
+	// 		Object.keys(editingStartingScores).length === 0
+	// 	) {
+	// 		setEditingName(gameData?.name || '');
+	// 		setEditingStartingScores({
+	// 			expected_profit_score: gameData?.start_expected_profit_score || 0,
+	// 			liquidity_score: gameData?.start_liquidity_score || 0,
+	// 			solvency_score: gameData?.start_solvency_score || 0,
+	// 			IT_score: gameData?.start_IT_score || 0,
+	// 			capacity_score: gameData?.start_capacity_score || 0,
+	// 		});
+	// 	}
+	// 	if (
+	// 		!editingCriticalScores ||
+	// 		Object.keys(editingCriticalScores).length === 0
+	// 	) {
+	// 		setEditingCriticalScores({
+	// 			expected_profit_score: gameData?.critical_expected_profit_score || 0,
+	// 			liquidity_score: gameData?.critical_liquidity_score || 0,
+	// 			solvency_score: gameData?.critical_solvency_score || 0,
+	// 			IT_score: gameData?.critical_IT_score || 0,
+	// 			capacity_score: gameData?.critical_capacity_score || 0,
+	// 		});
+	// 	}
+	// 	if (
+	// 		!editingGameOverScores ||
+	// 		Object.keys(editingGameOverScores).length === 0
+	// 	) {
+	// 		setEditingGameOverScores({
+	// 			expected_profit_score: gameData?.gameover_expected_profit_score || 0,
+	// 			liquidity_score: gameData?.gameover_liquidity_score || 0,
+	// 			solvency_score: gameData?.gameover_solvency_score || 0,
+	// 			IT_score: gameData?.gameover_IT_score || 0,
+	// 			capacity_score: gameData?.gameover_capacity_score || 0,
+	// 		});
+	// 	}
+	// 	if (!editingCriticalText || Object.keys(editingCriticalText).length === 0) {
+	// 		setEditingCriticalText({
+	// 			expected_profit_score: gameData?.critical_expected_profit_text || '',
+	// 			liquidity_text: gameData?.critical_liquidity_text || '',
+	// 			solvency_text: gameData?.critical_solvency_text || '',
+	// 			IT_text: gameData?.critical_IT_text || '',
+	// 			capacity_text: gameData?.critical_capacity_text || '',
+	// 		});
+	// 	}
+	// }, [gameData]);
 
 	const finishEditingName = () => {
 		setIsEditingName(false);
@@ -190,56 +228,42 @@ const GameConfigHeader = ({
 	};
 
 	const handleScoreChange = (
+		condition: ConditionType,
 		scoreKey: keyof Scores,
 		value: string | number
 	) => {
-		setEditingStartingScores((prevScores) => ({
-			...prevScores,
-			[scoreKey]: value,
-		}));
-	};
-	const handleCriticalScoreChange = (
-		scoreKey: keyof Scores,
-		value: string | number
-	) => {
-		setEditingCriticalScores((prevScores) => ({
-			...prevScores,
-			[scoreKey]: value,
-		}));
-	};
-	const handleGameOverScoreChange = (
-		scoreKey: keyof Scores,
-		value: string | number
-	) => {
-		setEditingGameOverScores((prevScores) => ({
-			...prevScores,
-			[scoreKey]: value,
+		setEditingScores((prev) => ({
+			...prev,
+			[condition]: {
+				...prev[condition],
+				[scoreKey]: value,
+			},
 		}));
 	};
 
-	const saveScoreChange = (scoreKey: keyof Scores) => {
+	const saveScoreChange = (
+		condition: ConditionType,
+		scoreKey: keyof Scores
+	) => {
+		const val = editingScores[condition][scoreKey];
 		onUpdateGameConfig(
-			`start_${scoreKey}`,
-			typeof editingStartingScores[scoreKey] === 'number'
-				? editingStartingScores[scoreKey]
-				: parseFloat(String(editingStartingScores[scoreKey])) || 0
+			`${condition}_${scoreKey}`,
+			typeof val === 'number' ? val : parseFloat(String(val)) || 0
 		);
 	};
-	const saveCriticalScoreChange = (scoreKey: keyof Scores) => {
-		onUpdateGameConfig(
-			`critical_${scoreKey}`,
-			typeof editingCriticalScores[scoreKey] === 'number'
-				? editingCriticalScores[scoreKey]
-				: parseFloat(String(editingCriticalScores[scoreKey])) || 0
-		);
+
+	const handleCriticalTextChange = (
+		textKey: keyof CriticalTexts,
+		value: string
+	) => {
+		setEditingCriticalText((prev) => ({
+			...prev,
+			[textKey]: value,
+		}));
 	};
-	const saveGameOverScoreChange = (scoreKey: keyof Scores) => {
-		onUpdateGameConfig(
-			`gameover_${scoreKey}`,
-			typeof editingGameOverScores[scoreKey] === 'number'
-				? editingGameOverScores[scoreKey]
-				: parseFloat(String(editingGameOverScores[scoreKey])) || 0
-		);
+
+	const saveCriticalTextChange = (textKey: keyof CriticalTexts) => {
+		onUpdateGameConfig(textKey, editingCriticalText[textKey]);
 	};
 
 	return (
@@ -286,7 +310,15 @@ const GameConfigHeader = ({
 				</button>
 			</div>
 			<div className="border-t border-gray-600 my-8"></div>
-			<h3 className="text-xl font-bold text-gray-300 mb-4">Start Conditions</h3>
+			<ScoreTable
+				editingCriticalText={editingCriticalText}
+				editingScores={editingScores}
+				handleCriticalTextChange={handleCriticalTextChange}
+				saveCriticalTextChange={saveCriticalTextChange}
+				handleScoreChange={handleScoreChange}
+				saveScoreChange={saveScoreChange}
+			/>
+			{/* <h3 className="text-xl font-bold text-gray-300 mb-4">Start Conditions</h3>
 			<ScoreBar
 				handleScoreChange={handleScoreChange}
 				saveScoreChange={saveScoreChange}
@@ -311,10 +343,120 @@ const GameConfigHeader = ({
 					saveScoreChange={saveGameOverScoreChange}
 					editingScores={editingGameOverScores}
 				/>
-			</div>
+			</div> */}
 		</div>
 	);
 };
+
+interface ScoreTableProps {
+	editingScores: {
+		start: Record<ScoreType, number>;
+		critical: Record<ScoreType, number>;
+		gameover: Record<ScoreType, number>;
+	};
+	handleScoreChange: (
+		condition: 'start' | 'critical' | 'gameover',
+		scoreKey: ScoreType,
+		value: string | number
+	) => void;
+	saveScoreChange: (
+		condition: 'start' | 'critical' | 'gameover',
+		scoreKey: ScoreType
+	) => void;
+	editingCriticalText: Record<`critical_${ScoreType}_text`, string>;
+	handleCriticalTextChange: (
+		textKey: `${ScoreType}_text`,
+		value: string
+	) => void;
+	saveCriticalTextChange: (textKey: `${ScoreType}_text`) => void;
+}
+
+export function ScoreTable({
+	editingScores,
+	handleScoreChange,
+	saveScoreChange,
+	editingCriticalText,
+	handleCriticalTextChange,
+	saveCriticalTextChange,
+}: ScoreTableProps) {
+	const conditions: {
+		key: 'start' | 'critical' | 'gameover';
+		label: string;
+		icon?;
+	}[] = [
+		{ key: 'start', label: 'Start' },
+		{ key: 'critical', label: 'Critical', icon: LucideCircleAlert },
+		{ key: 'gameover', label: 'Game Over', icon: LucideSkull },
+	];
+
+	return (
+		<div className="overflow-x-auto">
+			<table className="w-full text-sm text-gray-300 border-collapse">
+				<thead>
+					<tr className="bg-gray-800 text-left">
+						<th className="p-3">Score Type</th>
+						{conditions.map(({ key, label, icon }) => (
+							<th key={key} className="p-3">
+								{/* {icon && <icon className="mr-1" size={16} />} */}
+								{label}
+							</th>
+						))}
+						<th className="p-3">Critical Message</th>
+					</tr>
+				</thead>
+				<tbody>
+					{scoreTypes.map(({ name, label, icon: Icon, color }) => {
+						const textKey =
+							`critical_${name}_text` as `critical_${ScoreType}_text`;
+						return (
+							<tr key={name} className="border-b border-gray-700">
+								{/* Score Type & Icon */}
+								<td className="p-3 flex items-center gap-2">
+									<Icon size={20} className={`text-${color}`} />
+									<span>{label}</span>
+								</td>
+
+								{/* Scores for each condition */}
+								{conditions.map(({ key }) => (
+									<td key={key} className="p-3">
+										<input
+											type="number"
+											value={editingScores[key][name]}
+											onChange={(e) =>
+												handleScoreChange(key, name, e.target.value)
+											}
+											onBlur={() => saveScoreChange(key, name)}
+											className={clsx(
+												'w-24 text-center dark:bg-gray-900 dark:text-white rounded-md px-2 py-1 focus:outline-none focus:ring-2',
+												`focus:ring-${color}`
+											)}
+										/>
+									</td>
+								))}
+
+								{/* Critical Text */}
+								<td className="p-3">
+									<textarea
+										value={editingCriticalText[textKey]}
+										onChange={(e) =>
+											handleCriticalTextChange(textKey, e.target.value)
+										}
+										onBlur={() => saveCriticalTextChange(textKey)}
+										className={clsx(
+											'w-full dark:bg-gray-900 dark:text-white rounded-md px-3 py-2 resize-none focus:ring-2  focus:outline-none',
+											`focus:ring-${color}`
+										)}
+										placeholder={`Enter critical message for ${label}`}
+									/>
+								</td>
+							</tr>
+						);
+					})}
+				</tbody>
+			</table>
+		</div>
+	);
+}
 
 type RoundConfigProps = {
 	roundData: Round;
