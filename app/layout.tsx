@@ -42,7 +42,7 @@ export default function RootLayout({
 					<footer className="border-t-8 border-blue-900 px-6 py-8">
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center text-center md:text-left">
 							<div className="sm:order-last md:order-1 flex justify-center md:justify-end">
-								<DNBLogo />
+								{/* <DNBLogo /> */}
 							</div>
 							<div className="order-2 flex flex-col items-center">
 								<p className="text-xs mb-2">

@@ -219,7 +219,7 @@ const useGameControls = (gameId: string) => {
 		setLoading(true);
 
 		const { gameDocRef, roundsCollection } = collectionRefs;
-		const newRoundIndex = allRounds.length;
+		const newRoundIndex = allRounds.length + 1;
 		const newRoundId = `round_${newRoundIndex}`;
 
 		const newRound: Round = {
@@ -228,7 +228,7 @@ const useGameControls = (gameId: string) => {
 			round_started_at: null,
 			round_finished_at: null,
 			round_index: newRoundIndex,
-			round_name: `Round ${newRoundIndex + 1}`,
+			round_name: `Round ${newRoundIndex}`,
 			choices_ids: [],
 		};
 
@@ -250,6 +250,8 @@ const useGameControls = (gameId: string) => {
 			try {
 				const { roundsCollection } = collectionRefs;
 				const roundRef = doc(roundsCollection, String(roundId));
+				// TODO: we can delete all choices connected to the round and also remove all choices made by teams.
+				// But why go all lengths to do that right now?
 				await deleteDoc(roundRef);
 			} catch (error) {
 				console.error('Failed to remove round:', error);

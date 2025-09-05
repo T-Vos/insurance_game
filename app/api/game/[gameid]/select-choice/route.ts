@@ -23,51 +23,49 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const gameRef = adminDb.collection('insurance_game').doc(gameId);
-		const gameDoc = await gameRef.get();
+		const teamRef = adminDb
+			.collection('insurance_game')
+			.doc(gameId)
+			.collection('teams')
+			.doc(teamId);
 
-		if (!gameDoc.exists) {
-			return NextResponse.json({ error: 'Game not found' }, { status: 404 });
-		}
+		await adminDb.runTransaction(async (transaction) => {
+			const teamDoc = await transaction.get(teamRef);
 
-		const gameData = gameDoc.data();
-		if (!gameData?.teams) {
-			return NextResponse.json({ error: 'No teams in game' }, { status: 400 });
-		}
-
-		const updatedTeams = gameData.teams.map((team: Team) => {
-			if (team.id === teamId) {
-				// Find if a choice for this round already exists
-				const existingChoiceIndex = team.choices?.findIndex(
-					(c: TeamChoice) => c.round_id === roundId
+			if (!teamDoc.exists) {
+				return NextResponse.json(
+					{ error: 'Team document not found' },
+					{ status: 404 }
 				);
-
-				let updatedChoices;
-				if (!existingChoiceIndex || existingChoiceIndex > -1) {
-					// Update existing choice
-					updatedChoices = team.choices?.map((c: TeamChoice) =>
-						c.round_id === roundId
-							? { ...c, choice_id: choiceId, saved: false, roundIndex }
-							: c
-					);
-				} else {
-					updatedChoices = [
-						...(team.choices ?? []),
-						{
-							round_id: roundId,
-							choice_id: choiceId,
-							roundIndex: roundIndex,
-							saved: false,
-						},
-					];
-				}
-
-				return { ...team, choices: updatedChoices };
 			}
-			return team;
-		});
 
-		await gameRef.update({ teams: updatedTeams });
+			const teamData = teamDoc.data() as Team;
+
+			const existingChoiceIndex = teamData.choices?.findIndex(
+				(c: TeamChoice) => c.round_id === roundId
+			);
+
+			let updatedChoices;
+			if (existingChoiceIndex !== -1) {
+				updatedChoices = teamData.choices?.map((c: TeamChoice) =>
+					c.round_id === roundId
+						? { ...c, choice_id: choiceId, saved: false, roundIndex }
+						: c
+				);
+			} else {
+				updatedChoices = [
+					...(teamData.choices ?? []),
+					{
+						round_id: roundId,
+						choice_id: choiceId,
+						roundIndex: roundIndex,
+						saved: false,
+					},
+				];
+			}
+
+			transaction.update(teamRef, { choices: updatedChoices });
+		});
 
 		return NextResponse.json({ success: true });
 	} catch (err) {

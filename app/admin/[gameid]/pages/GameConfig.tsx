@@ -282,38 +282,43 @@ const GameConfigHeader = ({
 						<ChevronDown size={20} />
 					</div>
 				</button>
-				{isEditingName ? (
-					<input
-						type="text"
-						value={editingName}
-						onChange={(e) => setEditingName(e.target.value)}
-						onBlur={finishEditingName}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') finishEditingName();
-							if (e.key === 'Escape') {
-								setEditingName(gameData?.name || '');
-								setIsEditingName(false);
-							}
-						}}
-						autoFocus
-						className={clsx(
-							title_changeable,
-							'bg-gray-700 rounded-lg px-3 py-1 w-full sm:w-auto min-w-[200px]'
+				<div className="grow flex flex-col w-full">
+					<div className="grow w-full">
+						{isEditingName ? (
+							<input
+								type="text"
+								value={editingName}
+								onChange={(e) => setEditingName(e.target.value)}
+								onBlur={finishEditingName}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') finishEditingName();
+									if (e.key === 'Escape') {
+										setEditingName(gameData?.name || '');
+										setIsEditingName(false);
+									}
+								}}
+								autoFocus
+								className={clsx(
+									title_changeable,
+									'bg-gray-700 rounded-lg px-3 py-1 w-full sm:w-auto min-w-[200px]'
+								)}
+							/>
+						) : (
+							<h2
+								className={clsx(
+									title_changeable,
+									'cursor-pointer flex-grow flex items-center gap-2'
+								)}
+								onClick={() => setIsEditingName(true)}
+								title="Click to edit game name"
+							>
+								{gameData?.name || 'Game Title'}
+								<LucidePenTool size={18} className="text-gray-400" />
+							</h2>
 						)}
-					/>
-				) : (
-					<h2
-						className={clsx(
-							title_changeable,
-							'cursor-pointer flex-grow flex items-center gap-2'
-						)}
-						onClick={() => setIsEditingName(true)}
-						title="Click to edit game name"
-					>
-						{gameData?.name || 'Game Title'}
-						<LucidePenTool size={18} className="text-gray-400" />
-					</h2>
-				)}
+					</div>
+					<span className="font-light">Game key: {gameData?.key}</span>
+				</div>
 				<button
 					onClick={handleAddRound}
 					className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"

@@ -78,8 +78,14 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		const unsubscribeGame = onSnapshot(
 			doc(db, 'insurance_game', gameid),
 			(snapshot) => {
-				if (snapshot.exists()) setGame(snapshot.data() as Game);
-				else setGame(null);
+				if (snapshot.exists()) {
+					const newGame = {
+						...snapshot.data(),
+						id: snapshot.id,
+					};
+					console.log(newGame);
+					setGame(newGame as Game);
+				} else setGame(null);
 			}
 		);
 
@@ -87,7 +93,11 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		const unsubscribeTeam = onSnapshot(
 			doc(db, 'insurance_game', gameid, 'teams', teamId),
 			(snapshot) => {
-				if (snapshot.exists()) setCurrentTeam(snapshot.data() as Team);
+				const newTeam = {
+					...snapshot.data(),
+					id: snapshot.id,
+				};
+				if (snapshot.exists()) setCurrentTeam(newTeam as Team);
 				else setCurrentTeam(null);
 			}
 		);
@@ -107,27 +117,26 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	}, [currentTeam, memberId]);
 
 	useEffect(() => {
-		if (!game || !game.currentRoundId) return;
+		if (!game || !game.currentRoundId || !game.id) return;
 		const currentRoundId = game.currentRoundId;
-
 		const roundRef = doc(
 			db,
 			'insurance_game',
 			game.id,
 			'rounds',
-			currentRoundId?.toString()
+			String(currentRoundId)
 		);
 		const unsubscribeRound = onSnapshot(roundRef, (snapshot) => {
 			if (snapshot.exists()) {
 				const roundData = snapshot.data() as Round;
 				setCurrentRound(roundData);
 
-				// This is the correct way to get choices for a round with a single query
 				const choicesRef = collection(db, 'insurance_game', game.id, 'choices');
 				const choicesQuery = query(
 					choicesRef,
 					where('round_id', '==', roundData.round_id)
 				);
+
 				getDocs(choicesQuery).then((choicesSnapshot) => {
 					const choices = choicesSnapshot.docs.map(
 						(doc) => doc.data() as Choice
@@ -348,19 +357,17 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	if (!teamId) return <div>Loading.</div>;
 	if (!game) return <div>Loading..</div>;
 	if (!currentTeam) return <div>Loading...</div>;
-	if (!currentRound) return <div>Loading....</div>;
-	if (!currentRoundChoices) return <div>Loading.......</div>;
-
 	return (
 		<div className="flex items-center justify-center flex-col min-h-screen px-4">
 			<div className="w-full max-w-md space-y-6 mb-3">
 				<div className={cardstyle}>
-					<h3 className="font-semibold mt-3">{currentRound.round_name}</h3>
+					<h3 className="font-semibold mt-3">
+						{currentRound?.round_name ?? 'Spel gaat starten'}
+					</h3>
 					<div className="w-full flex flex-row justify-between mt-3">
 						<h5 className="font-light">Jouw rol: {currentUserRole}</h5>
 						<h5 className="font-light">Team: {currentTeam.teamName}</h5>
 					</div>
-					{recalculatedTeam?.expected_profit_score ?? '...'}
 				</div>
 
 				{revealedMessages.map((msg, index) => (
@@ -375,7 +382,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 				))}
 
 				<div className={cardstyle}>
-					{currentRound.round_started_at ? (
+					{currentRound?.round_started_at ? (
 						<TeamBoard
 							team={currentTeam}
 							currentRound={currentRound}
