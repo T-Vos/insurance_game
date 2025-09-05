@@ -337,10 +337,27 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		setRecalculatedTeam(newTeams[0]);
 	}, [game, currentTeam, allRounds, allChoices]);
 
+	useEffect(() => {
+		// Block options for all roles except CEO.
+		if (currentUserRole !== 'CEO') {
+			setIsBlocked(true);
+			return;
+		}
+
+		// Check if a choice for the current round has already been saved for this team.
+		const choiced = currentTeam?.choices?.find(
+			(choice: TeamChoice) => choice.round_id === currentRound?.round_id
+		);
+
+		// If a choice is saved, block the options. Otherwise, unblock them.
+		setIsBlocked(choiced?.saved ?? false);
+	}, [currentUserRole, currentTeam, currentRound]);
+
 	const handleSaveChoice = async (
 		teamId: Team['id'],
 		roundId: Round['round_id']
 	) => {
+		setIsBlocked(true);
 		const res = await fetch(`/api/game/${gameid}/save-choice`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
