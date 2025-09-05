@@ -335,8 +335,10 @@ const useGameControls = (gameId: string) => {
 				const { teamsCollection } = collectionRefs;
 				const teamRef = doc(teamsCollection, id);
 				await updateDoc(teamRef, updates as never); // Type assertion for updateDoc
+				toast.success(`Team met id ${id} veranderd`);
 			} catch (error) {
 				console.error('Failed to update team:', error);
+				toast.error('Update van team met id: ' + id + ' mislukt');
 			} finally {
 				setLoading(false);
 			}
@@ -351,8 +353,10 @@ const useGameControls = (gameId: string) => {
 			const { gameDocRef } = collectionRefs;
 			try {
 				await updateDoc(gameDocRef, { [key]: value });
+				toast.success(`${key} is veranderd naar ${value}`);
 			} catch (error) {
 				console.error('Failed to update game:', error);
+				toast.error('Update mislukt');
 			} finally {
 				setLoading(false);
 			}
@@ -388,9 +392,11 @@ const useGameControls = (gameId: string) => {
 				};
 				await setDoc(newChoiceRef, newChoice);
 				setLoading(false);
+				toast.success(`Keuze met ID ${newChoiceRef.id} toegevoegd`);
 				return newChoiceRef.id;
 			} catch (error) {
 				console.error('Error adding choice:', error);
+				toast.error('Keuze toevoegen mislukt');
 			}
 		},
 		[collectionRefs, gameData, allChoices]
