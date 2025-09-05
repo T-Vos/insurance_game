@@ -44,7 +44,11 @@ const useGameControls = (gameId: string) => {
 
 		const unsubscribeGame = onSnapshot(gameDocRef, (docSnap) => {
 			if (docSnap.exists()) {
-				setGameData(docSnap.data() as Game);
+				const newGame = {
+					...docSnap.data(),
+					id: docSnap.id,
+				};
+				setGameData(newGame as Game);
 			}
 		});
 
@@ -362,8 +366,9 @@ const useGameControls = (gameId: string) => {
 			setLoading(true);
 			try {
 				const { choicesCollection } = collectionRefs;
+				const newChoiceRef = doc(choicesCollection);
 				const newChoice: Choice = {
-					id: crypto.randomUUID(),
+					id: newChoiceRef.id,
 					round_id: roundId,
 					choice_index: allChoices.filter((c) => c.round_id === roundId).length,
 					description: 'New choice',
@@ -381,11 +386,11 @@ const useGameControls = (gameId: string) => {
 						.round_index,
 					delayedEffect: [],
 				};
-				await addDoc(choicesCollection, newChoice);
+				await setDoc(newChoiceRef, newChoice);
+				setLoading(false);
+				return newChoiceRef.id;
 			} catch (error) {
 				console.error('Error adding choice:', error);
-			} finally {
-				setLoading(false);
 			}
 		},
 		[collectionRefs, gameData, allChoices]
@@ -396,6 +401,7 @@ const useGameControls = (gameId: string) => {
 			if (!collectionRefs) return;
 			setLoading(true);
 			try {
+				console.log(choiceId);
 				const { choicesCollection } = collectionRefs;
 				const choiceDocRef = doc(choicesCollection, choiceId);
 				await deleteDoc(choiceDocRef);
@@ -414,7 +420,8 @@ const useGameControls = (gameId: string) => {
 			setLoading(true);
 			try {
 				const { choicesCollection } = collectionRefs;
-				const choiceDocRef = doc(choicesCollection, updatedChoice.id);
+				const choiceId = updatedChoice.id.trim();
+				const choiceDocRef = doc(choicesCollection, choiceId);
 				const { id, ...dataToUpdate } = updatedChoice;
 				await updateDoc(choiceDocRef, dataToUpdate as never);
 			} catch (error) {

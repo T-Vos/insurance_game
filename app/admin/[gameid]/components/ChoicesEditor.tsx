@@ -11,8 +11,8 @@ import {
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ScoreBar from './ScoreBar'; // Assuming ScoreBar exists and is fine
+import { delete_button } from './styling';
 
-// The corrected props, using flat arrays instead of the old nested structure
 type ChoiceEditorProps = {
 	choice: Choice;
 	allChoices: Choice[]; // Use a flat list of all choices for interactions
@@ -212,6 +212,7 @@ export const ChoiceEditor = ({
 						onBlur={() => onSave(localChoice)}
 						className="w-full bg-gray-700 text-white rounded px-3 py-2"
 					/>
+					{localChoice.id}
 				</div>
 				<button
 					onClick={() => onRemove(localChoice.id)}
@@ -599,7 +600,7 @@ const InteractionEffects = ({
 					<div className="self-end mb-2">
 						<button
 							onClick={() => handleRemoveInteraction(interactionIndex)}
-							className="text-red-400 hover:text-red-300 transition duration-200"
+							className={delete_button}
 						>
 							<LucideTrash size={18} />
 						</button>
