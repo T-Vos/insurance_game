@@ -11,7 +11,7 @@ import {
 	query,
 } from 'firebase/firestore';
 import { Choice, Game, Round, Team } from '@/lib/types';
-
+import toast from 'react-hot-toast';
 const TEAMS_COLLECTION_NAME = 'teams';
 const ROUNDS_COLLECTION_NAME = 'rounds';
 const CHOICES_COLLECTION_NAME = 'choices';
@@ -404,9 +404,11 @@ const useGameControls = (gameId: string) => {
 				console.log(choiceId);
 				const { choicesCollection } = collectionRefs;
 				const choiceDocRef = doc(choicesCollection, choiceId);
+				toast.success(`Keuze met ID ${choiceDocRef} verwijder`);
 				await deleteDoc(choiceDocRef);
 			} catch (error) {
 				console.error('Error removing choice:', error);
+				toast.success(`Keuze verwijderen mislukt`);
 			} finally {
 				setLoading(false);
 			}
@@ -424,8 +426,12 @@ const useGameControls = (gameId: string) => {
 				const choiceDocRef = doc(choicesCollection, choiceId);
 				const { id, ...dataToUpdate } = updatedChoice;
 				await updateDoc(choiceDocRef, dataToUpdate as never);
+				toast.success(
+					`Verandering voor ${updatedChoice.description} opgeslagen`
+				);
 			} catch (error) {
 				console.error('Error saving choice:', error);
+				toast.error('Er is iets fout gegaan bij het opslaan.');
 			} finally {
 				setLoading(false);
 			}

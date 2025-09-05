@@ -212,7 +212,6 @@ export const ChoiceEditor = ({
 						onBlur={() => onSave(localChoice)}
 						className="w-full bg-gray-700 text-white rounded px-3 py-2"
 					/>
-					{localChoice.id}
 				</div>
 				<button
 					onClick={() => onRemove(localChoice.id)}

@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import ThemeToggle from '@/components/ThemeToggle';
-import DNBLogo from '@/components/dnb';
 import AuthSync from '@/lib/firebase/auth-sync';
 import clsx from 'clsx';
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
@@ -37,6 +37,16 @@ export default function RootLayout({
 			>
 				<AuthSync />
 				<div className="flex flex-col">
+					<Toaster
+						position="top-right" // <-- Set the position
+						toastOptions={{
+							duration: 2000, // <-- Set the duration to 3 seconds
+							style: {
+								background: '#333',
+								color: '#fff',
+							},
+						}}
+					/>
 					<main className="flex-1 min-h-screen">{children}</main>
 
 					<footer className="border-t-8 border-blue-900 px-6 py-8">
