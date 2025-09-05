@@ -26,7 +26,12 @@ import {
 	LucideTrash,
 } from 'lucide-react';
 import { title } from 'process';
-import { cardstyle, title_changeable } from '../components/styling';
+import {
+	cardstyle,
+	delete_button,
+	title_changeable,
+	title_subtle,
+} from '../components/styling';
 import { ChoicesList } from '../components/ChoicesList';
 import { generateGameKey } from '@/lib/generate_game_key';
 import ScoreBar from '../components/ScoreBar';
@@ -78,14 +83,14 @@ const GameConfig = ({
 
 	return (
 		<div className="flex flex-col gap-3">
-			<h3 className="text-lg font-semibold text-gray-400">Spel settings</h3>
+			<h3 className={title_subtle}>Spel settings</h3>
 			<GameConfigHeader
 				handleAddRound={handleAddRound}
 				gameData={gameData}
 				onUpdateGameConfig={handleUpdateGameConfig}
 			/>
 
-			<h3 className="text-lg font-semibold text-gray-400">Ronde settings</h3>
+			<h3 className={title_subtle}>Ronde settings</h3>
 			<div className={cardstyle}>
 				<RoundConfig
 					roundData={currentRound}
@@ -592,7 +597,7 @@ const RoundConfig = ({
 				<Tooltip content="Verwijder ronde">
 					<button
 						onClick={() => handleRemoveRound(roundData.round_id)}
-						className="flex shrink cursor-pointer space-x-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md transform hover:scale-105 active:scale-95"
+						className={delete_button}
 					>
 						<LucideTrash size={18} />
 					</button>

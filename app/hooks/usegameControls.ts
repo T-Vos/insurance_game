@@ -259,6 +259,22 @@ const useGameControls = (gameId: string) => {
 		},
 		[collectionRefs]
 	);
+	const handleRemoveTeam = useCallback(
+		async (teamId: Team['id']) => {
+			if (!collectionRefs) return;
+			setLoading(true);
+			try {
+				const { teamsCollection } = collectionRefs;
+				const teamRef = doc(teamsCollection, String(teamId));
+				await deleteDoc(teamRef);
+			} catch (error) {
+				console.error('Failed to remove team:', error);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[collectionRefs]
+	);
 
 	const handleUpdateRound = useCallback(
 		async (updatedRound: Round) => {
@@ -283,8 +299,9 @@ const useGameControls = (gameId: string) => {
 			setLoading(true);
 			try {
 				const { teamsCollection } = collectionRefs;
+				const newDocRef = doc(teamsCollection);
 				const newTeam: Team = {
-					id: teamsCollection.id,
+					id: newDocRef.id,
 					teamName: teamName.trim(),
 					choices: [],
 					capacity_score: 0,
@@ -294,7 +311,7 @@ const useGameControls = (gameId: string) => {
 					solvency_score: 0,
 					team_code: crypto.randomUUID().slice(0, 6).toUpperCase(),
 				};
-				await addDoc(teamsCollection, newTeam);
+				await setDoc(newDocRef, newTeam);
 			} catch (error) {
 				console.error('Failed to add new team:', error);
 			} finally {
@@ -421,6 +438,7 @@ const useGameControls = (gameId: string) => {
 		handleRemoveRound,
 		handleUpdateRound,
 		handleAddTeam,
+		handleRemoveTeam,
 		handleUpdateTeam,
 		handleUpdateGameConfig,
 		isGameRunning,

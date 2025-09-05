@@ -194,11 +194,12 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 				.filter(
 					(reveal) =>
 						!reveal.revealdForRoles ||
+						reveal.revealdForRoles.length === 0 ||
 						reveal.revealdForRoles.some((x) => x === currentUserRole)
 				)
 				.map((revealMessage) => ({
 					...revealMessage,
-					time: `${time.getHours()} : ${time.getMinutes()}`,
+					time: `${time.getHours()}:${time.getMinutes()}`,
 				}));
 
 			messages.push(...newMessages);
@@ -215,7 +216,6 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 				| string
 				| undefined;
 
-			console.log(scoreKey, criticalValue, currentValue);
 			if (criticalValue && currentValue <= criticalValue) {
 				const time = new Date();
 				messages.push({

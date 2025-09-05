@@ -412,7 +412,7 @@ const RevealMessages = ({
 			<h4 className="text-lg font-bold  text-gray-300 mb-2">Reveal Messages</h4>
 			{(reveals || []).map((reveal, revealIndex) => (
 				<div
-					key={`reveal_message_editor${reveal.id}`}
+					key={`reveal_message_editor${revealIndex}`}
 					className="flex flex-col space-y-3 mb-4 bg-gray-800 p-4 rounded-lg"
 				>
 					<div className="flex-grow">

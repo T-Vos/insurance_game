@@ -38,6 +38,7 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 		onAddChoice,
 		onRemoveChoice,
 		onSaveChoice,
+		handleRemoveTeam,
 	} = useGameControls(gameId);
 	if (loading) {
 		return (
@@ -86,6 +87,7 @@ const GameAdmin = ({ gameId }: { gameId: string }) => {
 						teams={allTeams}
 						handleAddTeam={handleAddTeam}
 						handleUpdateTeam={handleUpdateTeam}
+						handleDeleteTeam={handleRemoveTeam}
 					/>
 				);
 			case PageState.CHART:
