@@ -18,6 +18,7 @@ interface TeamBoardProps {
 		choice: Choice
 	) => void;
 	handleSaveChoice?: (teamId: Team['id'], roundId: Round['round_id']) => void;
+	blockedChoiceIds?: Choice['id'][];
 }
 export default function TeamBoard({
 	team,
@@ -25,6 +26,7 @@ export default function TeamBoard({
 	currentRound,
 	isAdminView = false,
 	disabled = false,
+	blockedChoiceIds = [],
 	handleSelectChoice,
 	handleSaveChoice,
 }: TeamBoardProps) {
@@ -73,7 +75,8 @@ export default function TeamBoard({
 		choice: Choice,
 		isSelected: boolean,
 		letter: string,
-		isSaved?: boolean
+		isSaved?: boolean,
+		blockedChoiceIds?: Choice['id'][]
 	): React.JSX.Element {
 		const buttonClasses = clsx(
 			'relative w-full text-left py-3 px-4 rounded-lg transition-all duration-200 flex justify-between items-center group',
@@ -85,7 +88,8 @@ export default function TeamBoard({
 		);
 
 		const CheckIcon = isSelected ? LucideCheckSquare : LucideSquare;
-
+		const isInteractivelyBlocked = blockedChoiceIds?.includes(choice.id);
+		if (isInteractivelyBlocked) return <></>;
 		return (
 			<button
 				key={choice.id}

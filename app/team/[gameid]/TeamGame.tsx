@@ -41,7 +41,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 	const [recalculatedTeam, setRecalculatedTeam] = useState<Team | null>(null);
 	const [allRounds, setAllRounds] = useState<Round[]>([]);
 	const [allChoices, setAllChoices] = useState<Choice[]>([]);
-
+	const [blockedChoiceIds, setBlockedChoiceIds] = useState<string[]>([]);
 	const [isBlocked, setIsBlocked] = useState<boolean>(false);
 	const scoreTypes: (keyof Scores)[] = [
 		'expected_profit_score',
@@ -353,6 +353,71 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 		setIsBlocked(choiced?.saved ?? false);
 	}, [currentUserRole, currentTeam, currentRound]);
 
+	useEffect(() => {
+		// Only proceed if we have all the necessary data.
+		if (!currentTeam || !allChoices || !currentRound || !currentRound.round_id)
+			return;
+
+		// Use Sets for efficient lookups of interaction effects.
+		const disallowedChoiceIds = new Set<string>();
+		const allowedChoiceIds = new Set<string>();
+
+		// 1. Collect all "disallows" and "allows" effects from previously made choices.
+		const teamChoices = currentTeam.choices ?? [];
+
+		teamChoices.forEach((teamChoice) => {
+			const originalChoice = allChoices.find(
+				(c) => c.id === teamChoice.choice_id
+			);
+
+			if (originalChoice?.interactionEffects) {
+				originalChoice.interactionEffects.forEach((effect) => {
+					if (effect.effectType === 'disallows') {
+						disallowedChoiceIds.add(effect.targetChoiceId);
+					} else if (effect.effectType === 'allows') {
+						allowedChoiceIds.add(effect.targetChoiceId);
+					}
+				});
+			}
+		});
+
+		// 2. Determine if any 'allows' effects are active. This enables "gated" mode.
+		const hasActiveAllows = allowedChoiceIds.size > 0;
+
+		// 3. Build the final list of blocked choices for the CURRENT round.
+		const finalBlockedIds = new Set<string>();
+		const choicesForCurrentRound = allChoices.filter(
+			(choice) => choice.round_id === currentRound.round_id
+		);
+
+		choicesForCurrentRound.forEach((currentChoice) => {
+			// Condition A: If "gated" mode is on, a choice is blocked if it's not on the 'allowed' list.
+			if (hasActiveAllows && !allowedChoiceIds.has(currentChoice.id)) {
+				finalBlockedIds.add(currentChoice.id);
+				return; // Move to the next choice, it's already blocked.
+			}
+
+			// Condition B: A choice is blocked if a 'disallows' effect targets it.
+			// This overrides any 'allows' effect.
+			if (disallowedChoiceIds.has(currentChoice.id)) {
+				finalBlockedIds.add(currentChoice.id);
+				return;
+			}
+
+			// Condition C: A choice is blocked by a 'blocking_choices' prerequisite.
+			// This is an unconditional block.
+			const isBlockedByPrerequisite = currentChoice.blocking_choices?.some(
+				(blockingChoiceId) =>
+					teamChoices.some((tc) => tc.choice_id === blockingChoiceId)
+			);
+			if (isBlockedByPrerequisite) {
+				finalBlockedIds.add(currentChoice.id);
+			}
+		});
+
+		setBlockedChoiceIds(Array.from(finalBlockedIds));
+	}, [currentTeam, allChoices, currentRound]);
+
 	const handleSaveChoice = async (
 		teamId: Team['id'],
 		roundId: Round['round_id']
@@ -411,6 +476,7 @@ export default function TeamGame({ gameid: gameid }: { gameid: string }) {
 								handleSaveChoice(teamId, roundId)
 							}
 							disabled={isBlocked}
+							blockedChoiceIds={blockedChoiceIds}
 						/>
 					) : (
 						<div className="text-center animate-pulse text-gray-600">

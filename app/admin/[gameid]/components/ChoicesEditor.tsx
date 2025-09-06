@@ -222,7 +222,7 @@ export const ChoiceEditor = ({
 					<LucideTrash size={20} />
 				</button>
 			</div>
-
+			<span className="font-extralight">Choice id: {localChoice.id}</span>
 			<div
 				className={`overflow-hidden transition-all duration-300 ${
 					isOpened ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
@@ -547,6 +547,10 @@ const InteractionEffects = ({
 	const [groupedChoices, setGroupedChoices] = useState<GroupedChoices>({});
 	const [selectedRoundId, setSelectedRoundId] = useState<Round['round_id']>('');
 	const [availableChoices, setAvailableChoices] = useState<Choice[]>([]);
+	const [selectedRounds, setSelectedRounds] = useState<
+		Record<number, Round['round_id']>
+	>({});
+
 	useEffect(() => {
 		const choicesByRound = allChoices.reduce((acc: GroupedChoices, choice) => {
 			const { round_id } = choice;
@@ -560,12 +564,44 @@ const InteractionEffects = ({
 		setGroupedChoices(choicesByRound);
 	}, [allChoices]);
 	useEffect(() => {
+		const initialSelectedRounds: Record<number, Round['round_id']> = {};
+		(interactionEffects || []).forEach((interaction, index) => {
+			if (interaction.roundId) {
+				initialSelectedRounds[index] = interaction.roundId;
+			}
+		});
+		setSelectedRounds(initialSelectedRounds);
+	}, [interactionEffects]);
+	useEffect(() => {
 		if (selectedRoundId && groupedChoices[selectedRoundId]) {
 			setAvailableChoices(groupedChoices[selectedRoundId]);
 		} else {
 			setAvailableChoices([]);
 		}
 	}, [selectedRoundId, groupedChoices]);
+
+	const handleRoundChange = (
+		interactionIndex: number,
+		roundId: Round['round_id']
+	) => {
+		// Update the local state for the selected round
+		setSelectedRounds((prev) => ({
+			...prev,
+			[interactionIndex]: roundId,
+		}));
+
+		// Also update the parent state for the interaction effect
+		handleUpdateInteraction(interactionIndex, 'roundId', roundId);
+
+		// This is a key step: when the round changes, also reset the targetChoiceId
+		// so the user can select a choice from the new round.
+		handleUpdateInteraction(interactionIndex, 'targetChoiceId', '');
+	};
+
+	const getAvailableChoices = (interactionIndex: number) => {
+		const roundId = selectedRounds[interactionIndex];
+		return groupedChoices[roundId] || [];
+	};
 	return (
 		<div className="mt-6">
 			<h4 className="text-lg font-bold text-gray-300 mb-2">
@@ -573,7 +609,7 @@ const InteractionEffects = ({
 			</h4>
 			{(interactionEffects || []).map((interaction, interactionIndex) => (
 				<div
-					key={`reveal_${interactionIndex}`}
+					key={`interaction_${interactionIndex}`}
 					className="flex flex-wrap items-center space-x-2 mb-2"
 				>
 					{/* Round Selector */}
@@ -582,28 +618,31 @@ const InteractionEffects = ({
 							Round
 						</label>
 						<select
-							value={selectedRoundId}
-							onChange={(e) => setSelectedRoundId(e.target.value)}
+							value={interaction.roundId || ''} // Use the prop value for persistence
+							onChange={(e) =>
+								handleRoundChange(interactionIndex, e.target.value)
+							}
 							className={clsx('w-full', input_box)}
 						>
 							<option value="" disabled>
 								Select a round
 							</option>
 							{Object.keys(groupedChoices).map((roundId) => (
-								<option key={`round_${roundId}`} value={roundId}>
-									Round {roundId}
-								</option>
+								<option
+									key={`round_${roundId}`}
+									value={roundId}
+								>{`Round ${roundId}`}</option>
 							))}
 						</select>
 					</div>
 
-					{/* Choice Selector */}
+					{/* Target Choice Selector */}
 					<div className="grow flex-1">
 						<label className="block text-gray-400 text-sm font-bold mb-1">
 							Target Choice
 						</label>
 						<select
-							value={interaction.targetChoiceId}
+							value={interaction.targetChoiceId || ''}
 							onChange={(e) =>
 								handleUpdateInteraction(
 									interactionIndex,
@@ -613,16 +652,13 @@ const InteractionEffects = ({
 							}
 							onBlur={handleSaveInteraction}
 							className={clsx('w-full', input_box)}
-							disabled={!selectedRoundId} // Disable until a round is selected
+							disabled={!interaction.roundId} // Disable until a round is selected
 						>
 							<option value="" disabled>
 								Select a choice
 							</option>
-							{availableChoices.map((targetChoice) => (
-								<option
-									key={`ManageChoices_${targetChoice.id}`}
-									value={targetChoice.id}
-								>
+							{getAvailableChoices(interactionIndex).map((targetChoice) => (
+								<option key={targetChoice.id} value={targetChoice.id}>
 									{targetChoice.description}
 								</option>
 							))}
@@ -634,13 +670,14 @@ const InteractionEffects = ({
 						</label>
 						<select
 							value={interaction.effectType}
-							onChange={(e) =>
+							onChange={(e) => {
+								handleUpdateInteraction(interactionIndex, 'bonusScore', 0);
 								handleUpdateInteraction(
 									interactionIndex,
 									'effectType',
 									e.target.value
-								)
-							}
+								);
+							}}
 							onBlur={handleSaveInteraction}
 							className={input_box}
 						>
