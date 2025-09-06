@@ -11,7 +11,8 @@ import {
 import { ChevronDown, LucideTrash, LucidePlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ScoreBar from './ScoreBar'; // Assuming ScoreBar exists and is fine
-import { delete_button } from './styling';
+import { delete_button, input_box } from './styling';
+import clsx from 'clsx';
 
 type ChoiceEditorProps = {
 	choice: Choice;
@@ -108,6 +109,7 @@ export const ChoiceEditor = ({
 			targetChoiceId: allChoices[0]?.id || '',
 			bonusScore: 0,
 			roundId: allRounds[0]?.round_id || '',
+			effectType: 'bonusScore',
 		};
 		const updatedInteractions = [
 			...(localChoice.interactionEffects || []),
@@ -530,6 +532,10 @@ type InteractionEffectsProps = {
 	handleSaveInteraction: () => void;
 };
 
+interface GroupedChoices {
+	[key: Round['round_id']]: Choice[];
+}
+
 const InteractionEffects = ({
 	interactionEffects,
 	allChoices, // Use the new prop
@@ -538,6 +544,28 @@ const InteractionEffects = ({
 	handleAddInteraction,
 	handleSaveInteraction,
 }: InteractionEffectsProps) => {
+	const [groupedChoices, setGroupedChoices] = useState<GroupedChoices>({});
+	const [selectedRoundId, setSelectedRoundId] = useState<Round['round_id']>('');
+	const [availableChoices, setAvailableChoices] = useState<Choice[]>([]);
+	useEffect(() => {
+		const choicesByRound = allChoices.reduce((acc: GroupedChoices, choice) => {
+			const { round_id } = choice;
+			if (!acc[round_id]) {
+				acc[round_id] = [];
+			}
+			acc[round_id].push(choice);
+			return acc;
+		}, {});
+
+		setGroupedChoices(choicesByRound);
+	}, [allChoices]);
+	useEffect(() => {
+		if (selectedRoundId && groupedChoices[selectedRoundId]) {
+			setAvailableChoices(groupedChoices[selectedRoundId]);
+		} else {
+			setAvailableChoices([]);
+		}
+	}, [selectedRoundId, groupedChoices]);
 	return (
 		<div className="mt-6">
 			<h4 className="text-lg font-bold text-gray-300 mb-2">
@@ -548,7 +576,29 @@ const InteractionEffects = ({
 					key={`reveal_${interactionIndex}`}
 					className="flex flex-wrap items-center space-x-2 mb-2"
 				>
-					<div className="grow">
+					{/* Round Selector */}
+					<div className="grow flex-1">
+						<label className="block text-gray-400 text-sm font-bold mb-1">
+							Round
+						</label>
+						<select
+							value={selectedRoundId}
+							onChange={(e) => setSelectedRoundId(e.target.value)}
+							className={clsx('w-full', input_box)}
+						>
+							<option value="" disabled>
+								Select a round
+							</option>
+							{Object.keys(groupedChoices).map((roundId) => (
+								<option key={`round_${roundId}`} value={roundId}>
+									Round {roundId}
+								</option>
+							))}
+						</select>
+					</div>
+
+					{/* Choice Selector */}
+					<div className="grow flex-1">
 						<label className="block text-gray-400 text-sm font-bold mb-1">
 							Target Choice
 						</label>
@@ -562,12 +612,13 @@ const InteractionEffects = ({
 								)
 							}
 							onBlur={handleSaveInteraction}
-							className="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
+							className={clsx('w-full', input_box)}
+							disabled={!selectedRoundId} // Disable until a round is selected
 						>
 							<option value="" disabled>
 								Select a choice
 							</option>
-							{allChoices.map((targetChoice) => (
+							{availableChoices.map((targetChoice) => (
 								<option
 									key={`ManageChoices_${targetChoice.id}`}
 									value={targetChoice.id}
@@ -579,10 +630,32 @@ const InteractionEffects = ({
 					</div>
 					<div>
 						<label className="block text-gray-400 text-sm font-bold mb-1">
+							Target Choice
+						</label>
+						<select
+							value={interaction.effectType}
+							onChange={(e) =>
+								handleUpdateInteraction(
+									interactionIndex,
+									'effectType',
+									e.target.value
+								)
+							}
+							onBlur={handleSaveInteraction}
+							className={input_box}
+						>
+							<option value="bonusScore">Bonus score</option>
+							<option value="allows">Mogelijk maken</option>
+							<option value="disallows">Onmogelijk maken</option>
+						</select>
+					</div>
+					<div>
+						<label className="block text-gray-400 text-sm font-bold mb-1">
 							Bonus Score
 						</label>
 						<input
 							type="number"
+							disabled={interaction.effectType !== 'bonusScore'}
 							value={interaction.bonusScore || 0}
 							placeholder="Bonus Score"
 							onChange={(e) =>
@@ -593,7 +666,7 @@ const InteractionEffects = ({
 								)
 							}
 							onBlur={handleSaveInteraction}
-							className="w-28 bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0"
+							className={clsx('w-28', input_box)}
 						/>
 					</div>
 					<div className="self-end mb-2">

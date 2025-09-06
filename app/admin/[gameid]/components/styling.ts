@@ -12,3 +12,5 @@ export const delete_button = clsx(
 	button,
 	'bg-red-600 hover:bg-red-700 text-white'
 );
+export const input_box =
+	'dark:bg-gray-700 text-white rounded px-3 py-2 mb-2 sm:mb-0 invalid:border-pink-500 invalid:text-pink-600 focus:border-sky-500 focus:outline focus:outline-sky-500 focus:invalid:border-pink-500 focus:invalid:outline-pink-500 disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-500 disabled:shadow-none dark:disabled:border-gray-700 dark:disabled:bg-gray-800/20';

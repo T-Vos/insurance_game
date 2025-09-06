@@ -192,6 +192,7 @@ export interface InteractionEffect {
 	targetChoiceId: Choice['id'];
 	roundId: Round['round_id'];
 	bonusScore: number;
+	effectType: 'allows' | 'disallows' | 'bonusScore';
 }
 
 /**
